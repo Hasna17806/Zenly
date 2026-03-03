@@ -21,6 +21,7 @@ app.get("/", (req, res) => {
   res.send("Zenly API Running ✅");
 });
 
+app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/mood", moodRoutes);
@@ -30,6 +31,6 @@ app.use("/api/challenges", challengeRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/completed-challenges", completedChallengeRoutes);
-app.use("/api/admin", adminRoutes);
+
 
 export default app;
