@@ -10,10 +10,17 @@ const API = axios.create({
 // Add token to requests if it exists
 API.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Check both user token and psychiatrist token
+    const userToken = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const psychiatristToken = localStorage.getItem('psychiatristToken') || sessionStorage.getItem('psychiatristToken');
+
+    // Prioritize psychiatrist token if route is for psychiatrist
+    if (config.url.startsWith('/psychiatrist') && psychiatristToken) {
+      config.headers.Authorization = `Bearer ${psychiatristToken}`;
+    } else if (userToken) {
+      config.headers.Authorization = `Bearer ${userToken}`;
     }
+
     console.log('API Request:', config.method.toUpperCase(), config.url); 
     return config;
   },

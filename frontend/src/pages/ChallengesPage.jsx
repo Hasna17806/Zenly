@@ -45,7 +45,7 @@ const ChallengesPage = () => {
         time: '20 secs',
         image: 'https://res.cloudinary.com/dkqjn6dqw/image/upload/v1772259296/Excited_Emoji__Excitement_Concept__Excited__Happy_PNG_Transparent_Image_and_Clipart_for_Free_Download-removebg-preview_ew4xyt.png',
         moodTag: ['happy/Energetic', 'calm/Okay'],
-        gameType: 'timer',
+        gameType: 'smile-challenge',
       },
       {
         id: 'calm-taps',
@@ -54,7 +54,7 @@ const ChallengesPage = () => {
         time: '2 mins',
         image: 'https://res.cloudinary.com/dkqjn6dqw/image/upload/v1772259297/30_Bubbles_Clipart__Iridescent_Bubbles__Foam_Water_Bubble__Baby_Shower__Printable_Watercolor-removebg-preview_scwri9.png',
         moodTag: ['stressed/Heavy', 'angry/Frustrated'],
-        gameType: 'bubbles', // Changed from 'tap' to 'bubbles'
+        gameType: 'bubbles', 
       },
     ],
     'Study': [
@@ -65,7 +65,7 @@ const ChallengesPage = () => {
         time: '5 mins',
         image: 'https://res.cloudinary.com/dkqjn6dqw/image/upload/v1772260605/download__42_-removebg-preview_bgh7qn.png',
         moodTag: ['tired/Burned Out', 'calm/Okay'],
-        gameType: 'timer',
+        gameType: 'focus-sprint',
       },
       {
         id: 'memory-flip',
@@ -121,7 +121,7 @@ const ChallengesPage = () => {
         time: '30 secs',
         image: 'https://res.cloudinary.com/dkqjn6dqw/image/upload/v1772261045/download__15_-removebg-preview_kshs3n.png',
         moodTag: ['angry/Frustrated', 'stressed/Heavy'],
-        gameType: 'stars', // Changed from 'tap' to 'stars'
+        gameType: 'stars',
       },
       {
         id: 'spin-smile',
@@ -150,7 +150,7 @@ const ChallengesPage = () => {
         time: '30 secs',
         image: 'https://res.cloudinary.com/dkqjn6dqw/image/upload/v1772261663/Sign_in-removebg-preview_uagazz.png',
         moodTag: ['tired/Burned Out'],
-        gameType: 'timer',
+        gameType: 'blink-break',
       },
       {
         id: 'one-thought-dump',
@@ -186,7 +186,7 @@ const ChallengesPage = () => {
       // Handle different response formats
       let completedIds = [];
       if (Array.isArray(response.data)) {
-        completedIds = response.data.map(c => c.challenge?.title || c.challenge?._id || c.title || c._id);
+        completedIds = response.data.map(c => c.challengeId);
       } else if (response.data.completed) {
         completedIds = response.data.completed.map(c => c.challenge?.title || c.challenge?._id || c.title || c._id);
       }
@@ -240,7 +240,7 @@ const ChallengesPage = () => {
       return; 
     }
     
-    if (completedChallenges.includes(challenge.title)) { 
+   if (completedChallenges.includes(challenge.id)) { 
       alert('Challenge already completed!'); 
       return; 
     }
@@ -260,18 +260,18 @@ const ChallengesPage = () => {
       }
     );
     
-    console.log("Complete response:", response.data); // Debug log
+    console.log("Complete response:", response.data); 
     
-    setCompletedChallenges(prev => [...prev, challenge.title]);
+    setCompletedChallenges(prev => [...prev, challenge.id]);
     alert('🎉 Challenge Completed! +5 Focus Points');
   } catch (error) {
     console.error('Error completing challenge:', error);
-    console.error('Error response:', error.response?.data); // Debug log
+    console.error('Error response:', error.response?.data); 
     alert(`Error: ${error.response?.data?.message || error.message}`);
   }
 };
 
-  const isCompleted = (challenge) => completedChallenges.includes(challenge.title);
+  const isCompleted = (challenge) => completedChallenges.includes(challenge.id);
   const getCompletedCount = () => completedChallenges.length;
 
   return (

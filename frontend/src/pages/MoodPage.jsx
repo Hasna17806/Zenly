@@ -654,7 +654,7 @@ const MoodPage = () => {
                 })}
               </div>
               
-              {/* Progress summary - Fixed banner message */}
+              {/* Progress summary */}
               <div className="mt-8 p-6 bg-indigo-50 rounded-xl text-center">
                 <p className="text-indigo-800 text-lg font-medium">
                   {completed.length > 0 
@@ -676,6 +676,37 @@ const MoodPage = () => {
                   ← Back to edit factors
                 </button>
               </div>
+
+              {/* ========== FIND PSYCHIATRIST SECTION ========== */}
+              {/* Add this after the challenges section */}
+              <div className="mt-10 pt-6 border-t border-slate-100">
+                <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-100 shadow-md">
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center">
+                        <span className="text-3xl">👨‍⚕️</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold text-purple-800 mb-1">
+                          Need Professional Support?
+                        </h3>
+                        <p className="text-purple-600">
+                          Connect with licensed psychiatrists for personalized guidance
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => navigate('/psychiatrists')}
+                      className="bg-purple-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-purple-700 transition transform hover:scale-105 shadow-lg whitespace-nowrap flex items-center gap-2"
+                    >
+                      Find Psychiatrists
+                      <span className="text-xl">→</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              {/* ============================================== */}
+
             </div>
           )}
         </div>

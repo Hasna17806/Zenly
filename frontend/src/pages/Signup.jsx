@@ -213,55 +213,71 @@ function Signup() {
   };
 
   const submitHandler = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  
+  const newErrors = validateForm();
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    showModal(
+      'error',
+      'Validation Error',
+      'Please check all fields and try again.'
+    );
+    return;
+  }
+
+  setErrors({});
+  setIsLoading(true);
+
+  try {
+    const { data } = await API.post("/auth/register", {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+    });
+
+    console.log("SIGNUP SUCCESS:", data);
+    console.log("FULL SIGNUP RESPONSE:", JSON.stringify(data, null, 2));
+
+    // Store token
+    localStorage.setItem("token", data.token);
     
-    const newErrors = validateForm();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      showModal(
-        'error',
-        'Validation Error',
-        'Please check all fields and try again.'
-      );
-      return;
-    }
-
-    setErrors({});
-    setIsLoading(true);
-
-    try {
-      const { data } = await API.post("/auth/register", {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-      });
-
-      console.log("SIGNUP SUCCESS:", data);
-
-      localStorage.setItem("token", data.token);
+    // Store user email
+    localStorage.setItem("userEmail", formData.email);
+    
+    
+    if (data.name) {
+      localStorage.setItem("userName", data.name);
+    } else if (data.user?.name) {
+      localStorage.setItem("userName", data.user.name);
+    } else {
       
-      showModal(
-        'success',
-        'Welcome to Zenly! 🎉',
-        `Your account has been created successfully${formData.name ? ', ' + formData.name : ''}!`
-      );
-
-      // Navigate after showing success message
-      setTimeout(() => {
-        closeModal();
-        navigate("/");
-      }, 2000);
-
-    } catch (error) {
-      showModal(
-        'error',
-        'Signup Failed',
-        error.response?.data?.message || "Unable to create account. Please try again."
-      );
-    } finally {
-      setIsLoading(false);
+      localStorage.setItem("userName", formData.name);
     }
-  };
+    
+    showModal(
+      'success',
+      'Welcome to Zenly! 🎉',
+      `Your account has been created successfully, ${formData.name}!`
+    );
+
+ 
+    setTimeout(() => {
+      closeModal();
+      navigate("/");
+    }, 2000);
+
+  } catch (error) {
+    console.error("Signup error:", error);
+    showModal(
+      'error',
+      'Signup Failed',
+      error.response?.data?.message || "Unable to create account. Please try again."
+    );
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const getPasswordStrength = () => {
     const password = formData.password;

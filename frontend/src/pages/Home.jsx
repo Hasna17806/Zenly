@@ -6,7 +6,7 @@ import {
   Brain, Zap, Calendar, Bell, BookOpen, Shield,
   Moon, Sun, Wind, Leaf, Heart, ArrowRight, Play,
   CheckCircle, Star, BarChart2, Headphones, Lock,
-  Compass, Target, Volume2, X
+  Compass, Target, Volume2, X, UserPlus
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -264,17 +264,17 @@ function Home() {
       description: "Visualize your progress with beautiful charts and insights."
     },
     {
-      icon: <Headphones className="w-8 h-8" />,
-      title: "Calm Sounds",
-      desc: "Lo-fi beats, white noise, and focus playlists that adapt to your current mood setting.",
+      icon: <UserPlus className="w-8 h-8" />, 
+      title: "Consult Psychiatrist",
+      desc: "Connect with licensed psychiatrists for professional mental health support and guidance.",
       tag: "NEW",
-      link: "/sounds",
+      link: "/psychiatrists",
       accent: "#8b5cf6",
       lightBg: "#f5f3ff",
-      emoji: "🎵",
+      emoji: "👨‍⚕️",
       locked: !isLoggedIn,
       gradient: "from-violet-500 to-violet-600",
-      description: "Listen to focus-enhancing sounds and music tailored to your mood."
+      description: "Connect with licensed psychiatrists for professional mental health support."
     },
     {
       icon: <Leaf className="w-8 h-8" />,
@@ -512,16 +512,30 @@ function Home() {
               <Sparkles className="w-4 h-4 relative z-10" />
               <span className="relative z-10">Get Started — It's Free</span>
             </button>
-
-            {/* <button
-              // onClick={() => navigate("/login")}
-              className="group inline-flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/30 text-white px-6 py-3.5 rounded-2xl font-semibold text-base transition-all duration-300 hover:scale-105 backdrop-blur-sm"
-            >
-              <span>Login</span>
-            </button> */}
           </>
         )}
       </div>
+
+      {isLoggedIn && (
+        <div className="mt-8 pt-4 border-t border-white/10">
+          <div className="flex items-center gap-4">
+            <div className="bg-purple-500/20 p-3 rounded-full">
+              <UserPlus className="w-6 h-6 text-purple-300" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-white font-semibold">Need Professional Support?</h3>
+              <p className="text-white/60 text-sm">Connect with licensed psychiatrists</p>
+            </div>
+            <button
+              onClick={() => navigate("/psychiatrists")}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg flex items-center gap-2"
+            >
+              Find Psychiatrists
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-8 border-t border-white/10">
@@ -926,11 +940,6 @@ function Home() {
 
                 {/* Floating cards */}
                 <div className="absolute -bottom-8 -left-8 bg-white rounded-2xl p-4 shadow-2xl max-w-[250px] animate-bounce">
-                  {/* <div className="flex items-center gap-2 mb-2">
-                    {[1,2,3,4,5].map(s => (
-                      <Star key={s} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div> */}
                   <p className="text-gray-700 text-base font-medium italic leading-relaxed">
                     "You're doing great — one breath at a time."
                   </p>

@@ -6,20 +6,33 @@ const challengeSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+
     description: {
       type: String,
     },
-    moodTag: {
+
+    category: {
       type: String,
       required: true,
       enum: [
-        "happy/Energetic",
-        "calm/Okay",
-        "stressed/Heavy",
-        "sad/Low",
-        "angry/Frustrated",
-        "tired/Burned Out",
+        "mood-boost",
+        "study",
+        "fun",
+        "quick-play",
       ],
+    },
+
+    image: {
+      type: String,
+    },
+
+    duration: {
+      type: String,
+    },
+
+    route: {
+      type: String,
+      required: true,
     },
   },
   { timestamps: true }

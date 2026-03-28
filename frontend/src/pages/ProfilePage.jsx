@@ -8,10 +8,10 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ totalMoods: 0, completedChallenges: 0, streak: 0, chatMessages: 0 });
+  const [stats, setStats] = useState({ totalMoods: 0, completedChallenges: 0, streak: 0, chatbotMessages: 0 });
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', role: '' });
-  const [profilePic, setProfilePic] = useState(null);       // preview URL
+  const [profilePic, setProfilePic] = useState(null);       
   const [uploadingPic, setUploadingPic] = useState(false);
   const picInputRef = React.useRef(null);
 
@@ -46,7 +46,7 @@ const ProfilePage = () => {
         totalMoods: moodsRes.data?.length || 0,
         completedChallenges: challengesRes.data?.length || 0,
         streak: Math.min(moodsRes.data?.length || 0, 7),
-        chatMessages: chatRes.data?.length || 0
+        chatbotMessages: chatRes.data?.length || 0
       });
     } catch (error) {
       console.error("Error fetching stats:", error);
@@ -311,7 +311,7 @@ const ProfilePage = () => {
                     { num: stats.totalMoods,           label: 'Moods Logged',     bg: '#f0f9f7', border: '#d4ede8', color: '#3d7a73' },
                     { num: stats.completedChallenges,  label: 'Challenges Done',  bg: '#f0fdf4', border: '#bbf7d0', color: '#16a34a' },
                     { num: stats.streak,               label: 'Day Streak 🔥',    bg: '#fff7ed', border: '#fed7aa', color: '#ea580c' },
-                    { num: stats.chatMessages,         label: 'Chat Messages',    bg: '#faf5ff', border: '#e9d5ff', color: '#9333ea' },
+                    { num: stats.chatbotMessages,         label: 'Chat Messages',    bg: '#faf5ff', border: '#e9d5ff', color: '#9333ea' },
                   ].map(({ num, label, bg, border, color }) => (
                     <div key={label} className="prof-stat" style={{ background: bg, borderColor: border }}>
                       <div className="prof-stat-num" style={{ color }}>{num}</div>

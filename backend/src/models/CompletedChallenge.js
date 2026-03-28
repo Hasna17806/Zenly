@@ -7,9 +7,10 @@ const completedChallengeSchema = mongoose.Schema(
       ref: "User",
       required: true,
     },
-    challenge: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Challenge",
+
+    // store challenge id from frontend
+    challengeId: {
+      type: String,
       required: true,
     },
   },

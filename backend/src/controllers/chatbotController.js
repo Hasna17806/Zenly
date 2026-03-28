@@ -1,4 +1,4 @@
-import ChatMessage from "../models/ChatMessage.js";
+import ChatbotMessage from "../models/ChatbotMessage.js";
 
 export const sendMessage = async (req, res) => {
   try {
@@ -9,7 +9,7 @@ export const sendMessage = async (req, res) => {
     }
 
     // Save user message
-    const userMsg = await ChatMessage.create({
+    const userMsg = await ChatbotMessage.create({
       user: req.user.id,
       message,
       sender: "user",
@@ -18,7 +18,7 @@ export const sendMessage = async (req, res) => {
     // Simple bot reply 
     const botReplyText = getBotReply(message);
 
-    const botMsg = await ChatMessage.create({
+    const botMsg = await ChatbotMessage.create({
       user: req.user.id,
       message: botReplyText,
       sender: "bot",
@@ -36,7 +36,7 @@ export const sendMessage = async (req, res) => {
 // Add this new function to get chat history
 export const getChatHistory = async (req, res) => {
   try {
-    const messages = await ChatMessage.find({ user: req.user.id })
+    const messages = await ChatbotMessage.find({ user: req.user.id })
       .sort({ createdAt: 1 }) // Oldest first
       .limit(50); // Limit to last 50 messages
 

@@ -8,12 +8,11 @@ const TimerGame = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const challenge = location.state?.challenge;
-  const [timer, setTimer] = useState(300); // Default 5 min
+  const [timer, setTimer] = useState(300); 
   const [isActive, setIsActive] = useState(false);
   const [completed, setCompleted] = useState(false);
 
   useEffect(() => {
-    // Parse time from challenge (e.g., "5 mins" -> 300 seconds)
     if (challenge?.time) {
       const minutes = parseInt(challenge.time);
       if (!isNaN(minutes)) {
