@@ -78,7 +78,7 @@ export const getDashboardStats = async (req, res) => {
       User.countDocuments({ createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }),
       Psychiatrist.countDocuments({ createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }),
       
-      // Focus hours today
+      // Focus hours today - using completedAt instead of createdAt
       FocusSession.aggregate([
         { $match: { createdAt: { $gte: today, $lt: tomorrow } } },
         { $group: { _id: null, total: { $sum: "$duration" } } }
@@ -96,7 +96,7 @@ export const getDashboardStats = async (req, res) => {
       // Mood logs yesterday
       MoodLog.countDocuments({ createdAt: { $gte: yesterday, $lt: endYesterday } }),
       
-      // Challenges completed today
+      // Challenges completed today 
       CompletedChallenge.countDocuments({ completedAt: { $gte: today, $lt: tomorrow } }),
       
       // Challenges completed yesterday
@@ -144,7 +144,6 @@ export const getDashboardStats = async (req, res) => {
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find({ role: "student" }).select("-password");
-    // const users = await User.find().select("-password").sort({ createdAt: -1 });
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -368,7 +367,7 @@ export const getUserCount = async (req, res) => {
 };
 
 /* ===============================
-   WEEKLY FOCUS STATS
+   WEEKLY FOCUS STATS (Now in Minutes)
 ================================= */
 export const getWeeklyFocusStats = async (req, res) => {
   try {
@@ -397,9 +396,12 @@ export const getWeeklyFocusStats = async (req, res) => {
         }
       ]);
 
+      // Convert seconds to minutes
+      const totalMinutes = stats[0]?.total ? Math.round(stats[0].total / 60) : 0;
+
       result.unshift({
         day: days[date.getDay()],
-        hours: stats[0]?.total ? Math.round(stats[0].total / 3600 * 10) / 10 : 0
+        minutes: totalMinutes  // Now in minutes
       });
     }
 
@@ -493,8 +495,9 @@ export const getRecentActivity = async (req, res) => {
       activities.push({
         emoji: '🟢',
         user: mood.user?.name || 'Unknown',
-        action: 'logged their mood',
-        time: formatTimeAgo(mood.createdAt)
+        action: `logged their mood: ${mood.mood}`,
+        time: formatTimeAgo(mood.createdAt),
+        timestamp: mood.createdAt
       });
     });
 
@@ -513,47 +516,45 @@ export const getRecentActivity = async (req, res) => {
         emoji: '🔵',
         user: session.user?.name || 'Unknown',
         action: `completed ${timeString} focus session`,
-        time: formatTimeAgo(session.createdAt)
+        time: formatTimeAgo(session.createdAt),
+        timestamp: session.createdAt
       });
     });
 
-    // Get recent challenge completions
+    // Get recent challenge completions - FIX THIS PART
     const recentChallenges = await CompletedChallenge.find()
       .sort({ completedAt: -1 })
-      .limit(2)
+      .limit(5)
       .populate('user', 'name');
 
     recentChallenges.forEach(challenge => {
       activities.push({
-        emoji: '🟣',
+        emoji: '🏆',
         user: challenge.user?.name || 'Unknown',
         action: `completed a challenge`,
-        time: formatTimeAgo(challenge.completedAt)
+        time: formatTimeAgo(challenge.completedAt),
+        timestamp: challenge.completedAt
       });
     });
 
-    // Get recent psychiatrist registrations
-    const recentPsychiatrists = await Psychiatrist.find()
+    // Get recent user registrations
+    const recentUsers = await User.find({ role: "student" })
       .sort({ createdAt: -1 })
       .limit(2)
       .select('name createdAt');
 
-    recentPsychiatrists.forEach(psych => {
+    recentUsers.forEach(user => {
       activities.push({
-        emoji: '👨‍⚕️',
-        user: 'Admin',
-        action: `added psychiatrist: ${psych.name}`,
-        time: formatTimeAgo(psych.createdAt)
+        emoji: '👤',
+        user: 'System',
+        action: `new user registered: ${user.name}`,
+        time: formatTimeAgo(user.createdAt),
+        timestamp: user.createdAt
       });
     });
 
-    // Sort by time (most recent first) and limit to 5
-    activities.sort((a, b) => {
-      const timeA = a.time.includes('Just now') ? 0 : parseInt(a.time) || 0;
-      const timeB = b.time.includes('Just now') ? 0 : parseInt(b.time) || 0;
-      return timeA - timeB;
-    });
-    
+    // Sort by timestamp and limit to 5
+    activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     res.json(activities.slice(0, 5));
 
   } catch (error) {
@@ -575,17 +576,17 @@ export const getUserActivity = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // 📊 Focus Stats
+    // 📊 Focus Stats - Convert to minutes
     const totalFocusSessions = await FocusSession.countDocuments({ user: userId });
 
     const totalFocusMinutesData = await FocusSession.aggregate([
       { $match: { user: user._id } },
-      { $group: { _id: null, totalMinutes: { $sum: "$duration" } } }
+      { $group: { _id: null, totalSeconds: { $sum: "$duration" } } }
     ]);
 
     const totalFocusMinutes =
       totalFocusMinutesData.length > 0
-        ? totalFocusMinutesData[0].totalMinutes
+        ? Math.round(totalFocusMinutesData[0].totalSeconds / 60)
         : 0;
 
     // 😊 Mood Stats
@@ -596,10 +597,16 @@ export const getUserActivity = async (req, res) => {
       { $group: { _id: "$mood", count: { $sum: 1 } } }
     ]);
 
-    // 📅 Recent Activity (last 5 focus sessions)
+    // 📅 Recent Activity (last 5 focus sessions) - Convert to minutes
     const recentFocus = await FocusSession.find({ user: userId })
       .sort({ createdAt: -1 })
       .limit(5);
+
+    // Convert recent focus sessions to minutes
+    const recentFocusInMinutes = recentFocus.map(session => ({
+      ...session.toObject(),
+      durationMinutes: Math.round(session.duration / 60)
+    }));
 
     // For psychiatrists, get their students
     let selectedByStudents = [];
@@ -616,7 +623,7 @@ export const getUserActivity = async (req, res) => {
         totalFocusMinutes,
         totalMoodEntries,
         moodDistribution,
-        recentFocus,
+        recentFocus: recentFocusInMinutes,
       },
       additionalInfo: {
         selectedByStudents: user.role === 'psychiatrist' ? selectedByStudents : undefined,
@@ -647,5 +654,7 @@ const formatTimeAgo = (date) => {
   if (diffHours < 24) return `${diffHours}h ago`;
   
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  
+  return `${Math.floor(diffDays / 7)}w ago`;
 };

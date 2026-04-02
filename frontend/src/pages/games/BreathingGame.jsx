@@ -54,17 +54,27 @@ const BreathingGame = () => {
   };
 
   const finishSession = () => { setIsActive(false); setCompleted(true); };
+const handleComplete = async () => {
+  try {
+    setLoading(true);
+    setErrorMsg("");
 
-  const handleComplete = async () => {
-    try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.post("http://localhost:5000/api/completed",
-        { challengeId: challenge?.id || "breathe-reset", score: 10 },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      navigate("/challenges");
-    } catch { navigate("/challenges"); }
-  };
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+    await axios.post(
+      "http://localhost:5000/api/completed-challenges",
+      { challengeId: challenge?._id || challenge?.id },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    setTimeout(() => navigate("/challenges"), 2000);
+  } catch (error) {
+    console.error("Error completing challenge:", error);
+    setErrorMsg(error.response?.data?.message || "Could not complete challenge. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const restart = () => { setCompleted(false); setPhase("ready"); setCycles(0); setTotalSeconds(0); };
 

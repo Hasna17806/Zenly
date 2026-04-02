@@ -6,7 +6,8 @@ import {
   createChallenge,
   updateChallenge,
   deleteChallenge,
-  getAllChallenges
+  getAllChallenges,
+  getChallengesByMoodTag
 } from "../controllers/challengeController.js";
 
 const router = express.Router();
@@ -21,5 +22,7 @@ router.delete("/admin/delete/:id", deleteChallenge);
 router.get("/", protect, getAllChallenges); 
 router.get("/category/:category", protect, getChallengesByMood);
 router.post("/:id/complete", protect, completeChallenge);
+router.get("/mood/:moodTag", protect, getChallengesByMoodTag);
+
 
 export default router;

@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from 'url';
 import { adminLogin } from "./adminController.js";
 import { protectAdmin } from "./adminMiddleware.js";
+import CompletedChallenge from "../models/CompletedChallenge.js";
 
 import {
   getAllUsers,
@@ -82,5 +83,20 @@ router.post("/psychiatrists", protectAdmin, upload.array('documents', 10), creat
 router.put("/psychiatrists/:id", protectAdmin, upload.array('documents', 10), updatePsychiatrist);
 router.put("/psychiatrists/:id/block", protectAdmin, blockPsychiatrist);
 router.delete("/psychiatrists/:id", protectAdmin, deletePsychiatrist);
+
+router.get("/recent-challenges", protectAdmin, async (req, res) => {
+  try {
+    const recentChallenges = await CompletedChallenge.find()
+      .sort({ completedAt: -1 })
+      .limit(10)
+      .populate('user', 'name email')
+      .lean();
+    
+    res.json(recentChallenges);
+  } catch (error) {
+    console.error('Error fetching recent challenges:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
 
 export default router;

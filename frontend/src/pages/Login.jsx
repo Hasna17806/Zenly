@@ -173,14 +173,21 @@ function Login() {
       return;
     }
 
-    localStorage.setItem("token", token);
-    localStorage.setItem("userEmail", userEmail);
-    
-    if (userName) {
-      localStorage.setItem("userName", userName);
+    if (rememberMe) {
+      localStorage.setItem("token", token);
+      localStorage.setItem("userEmail", userEmail);
+      if (userName) {
+        localStorage.setItem("userName", userName);
+      }
+    } else {
+      sessionStorage.setItem("token", token);
+      sessionStorage.setItem("userEmail", userEmail);
+      if (userName) {
+        sessionStorage.setItem("userName", userName);
+      }
     }
 
-    console.log("TOKEN SAVED:", localStorage.getItem("token"));
+    console.log("TOKEN SAVED:", localStorage.getItem("token") || sessionStorage.getItem("token"));
 
     showModal(
       'success',
@@ -217,7 +224,7 @@ function Login() {
       });
 
       console.log("LOGIN SUCCESS:", data);
-      handleSuccessfulLogin(data, email, data.user?.name);
+      handleSuccessfulLogin(data, email, data.user?.name || data.name);
 
     } catch (error) {
       console.error("Login error:", error);
@@ -237,6 +244,14 @@ function Login() {
     setError("");
 
     try {
+      // Check if auth and googleProvider are properly initialized
+      if (!auth || !googleProvider) {
+        console.error("Firebase auth or provider not initialized");
+        showModal('error', 'Configuration Error', 'Firebase not properly configured. Please contact support.');
+        setGoogleLoading(false);
+        return;
+      }
+
       console.log("Attempting to sign in with popup...");
       
       // Sign in with Google popup
@@ -281,8 +296,12 @@ function Login() {
         errorMessage = "This domain is not authorized for Firebase. Please check Firebase console settings.";
       } else if (error.code === 'auth/network-request-failed') {
         errorMessage = "Network error. Please check your internet connection.";
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
+      } else if (error.code === 'auth/operation-not-allowed') {
+        errorMessage = "Google Sign-In is not enabled. Please contact support.";
+      } else if (error.response) {
+        errorMessage = error.response.data?.message || "Server error. Please try again.";
+      } else if (error.message) {
+        errorMessage = error.message;
       }
       
       showModal('error', 'Google Sign-In Failed', errorMessage);

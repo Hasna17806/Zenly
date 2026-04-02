@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, AlertCircle, X, Sparkles } from 'lucide-react';
+import Celebration from './Celebration';
 
 // Custom Modal Component
 const CustomModal = ({ isOpen, onClose, type, title, message, onAction }) => {
@@ -15,16 +16,13 @@ const CustomModal = ({ isOpen, onClose, type, title, message, onAction }) => {
 
   return (
     <div className="fixed inset-0 z-[100] overflow-y-auto">
-      {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
       
-      {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="relative w-full max-w-md transform overflow-hidden rounded-3xl bg-white shadow-2xl transition-all animate-slide-up">
-          {/* Close button */}
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
@@ -32,7 +30,6 @@ const CustomModal = ({ isOpen, onClose, type, title, message, onAction }) => {
             <X className="w-5 h-5 text-gray-500" />
           </button>
 
-          {/* Content */}
           <div className="p-8 text-center">
             <div className={`w-20 h-20 rounded-3xl bg-gradient-to-br ${bgColor} flex items-center justify-center mx-auto mb-4 shadow-lg`}>
               <Icon className="w-10 h-10 text-white" />
@@ -106,6 +103,70 @@ const Toast = ({ message, type = 'success', onClose }) => {
   );
 };
 
+// Static challenges for fallback (UPDATED with all moodTags)
+const allChallenges = {
+  'Mood Boost': [
+    { id: 'breathe-reset', title: 'Breathe & Reset', description: 'Calm your mind with guided breathing', time: '3 mins', image: '', moodTag: ['stressed/Heavy', 'sad/Low', 'tired/Burned Out'], gameType: 'breathing' },
+    { id: 'gratitude-tap', title: 'Gratitude Tap', description: 'Think of one good thing today', time: '2 mins', image: '', moodTag: ['sad/Low', 'calm/Okay'], gameType: 'gratitude' },
+    { id: 'smile-challenge', title: 'Smile Challenge', description: 'Hold a gentle smile for 20 seconds', time: '20 secs', image: '', moodTag: ['happy/Energetic', 'calm/Okay'], gameType: 'smile-challenge' },
+    { id: 'calm-taps', title: 'Calm Taps', description: 'Tap floating bubbles to relax', time: '2 mins', image: '', moodTag: ['stressed/Heavy', 'angry/Frustrated', 'tired/Burned Out'], gameType: 'bubbles' },
+  ],
+  'Study': [
+    { id: 'focus-sprint', title: 'Focus Sprint', description: 'Stay focused. You got this 💪', time: '5 mins', image: '', moodTag: ['tired/Burned Out', 'calm/Okay', 'stressed/Heavy'], gameType: 'focus-sprint' },
+    { id: 'memory-flip', title: 'Memory Flip', description: 'Match pairs to exercise your brain', time: '3 mins', image: '', moodTag: ['happy/Energetic', 'calm/Okay'], gameType: 'memory' },
+    { id: 'quick-quiz', title: 'Quick Quiz', description: 'Test your knowledge with 3 questions', time: '2 mins', image: '', moodTag: ['happy/Energetic', 'calm/Okay'], gameType: 'quiz' },
+    { id: 'distraction-block', title: 'Distraction Block', description: 'Choose one distraction to avoid', time: '5 mins', image: '', moodTag: ['tired/Burned Out', 'stressed/Heavy'], gameType: 'focus' },
+  ],
+  'Fun': [
+    { id: 'guess-sound', title: 'Guess the Sound', description: 'Listen and guess the sound', time: '3 mins', image: '', moodTag: ['happy/Energetic', 'calm/Okay'], gameType: 'sound' },
+    { id: 'emoji-match', title: 'Emoji Match', description: 'Match emotions by dragging emojis', time: '2 mins', image: '', moodTag: ['happy/Energetic', 'sad/Low'], gameType: 'matching' },
+    { id: 'tap-star', title: 'Tap the Star', description: 'Tap as many stars as you can', time: '30 secs', image: '', moodTag: ['angry/Frustrated', 'stressed/Heavy', 'tired/Burned Out'], gameType: 'stars' },
+    { id: 'spin-smile', title: 'Spin & Smile', description: 'Spin the wheel for a fun surprise', time: '1 min', image: '', moodTag: ['tired/Burned Out', 'sad/Low'], gameType: 'wheel' },
+  ],
+  'Quick Play': [
+    { id: '60-second-breath', title: '60-Second Breath', description: 'One minute of mindful breathing', time: '1 min', image: '', moodTag: ['stressed/Heavy', 'angry/Frustrated', 'tired/Burned Out'], gameType: 'breathing' },
+    { id: 'blink-break', title: 'Blink Break', description: 'Rest your eyes for 30 seconds', time: '30 secs', image: '', moodTag: ['tired/Burned Out', 'stressed/Heavy'], gameType: 'blink-break' },
+    { id: 'one-thought-dump', title: 'One-Thought Dump', description: 'Write down one thought and let it go', time: '1 min', image: '', moodTag: ['stressed/Heavy', 'sad/Low', 'tired/Burned Out'], gameType: 'journal' },
+  ],
+};
+
+// Fallback suggestions for each mood (in case no challenges match)
+const moodFallbackSuggestions = {
+  'happy/Energetic': [
+    { title: 'Smile Challenge', description: 'Hold a gentle smile for 20 seconds', gameType: 'smile-challenge' },
+    { title: 'Memory Flip', description: 'Match pairs to exercise your brain', gameType: 'memory' },
+    { title: 'Quick Quiz', description: 'Test your knowledge with 3 questions', gameType: 'quiz' },
+  ],
+  'calm/Okay': [
+    { title: 'Breathe & Reset', description: 'Calm your mind with guided breathing', gameType: 'breathing' },
+    { title: 'Gratitude Tap', description: 'Think of one good thing today', gameType: 'gratitude' },
+    { title: 'Memory Flip', description: 'Match pairs to exercise your brain', gameType: 'memory' },
+  ],
+  'stressed/Heavy': [
+    { title: 'Breathe & Reset', description: 'Calm your mind with guided breathing', gameType: 'breathing' },
+    { title: 'Calm Taps', description: 'Tap floating bubbles to relax', gameType: 'bubbles' },
+    { title: '60-Second Breath', description: 'One minute of mindful breathing', gameType: 'breathing' },
+    { title: 'One-Thought Dump', description: 'Write down one thought and let it go', gameType: 'journal' },
+  ],
+  'sad/Low': [
+    { title: 'Gratitude Tap', description: 'Think of one good thing today', gameType: 'gratitude' },
+    { title: 'Breathe & Reset', description: 'Calm your mind with guided breathing', gameType: 'breathing' },
+    { title: 'Spin & Smile', description: 'Spin the wheel for a fun surprise', gameType: 'wheel' },
+  ],
+  'angry/Frustrated': [
+    { title: 'Calm Taps', description: 'Tap floating bubbles to relax', gameType: 'bubbles' },
+    { title: 'Tap the Star', description: 'Tap as many stars as you can', gameType: 'stars' },
+    { title: '60-Second Breath', description: 'One minute of mindful breathing', gameType: 'breathing' },
+  ],
+  'tired/Burned Out': [
+    { title: 'Focus Sprint', description: 'Stay focused. You got this 💪', gameType: 'focus-sprint' },
+    { title: 'Distraction Block', description: 'Choose one distraction to avoid', gameType: 'focus' },
+    { title: 'Blink Break', description: 'Rest your eyes for 30 seconds', gameType: 'blink-break' },
+    { title: 'Spin & Smile', description: 'Spin the wheel for a fun surprise', gameType: 'wheel' },
+    { title: 'One-Thought Dump', description: 'Write down one thought and let it go', gameType: 'journal' },
+  ],
+};
+
 const MoodPage = () => {
   const navigate = useNavigate();
   const [selectedMood, setSelectedMood] = useState(null);
@@ -118,6 +179,7 @@ const MoodPage = () => {
   const [error, setError] = useState("");
   const [suggestedChallenges, setSuggestedChallenges] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [celebration, setCelebration] = useState(null);
   
   // Modal states
   const [modalState, setModalState] = useState({
@@ -132,64 +194,15 @@ const MoodPage = () => {
 
   // Mood Data with simple emoji icons
   const moods = [
-    {
-      id: 'happy',
-      label: 'Happy / Energetic',
-      emoji: '😁',
-      gradient: 'from-[#FFD978] to-[#FFF1C1]',
-      textColor: 'text-amber-700',
-      borderColor: 'border-blue-400',
-      backendValue: 'happy/Energetic'
-    },
-    {
-      id: 'calm',
-      label: 'Calm / Okay',
-      emoji: '😊',
-      gradient: 'from-[#8CCBB9] to-[#E6F4F1]',
-      textColor: 'text-emerald-700',
-      borderColor: 'border-emerald-400',
-      backendValue: 'calm/Okay'
-    },
-    {
-      id: 'anger',
-      label: 'Anger / Frustrated',
-      emoji: '😤',
-      gradient: 'from-[#F28B82] to-[#FCE8E6]',
-      textColor: 'text-rose-800',
-      borderColor: 'border-rose-400',
-      backendValue: 'angry/Frustrated'
-    },
-    {
-      id: 'stressed',
-      label: 'Stressed / Heavy',
-      emoji: '😰',
-      gradient: 'from-[#A7B1C2] to-[#F1F3F4]',
-      textColor: 'text-slate-600',
-      borderColor: 'border-slate-400',
-      backendValue: 'stressed/Heavy'
-    },
-    {
-      id: 'sad',
-      label: 'Sad / Low',
-      emoji: '☹️',
-      gradient: 'from-[#9CA3FF] to-[#E8E9FF]',
-      textColor: 'text-indigo-800',
-      borderColor: 'border-indigo-400',
-      hasBar: true,
-      backendValue: 'sad/Low'
-    },
-    {
-      id: 'tired',
-      label: 'Tired / Burned Out',
-      emoji: '😫',
-      gradient: 'from-[#FFAD5A] to-[#FFF0E0]',
-      textColor: 'text-orange-800',
-      borderColor: 'border-orange-400',
-      backendValue: 'tired/Burned Out'
-    }
+    { id: 'happy', label: 'Happy / Energetic', emoji: '😁', gradient: 'from-[#FFD978] to-[#FFF1C1]', textColor: 'text-amber-700', borderColor: 'border-blue-400', backendValue: 'happy/Energetic' },
+    { id: 'calm', label: 'Calm / Okay', emoji: '😊', gradient: 'from-[#8CCBB9] to-[#E6F4F1]', textColor: 'text-emerald-700', borderColor: 'border-emerald-400', backendValue: 'calm/Okay' },
+    { id: 'anger', label: 'Anger / Frustrated', emoji: '😤', gradient: 'from-[#F28B82] to-[#FCE8E6]', textColor: 'text-rose-800', borderColor: 'border-rose-400', backendValue: 'angry/Frustrated' },
+    { id: 'stressed', label: 'Stressed / Heavy', emoji: '😰', gradient: 'from-[#A7B1C2] to-[#F1F3F4]', textColor: 'text-slate-600', borderColor: 'border-slate-400', backendValue: 'stressed/Heavy' },
+    { id: 'sad', label: 'Sad / Low', emoji: '☹️', gradient: 'from-[#9CA3FF] to-[#E8E9FF]', textColor: 'text-indigo-800', borderColor: 'border-indigo-400', hasBar: true, backendValue: 'sad/Low' },
+    { id: 'tired', label: 'Tired / Burned Out', emoji: '😫', gradient: 'from-[#FFAD5A] to-[#FFF0E0]', textColor: 'text-orange-800', borderColor: 'border-orange-400', backendValue: 'tired/Burned Out' }
   ];
 
-  // Factors (What's affecting your mood) - with emoji icons
+  // Factors (What's affecting your mood)
   const factors = [
     { id: 'studies', label: 'Studies', icon: '📚', color: 'bg-[#CDE4B4] text-slate-800' },
     { id: 'sleep', label: 'Sleep', icon: '😴', color: 'bg-[#CEC2EB] text-slate-800' },
@@ -199,12 +212,7 @@ const MoodPage = () => {
   ];
 
   const showModal = (type, title, message) => {
-    setModalState({
-      isOpen: true,
-      type,
-      title,
-      message
-    });
+    setModalState({ isOpen: true, type, title, message });
   };
 
   const closeModal = () => {
@@ -229,10 +237,14 @@ const MoodPage = () => {
 
   const toggleFactor = (factorId) => {
     setSelectedFactors(prev => 
-      prev.includes(factorId)
-        ? prev.filter(id => id !== factorId)
-        : [...prev, factorId]
+      prev.includes(factorId) ? prev.filter(id => id !== factorId) : [...prev, factorId]
     );
+  };
+
+  // Map mood to category for fetching challenges
+  const getCategoryFromMood = (moodValue) => {
+    // All moods go to Mood Boost category for relevant challenges
+    return 'Mood Boost';
   };
 
   const handleSubmit = async () => {
@@ -243,215 +255,177 @@ const MoodPage = () => {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
       if (!token) {
-        showModal(
-          'error',
-          'Login Required',
-          'Please login first to save your mood and get personalized suggestions.'
-        );
+        showModal('error', 'Login Required', 'Please login first to save your mood and get personalized suggestions.');
+        setIsSubmitting(false);
         return;
       }
 
       if (!selectedMood) {
-        showModal(
-          'error',
-          'No Mood Selected',
-          'Please select a mood before continuing.'
-        );
+        showModal('error', 'No Mood Selected', 'Please select a mood before continuing.');
+        setIsSubmitting(false);
         return;
       }
 
       const selectedMoodData = moods.find(m => m.id === selectedMood);
       
       if (!selectedMoodData) {
-        showModal(
-          'error',
-          'Invalid Selection',
-          'Please select a valid mood option.'
-        );
+        showModal('error', 'Invalid Selection', 'Please select a valid mood option.');
+        setIsSubmitting(false);
         return;
       }
 
       // 1. Save mood to database
-      const moodResponse = await axios.post(
+      await axios.post(
         "http://localhost:5000/api/mood",
-        { 
-          mood: selectedMoodData.backendValue,
-          note: note || "" 
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-        }
+        { mood: selectedMoodData.backendValue, note: note || "" },
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );
 
-      console.log("Mood saved successfully:", moodResponse.data);
-
-      // 2. Fetch challenges based on mood from backend
+      // 2. Fetch challenges based on mood
+      const backendMoodValue = selectedMoodData.backendValue;
+      
       try {
+        // Try to get challenges by category first
+        const category = getCategoryFromMood(backendMoodValue);
         const challengesResponse = await axios.get(
-          `http://localhost:5000/api/challenges/${encodeURIComponent(selectedMoodData.backendValue)}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          `http://localhost:5000/api/challenges/category/${encodeURIComponent(category)}`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         
-        console.log("Challenges fetched:", challengesResponse.data);
-        
         if (challengesResponse.data && challengesResponse.data.length > 0) {
-          setSuggestedChallenges(challengesResponse.data);
-          setSuggestions(challengesResponse.data.map(c => c.title));
+          // Filter challenges that match the selected mood
+          const moodMatchedChallenges = challengesResponse.data.filter(
+            challenge => challenge.moodTag && challenge.moodTag.includes(backendMoodValue)
+          );
+          
+          if (moodMatchedChallenges.length > 0) {
+            setSuggestedChallenges(moodMatchedChallenges);
+            setSuggestions(moodMatchedChallenges.map(c => c.title));
+          } else {
+            // Show all challenges from that category if no exact mood match
+            setSuggestedChallenges(challengesResponse.data);
+            setSuggestions(challengesResponse.data.map(c => c.title));
+          }
         } else {
-          // Fallback to default suggestions if no challenges found
-          setSuggestedChallenges([]);
-          setSuggestions(getDefaultSuggestions(selectedMood));
+          // Fallback to static challenges
+          const staticChallenges = allChallenges['Mood Boost'] || [];
+          const moodMatchedStatic = staticChallenges.filter(
+            challenge => challenge.moodTag && challenge.moodTag.includes(backendMoodValue)
+          );
+          
+          if (moodMatchedStatic.length > 0) {
+            setSuggestedChallenges(moodMatchedStatic);
+            setSuggestions(moodMatchedStatic.map(c => c.title));
+          } else {
+            // Use mood-specific fallback suggestions
+            const fallback = moodFallbackSuggestions[backendMoodValue] || moodFallbackSuggestions['calm/Okay'];
+            setSuggestedChallenges(fallback);
+            setSuggestions(fallback.map(c => c.title));
+          }
         }
       } catch (challengeError) {
         console.error("Error fetching challenges:", challengeError);
-        // Fallback to default suggestions
-        setSuggestions(getDefaultSuggestions(selectedMood));
+        // Use mood-specific fallback suggestions
+        const fallback = moodFallbackSuggestions[backendMoodValue] || moodFallbackSuggestions['calm/Okay'];
+        setSuggestedChallenges(fallback);
+        setSuggestions(fallback.map(c => c.title));
       }
 
-      // Show suggestions and hide factors
       setShowSuggestions(true);
-      
-      // Show success modal
-      showModal(
-        'success',
-        'Mood Saved! ✨',
-        'Your mood has been recorded. Check out your personalized challenges below.'
-      );
+      showModal('success', 'Mood Saved! ✨', 'Your mood has been recorded. Check out your personalized challenges below.');
 
     } catch (error) {
       console.error("Error saving mood:", error);
-      
-      if (error.response) {
-        showModal(
-          'error',
-          'Server Error',
-          error.response.data.message || 'Failed to save mood. Please try again.'
-        );
-      } else if (error.request) {
-        showModal(
-          'error',
-          'Connection Error',
-          'Cannot connect to server. Please check if the backend is running.'
-        );
-      } else {
-        showModal(
-          'error',
-          'Error',
-          error.message || 'An unexpected error occurred.'
-        );
-      }
+      showModal('error', 'Error', error.response?.data?.message || 'Failed to save mood. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Helper function for default suggestions
-  const getDefaultSuggestions = (mood) => {
-    if (mood === "stressed" || mood === "sad") {
-      return [
-        "5-minute breathing exercise",
-        "Write down 3 thoughts",
-        "Short 15-min focus session"
-      ];
-    } else if (mood === "tired") {
-      return [
-        "Drink water",
-        "Take a 10-min walk",
-        "25-min light focus session"
-      ];
-    } else if (mood === "anger") {
-      return [
-        "Count to 10 slowly",
-        "Go for a quick walk",
-        "Write down what's frustrating you"
-      ];
-    } else {
-      return [
-        "45-min deep focus session",
-        "Review today's goals",
-        "Help a friend with studies"
-      ];
-    }
-  };
-
   const selectedMoodData = moods.find(m => m.id === selectedMood);
 
-  const handleComplete = async (challenge) => {
+  const handleComplete = async (challengeTitle) => {
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
       if (!token) {
-        showModal(
-          'error',
-          'Login Required',
-          'Please login first to complete challenges.'
-        );
+        showModal('error', 'Login Required', 'Please login first to complete challenges.');
         return;
       }
 
-      // Find the challenge ID from suggestedChallenges
-      const challengeObj = suggestedChallenges.find(c => c.title === challenge);
+      // Find the challenge from suggestedChallenges
+      const challengeObj = suggestedChallenges.find(c => c.title === challengeTitle);
       
       if (!challengeObj || !challengeObj._id) {
-        console.error("Challenge ID not found:", challenge);
-        // If we can't find the ID, still mark as completed in UI
-        setCompleted(prev => [...prev, challenge]);
-        showToast("Challenge marked as completed locally!", 'success');
+        console.error("Challenge ID not found:", challengeTitle);
+        setCompleted(prev => [...prev, challengeTitle]);
+        setCelebration({ title: challengeTitle });
         return;
       }
 
-      // Post to the correct completed challenges endpoint
+      // Post to completed challenges endpoint
       await axios.post(
         "http://localhost:5000/api/completed-challenges",
         { challengeId: challengeObj._id },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );
-
-      setCompleted(prev => [...prev, challenge]);
+      
+      setCompleted(prev => [...prev, challengeTitle]);
+      setCelebration({ title: challengeTitle });
       showToast("Challenge completed! +5 Focus Points 🎉", 'success');
 
     } catch (error) {
       console.error("Error completing challenge:", error);
-      
-      // Still mark as completed in UI for better UX
-      setCompleted(prev => [...prev, challenge]);
-      showToast("Challenge marked as completed!", 'success');
+      setCompleted(prev => [...prev, challengeTitle]);
+      setCelebration({ title: challengeTitle });
+      showToast("Challenge completed!", 'success');
     }
   };
 
-  const handlePlayChallenge = (challenge) => {
-    const challengeObj = suggestedChallenges.find(c => c.title === challenge);
+  // Updated handlePlayChallenge with proper game type mapping
+  const handlePlayChallenge = (challengeTitle) => {
+    const challengeObj = suggestedChallenges.find(c => c.title === challengeTitle);
     
-    if (challenge.includes("breathing") || challenge.includes("Breathe")) {
-      navigate("/games/breathe");
-    } else if (challenge.includes("Match") || challenge.includes("Emoji")) {
-      navigate("/games/emoji-match");
-    } else if (challenge.includes("Star") || challenge.includes("Tap")) {
-      navigate("/games/tap-star");
-    } else if (challenge.includes("Guess") || challenge.includes("Sound")) {
-      navigate("/games/guess-sound");
-    } else if (challenge.includes("Spin") || challenge.includes("Wheel")) {
-      navigate("/games/spin-wheel");
-    } else {
+    if (!challengeObj) {
+      console.error("Challenge not found:", challengeTitle);
       navigate("/challenges");
+      return;
     }
+
+    // Map gameType to routes
+    const gameRoutes = {
+      'breathing': '/games/breathe',
+      'gratitude': '/games/gratitude-tap',
+      'smile-challenge': '/games/smile-challenge',
+      'bubbles': '/games/calm-taps',
+      'focus-sprint': '/games/focus-sprint',
+      'memory': '/games/memory-flip',
+      'quiz': '/games/quick-quiz',
+      'focus': '/games/distraction-block',
+      'sound': '/games/guess-sound',
+      'matching': '/games/emoji-match',
+      'stars': '/games/tap-star',
+      'wheel': '/games/spin-wheel',
+      'timer': '/games/timer',
+      'blink-break': '/games/blink-break',
+      'journal': '/games/one-thought'
+    };
+
+    const route = gameRoutes[challengeObj.gameType] || '/games/timer';
+    navigate(route, { state: { challenge: challengeObj } });
   };
 
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex flex-col font-sans">
       <Navbar />
+
+      {/* Celebration Modal */}
+      {celebration && (
+        <Celebration 
+          challengeTitle={celebration.title}
+          onComplete={() => setCelebration(null)}
+        />
+      )}
 
       {/* Toast Notification */}
       {toast && (
@@ -501,12 +475,11 @@ const MoodPage = () => {
             ))}
           </div>
 
-          {/* Factors Section - Only show when suggestions are not visible */}
+          {/* Factors Section */}
           {showFactors && selectedMood && !showSuggestions && (
             <div id="factors-section" className="animate-in fade-in slide-in-from-bottom-10 duration-700 max-w-4xl mx-auto">
               <div className="bg-white rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-12 border border-slate-50">
                 
-                {/* Selected Mood Summary */}
                 <div className="flex items-center justify-center gap-3 mb-10">
                   <span className="text-4xl">{selectedMoodData?.emoji}</span>
                   <h2 className="text-2xl font-bold text-slate-800">
@@ -514,7 +487,6 @@ const MoodPage = () => {
                   </h2>
                 </div>
                 
-                {/* Note Input Field */}
                 <div className="mb-8">
                   <label htmlFor="note" className="block text-sm font-medium text-slate-700 mb-2 text-center">
                     Add a note (optional)
@@ -529,7 +501,6 @@ const MoodPage = () => {
                   />
                 </div>
 
-                {/* Factors Grid */}
                 <div className="flex flex-wrap justify-center gap-5 mb-12">
                   {factors.map((factor) => (
                     <button
@@ -549,14 +520,12 @@ const MoodPage = () => {
                   ))}
                 </div>
 
-                {/* Error Message */}
                 {error && (
                   <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-center">
                     {error}
                   </div>
                 )}
 
-                {/* Submit Button */}
                 <div className="flex justify-center">
                   <button 
                     onClick={handleSubmit}
@@ -572,7 +541,6 @@ const MoodPage = () => {
                   </button>
                 </div>
 
-                {/* Selected factors summary */}
                 {selectedFactors.length > 0 && (
                   <div className="mt-6 text-sm text-slate-500 text-center">
                     Selected: {selectedFactors.map(f => factors.find(c => c.id === f)?.label).join(' • ')}
@@ -582,7 +550,7 @@ const MoodPage = () => {
             </div>
           )}
 
-          {/* Suggestions Section - Show after submission */}
+          {/* Suggestions Section */}
           {showSuggestions && suggestions.length > 0 && (
             <div className="mt-16 bg-white p-10 rounded-3xl shadow-xl max-w-4xl mx-auto">
               <div className="flex justify-between items-center mb-8">
@@ -616,11 +584,9 @@ const MoodPage = () => {
                     >
                       <div className="flex justify-between items-start mb-3">
                         <h3 className="font-bold text-lg">{item}</h3>
-                        {challengeObj?.moodTag && (
+                        {challengeObj?.moodTag && Array.isArray(challengeObj.moodTag) && (
                           <span className="text-xs bg-slate-200 px-2 py-1 rounded-full">
-                            {Array.isArray(challengeObj.moodTag) 
-                              ? challengeObj.moodTag[0] 
-                              : challengeObj.moodTag}
+                            {challengeObj.moodTag[0]}
                           </span>
                         )}
                       </div>
@@ -654,7 +620,6 @@ const MoodPage = () => {
                 })}
               </div>
               
-              {/* Progress summary */}
               <div className="mt-8 p-6 bg-indigo-50 rounded-xl text-center">
                 <p className="text-indigo-800 text-lg font-medium">
                   {completed.length > 0 
@@ -665,7 +630,6 @@ const MoodPage = () => {
                   Zenly uses your daily challenges to help you feel better step-by-step.
                 </p>
                 
-                {/* Back button to factors */}
                 <button
                   onClick={() => {
                     setShowSuggestions(false);
@@ -677,8 +641,7 @@ const MoodPage = () => {
                 </button>
               </div>
 
-              {/* ========== FIND PSYCHIATRIST SECTION ========== */}
-              {/* Add this after the challenges section */}
+              {/* Find Psychiatrist Section */}
               <div className="mt-10 pt-6 border-t border-slate-100">
                 <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-100 shadow-md">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -705,8 +668,6 @@ const MoodPage = () => {
                   </div>
                 </div>
               </div>
-              {/* ============================================== */}
-
             </div>
           )}
         </div>
@@ -724,7 +685,6 @@ const MoodPage = () => {
         onAction={() => {
           closeModal();
           if (modalState.type === 'success') {
-            // Scroll to suggestions if needed
             document.getElementById('suggestions-section')?.scrollIntoView({ behavior: 'smooth' });
           }
         }}

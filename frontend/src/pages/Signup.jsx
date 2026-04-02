@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import API from "../api/axios";
 import Navbar from "../components/Navbar";
@@ -146,7 +146,7 @@ function Signup() {
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
 
   // Rotate quotes every 8 seconds
-  useState(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
       setCurrentQuoteIndex((prev) => (prev + 1) % quotes.length);
     }, 8000);

@@ -116,21 +116,26 @@ const SmileChallengeGame = () => {
   };
 
   const handleComplete = async () => {
-    try {
-      setLoading(true); setErrorMsg("");
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.post(
-        "http://localhost:5000/api/completed-challenges",
-        { challengeId: challenge?._id },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setTimeout(() => navigate("/challenges"), 2000);
-    } catch {
-      setErrorMsg("Could not complete challenge. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    setErrorMsg("");
+
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+    await axios.post(
+      "http://localhost:5000/api/completed-challenges",
+      { challengeId: challenge?._id || challenge?.id },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    setTimeout(() => navigate("/challenges"), 2000);
+  } catch (error) {
+    console.error("Error completing challenge:", error);
+    setErrorMsg(error.response?.data?.message || "Could not complete challenge. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const restart = () => {
     setTimer(DURATION); setCompleted(false);

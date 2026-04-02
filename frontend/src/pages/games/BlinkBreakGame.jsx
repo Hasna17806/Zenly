@@ -50,32 +50,26 @@ const BlinkBreakGame = () => {
   };
 
   const handleComplete = async () => {
-    try {
-      setLoading(true);
-      setErrorMsg("");
+  try {
+    setLoading(true);
+    setErrorMsg("");
 
-      const token =
-        localStorage.getItem("token") || sessionStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
-      await axios.post(
-        "http://localhost:5000/api/completed-challenges",
-        {
-          challengeId: challenge?._id,
-          blinks: blinkCount
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+    await axios.post(
+      "http://localhost:5000/api/completed-challenges",
+      { challengeId: challenge?._id || challenge?.id },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      navigate("/challenges");
-    } catch (error) {
-      console.error("Completion error:", error);
-      setErrorMsg("Could not complete challenge. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setTimeout(() => navigate("/challenges"), 2000);
+  } catch (error) {
+    console.error("Error completing challenge:", error);
+    setErrorMsg(error.response?.data?.message || "Could not complete challenge. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-cyan-50">

@@ -1,372 +1,613 @@
-import React, { useState, useEffect } from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from "react";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+const API = "http://localhost:5000";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const picInputRef = useRef(null);
+
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ totalMoods: 0, completedChallenges: 0, streak: 0, chatbotMessages: 0 });
-  const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', role: '' });
-  const [profilePic, setProfilePic] = useState(null);       
   const [uploadingPic, setUploadingPic] = useState(false);
-  const picInputRef = React.useRef(null);
+  const [editing, setEditing] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [toast, setToast] = useState(null);
 
+  const [stats, setStats] = useState({
+    totalMoods: 0,
+    completedChallenges: 0,
+    streak: 0,
+    chatbotMessages: 0,
+  });
+
+  const [formData, setFormData] = useState({ name: "", email: "" });
+
+  // ─── helpers ────────────────────────────────────────────────────────────────
+  const getToken = () =>
+    localStorage.getItem("token") || sessionStorage.getItem("token");
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // ─── data fetching ───────────────────────────────────────────────────────────
   useEffect(() => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    if (!token) { navigate('/login'); return; }
+    if (!getToken()) { navigate("/login"); return; }
     fetchUserProfile();
     fetchUserStats();
   }, [navigate]);
 
   const fetchUserProfile = async () => {
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      const response = await axios.get("http://localhost:5000/api/users/profile", {
-        headers: { Authorization: `Bearer ${token}` }
+      const { data } = await axios.get(`${API}/api/users/profile`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
       });
-      setUser(response.data);
-      setFormData({ name: response.data.name || '', email: response.data.email || '', role: response.data.role || 'student' });
-      if (response.data.profilePic) setProfilePic(response.data.profilePic);
-    } catch (error) {
-      console.error("Error fetching profile:", error);
+      setUser(data);
+      setFormData({ name: data.name || "", email: data.email || "" });
+    } catch (err) {
+      console.error("Error fetching profile:", err);
     }
   };
 
   const fetchUserStats = async () => {
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      const moodsRes = await axios.get("http://localhost:5000/api/mood", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] }));
-      const challengesRes = await axios.get("http://localhost:5000/api/completed-challenges", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] }));
-      const chatRes = await axios.get("http://localhost:5000/api/chatbot/history", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] }));
+      const token = getToken();
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const [moodsRes, challengesRes, chatRes] = await Promise.all([
+        axios.get(`${API}/api/mood`, { headers }).catch(() => ({ data: [] })),
+        axios.get(`${API}/api/completed-challenges`, { headers }).catch(() => ({ data: [] })),
+        axios.get(`${API}/api/chatbot/history`, { headers }).catch(() => ({ data: [] })),
+      ]);
+
       setStats({
         totalMoods: moodsRes.data?.length || 0,
         completedChallenges: challengesRes.data?.length || 0,
         streak: Math.min(moodsRes.data?.length || 0, 7),
-        chatbotMessages: chatRes.data?.length || 0
+        chatbotMessages: chatRes.data?.length || 0,
       });
-    } catch (error) {
-      console.error("Error fetching stats:", error);
+    } catch (err) {
+      console.error("Error fetching stats:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-  const handleSaveProfile = async () => { alert("Profile update feature coming soon! 🚀"); setEditing(false); };
-  const handleLogout = () => { localStorage.removeItem('token'); sessionStorage.removeItem('token'); navigate('/login'); };
+  // ─── profile update ──────────────────────────────────────────────────────────
+  const handleInputChange = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
 
+  const handleSaveProfile = async () => {
+    setSaveLoading(true);
+    try {
+      const { data } = await axios.put(`${API}/api/users/profile`, formData, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      setUser(data.user || data);
+      setEditing(false);
+      showToast("Profile updated successfully ✓");
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to update profile", "error");
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  // ─── picture upload (FIXED) ──────────────────────────────────────────────────
   const handlePicChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { alert("Image must be under 5MB"); return; }
-    const reader = new FileReader();
-    reader.onload = (ev) => setProfilePic(ev.target.result);
-    reader.readAsDataURL(file);
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("Image must be under 5MB", "error");
+      return;
+    }
     handlePicUpload(file);
   };
 
   const handlePicUpload = async (file) => {
+    setUploadingPic(true);
     try {
-      setUploadingPic(true);
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      const data = new FormData();
-      data.append("profilePic", file);
-      await axios.post("http://localhost:5000/api/users/profile-pic", data, {
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }
+      const token = getToken(); // ← fix: get token inside the function
+      const fd = new FormData();
+      fd.append("profilePic", file);
+
+      const { data } = await axios.post(`${API}/api/users/profile-pic`, fd, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
       });
-      alert("Profile picture updated! ✅");
-    } catch (error) {
-      console.error("Error uploading picture:", error);
-      // Preview still shows even if upload fails
+
+      // ← fix: update user state, not a non-existent setProfilePicture
+      setUser((prev) => ({ ...prev, profilePicture: data.profilePicture }));
+      showToast("Profile picture updated ✓");
+    } catch (err) {
+      console.error("Error uploading picture:", err);
+      showToast(err.response?.data?.message || "Failed to upload image", "error");
     } finally {
       setUploadingPic(false);
+      // reset so same file can be re-selected
+      if (picInputRef.current) picInputRef.current.value = "";
     }
   };
 
-  const getRoleIcon = (role) => ({ admin: '👑', psychiatrist: '🩺' }[role] || '🧘');
-  const getRoleBadge = (role) => ({
-    admin:        { bg: '#fef3c7', color: '#92400e' },
-    psychiatrist: { bg: '#dbeafe', color: '#1e40af' },
-  }[role] || { bg: '#d4ede8', color: '#2d4a47' });
+  // ─── misc ────────────────────────────────────────────────────────────────────
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
+    navigate("/login");
+  };
 
-  if (loading) {
-    return (
-      <>
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600&display=swap');
-          .prof-spinner { width:38px;height:38px;border:3px solid #d4ede8;border-top-color:#5b9e96;border-radius:50%;animation:profspin .75s linear infinite;margin:0 auto; }
-          @keyframes profspin { to { transform:rotate(360deg); } }
-        `}</style>
-        <div style={{ minHeight:'100vh', background:'#e8f4f1', display:'flex', flexDirection:'column', fontFamily:'Nunito,sans-serif' }}>
-          <Navbar />
-          <main style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <div style={{ textAlign:'center' }}>
-              <div className="prof-spinner" />
-              <p style={{ marginTop:16, color:'#7a9e9b' }}>Loading profile…</p>
-            </div>
-          </main>
-          <Footer />
-        </div>
-      </>
-    );
-  }
+  const getProfileImage = () => user?.profilePicture || null;
+
+  const getRoleBadge = (role) => {
+    if (role === "psychiatrist") return { label: "Psychiatrist", color: "#0c4a6e", bg: "#e0f2fe" };
+    if (role === "admin") return { label: "Admin", color: "#78350f", bg: "#fef3c7" };
+    return { label: "Student", color: "#14532d", bg: "#dcfce7" };
+  };
+
+  // ─── loading screen ──────────────────────────────────────────────────────────
+  if (loading) return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Playfair+Display:wght@500;600;700&display=swap');
+        .prof-loading{min-height:100vh;background:#f4f9f7;display:flex;flex-direction:column;font-family:'DM Sans',sans-serif}
+        .spin{width:40px;height:40px;border:3px solid #c8e2db;border-top-color:#2d7268;border-radius:50%;animation:s .8s linear infinite;margin:0 auto}
+        @keyframes s{to{transform:rotate(360deg)}}
+      `}</style>
+      <div className="prof-loading">
+        <Navbar />
+        <main style={{flex:1,display:"grid",placeItems:"center"}}>
+          <div style={{textAlign:"center"}}>
+            <div className="spin"/>
+            <p style={{marginTop:16,color:"#6b8f88",fontFamily:"'DM Sans',sans-serif"}}>Loading profile…</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    </>
+  );
 
   const roleBadge = getRoleBadge(user?.role);
 
+  // ─── render ──────────────────────────────────────────────────────────────────
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Nunito:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Playfair+Display:wght@500;600;700&display=swap');
 
-        .prof-page { min-height:100vh; background:#e8f4f1; font-family:'Nunito',sans-serif; display:flex; flex-direction:column; }
-        .prof-main { flex:1; padding:60px 24px 80px; }
-        .prof-inner { max-width:860px; margin:0 auto; }
+        *, *::before, *::after { box-sizing: border-box; }
 
-        /* Header */
-        .prof-header { text-align:center; margin-bottom:44px; }
-        .prof-title { font-family:'Playfair Display',serif; font-size:clamp(24px,4vw,40px); font-weight:400; letter-spacing:0.16em; text-transform:uppercase; color:#3d5a58; margin:0 0 10px; }
-        .prof-subtitle { font-size:15px; color:#7a9e9b; margin:0; }
+        /* ── toast ── */
+        .toast {
+          position: fixed; top: 24px; right: 24px; z-index: 9999;
+          padding: 14px 20px; border-radius: 14px; font-size: 14px; font-weight: 600;
+          font-family: 'DM Sans', sans-serif; box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+          animation: fadeIn .25s ease;
+          display: flex; align-items: center; gap: 10px;
+        }
+        .toast.success { background: #1a4d45; color: #fff; }
+        .toast.error   { background: #7f1d1d; color: #fff; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
 
-        /* Card */
-        .prof-card { background:#fff; border-radius:24px; border:1.5px solid #eaf4f2; box-shadow:0 4px 24px rgba(80,140,130,0.10); overflow:hidden; margin-bottom:20px; }
+        /* ── page ── */
+        .prof-page {
+          min-height: 100vh;
+          background: #f4f9f7;
+          display: flex; flex-direction: column;
+          font-family: 'DM Sans', sans-serif;
+          color: #1a3530;
+        }
 
-        /* Cover */
-        .prof-cover { height:110px; background:linear-gradient(135deg,#5b9e96 0%,#3d7a73 100%); position:relative; }
-        .prof-cover-dots { position:absolute; inset:0; background-image:radial-gradient(circle,rgba(255,255,255,0.1) 1px,transparent 1px); background-size:20px 20px; }
-        .prof-avatar-wrap { width:90px; height:90px; border-radius:50%; background:#fff; padding:4px; box-shadow:0 4px 16px rgba(80,140,130,0.2); position:absolute; bottom:-45px; left:32px; cursor:pointer; }
-        .prof-avatar-inner { width:100%; height:100%; border-radius:50%; background:linear-gradient(135deg,#d4ede8,#a8d5c8); display:flex; align-items:center; justify-content:center; font-size:36px; overflow:hidden; position:relative; }
-        .prof-avatar-img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
-        .prof-avatar-overlay { position:absolute; inset:0; border-radius:50%; background:rgba(0,0,0,0); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; transition:background .25s ease; }
-        .prof-avatar-wrap:hover .prof-avatar-overlay { background:rgba(0,0,0,0.42); }
-        .prof-avatar-overlay-icon { font-size:20px; opacity:0; transform:translateY(4px); transition:all .25s ease; }
-        .prof-avatar-overlay-text { font-size:10px; font-weight:700; color:#fff; opacity:0; transform:translateY(4px); transition:all .25s ease .05s; letter-spacing:.05em; }
-        .prof-avatar-wrap:hover .prof-avatar-overlay-icon,
-        .prof-avatar-wrap:hover .prof-avatar-overlay-text { opacity:1; transform:translateY(0); }
-        .prof-avatar-uploading { position:absolute; inset:0; border-radius:50%; background:rgba(255,255,255,0.7); display:flex; align-items:center; justify-content:center; }
-        .prof-pic-spinner { width:22px; height:22px; border:2.5px solid #d4ede8; border-top-color:#5b9e96; border-radius:50%; animation:profspin .75s linear infinite; }
-        @media(max-width:560px){ .prof-avatar-wrap{left:20px;} }
+        .prof-main {
+          flex: 1;
+          padding: 48px 20px 80px;
+        }
 
-        /* Body */
-        .prof-body { padding:60px 32px 28px; }
-        @media(max-width:560px){ .prof-body{padding:60px 18px 24px;} }
+        .prof-wrap {
+          max-width: 960px;
+          margin: 0 auto;
+          display: flex; flex-direction: column; gap: 20px;
+        }
 
-        .prof-info-row { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; margin-bottom:28px; }
-        .prof-role-badge { display:inline-block; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:4px 12px; border-radius:100px; margin-bottom:7px; }
-        .prof-name { font-family:'Playfair Display',serif; font-size:24px; font-weight:600; color:#3d5a58; margin:0 0 5px; }
-        .prof-email { font-size:13.5px; color:#7a9e9b; margin:0 0 6px; }
-        .prof-since { font-size:12px; color:#9ab5b2; margin:0; }
+        /* ── page heading ── */
+        .prof-heading { text-align: center; }
+        .prof-heading h1 {
+          font-family: 'Playfair Display', serif;
+          font-size: clamp(30px, 4.5vw, 46px);
+          font-weight: 700; margin: 0 0 8px; color: #1a3530;
+        }
+        .prof-heading p { color: #6b8f88; font-size: 15px; margin: 0; }
 
-        .prof-action-btns { display:flex; gap:10px; flex-shrink:0; }
-        .prof-btn { padding:10px 22px; border-radius:50px; font-family:'Nunito',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:all .2s ease; }
-        .prof-btn-edit { border:1.5px solid #c8e0db; background:#fff; color:#3d5a58; }
-        .prof-btn-edit:hover { background:#3d5a58; color:#fff; border-color:#3d5a58; box-shadow:0 4px 12px rgba(61,90,88,.2); }
-        .prof-btn-logout { border:1.5px solid #fca5a5; background:#fff; color:#dc2626; }
-        .prof-btn-logout:hover { background:#dc2626; color:#fff; border-color:#dc2626; box-shadow:0 4px 12px rgba(220,38,38,.2); }
+        /* ── card ── */
+        .card {
+          background: #fff;
+          border: 1px solid #e0eeea;
+          border-radius: 24px;
+          box-shadow: 0 4px 20px rgba(30,80,70,0.07);
+          overflow: hidden;
+        }
 
-        /* Edit form */
-        .prof-edit-form { background:#f8fdfc; border:1.5px solid #d4ede8; border-radius:18px; padding:24px; margin-bottom:24px; }
-        .prof-edit-title { font-family:'Playfair Display',serif; font-size:18px; font-weight:600; color:#3d5a58; margin:0 0 16px; }
-        .prof-field { margin-bottom:13px; }
-        .prof-label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:#7a9e9b; margin-bottom:5px; }
-        .prof-input,.prof-select { width:100%; padding:11px 16px; border:1.5px solid #d4ede8; border-radius:12px; font-family:'Nunito',sans-serif; font-size:14px; color:#3d5a58; background:#fff; outline:none; transition:border-color .2s; box-sizing:border-box; }
-        .prof-input:focus,.prof-select:focus { border-color:#5b9e96; }
-        .prof-edit-btns { display:flex; gap:10px; margin-top:16px; }
-        .prof-btn-save { padding:10px 24px; border-radius:50px; border:none; background:#3d5a58; color:#fff; font-family:'Nunito',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:all .2s; }
-        .prof-btn-save:hover { background:#2d4a47; box-shadow:0 4px 12px rgba(61,90,88,.22); }
-        .prof-btn-cancel { padding:10px 24px; border-radius:50px; border:1.5px solid #d4ede8; background:#fff; color:#7a9e9b; font-family:'Nunito',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:all .2s; }
-        .prof-btn-cancel:hover { border-color:#aaa; color:#555; }
+        /* ── hero banner ── */
+        .hero-banner {
+          height: 120px;
+          background: linear-gradient(120deg, #1a4d45 0%, #2d7268 50%, #3d9186 100%);
+          position: relative;
+        }
 
-        /* Stats */
-        .prof-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
-        @media(max-width:560px){ .prof-stats{grid-template-columns:repeat(2,1fr);} }
-        .prof-stat { border-radius:16px; padding:18px 10px; text-align:center; border:1.5px solid transparent; }
-        .prof-stat-num { font-family:'Playfair Display',serif; font-size:30px; font-weight:600; line-height:1; margin-bottom:5px; }
-        .prof-stat-label { font-size:11.5px; font-weight:600; color:#7a9e9b; }
+        /* ── avatar ── */
+        .avatar-ring {
+          position: absolute; bottom: -48px; left: 32px;
+          width: 100px; height: 100px;
+          border-radius: 50%; padding: 4px;
+          background: #fff;
+          box-shadow: 0 6px 20px rgba(0,0,0,0.14);
+          cursor: pointer;
+        }
+        .avatar-inner {
+          width: 100%; height: 100%; border-radius: 50%;
+          background: #d8eeea;
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Playfair Display', serif;
+          font-size: 30px; font-weight: 700; color: #1a4d45;
+          overflow: hidden; position: relative;
+        }
+        .avatar-inner img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-overlay {
+          position: absolute; inset: 0; border-radius: 50%;
+          background: rgba(0,0,0,0); display: flex;
+          align-items: center; justify-content: center;
+          color: #fff; font-size: 11px; font-weight: 700;
+          letter-spacing: .05em; transition: background .2s;
+        }
+        .avatar-ring:hover .avatar-overlay { background: rgba(0,0,0,.38); }
 
-        /* Section title */
-        .prof-section-title { font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:#3d5a58; margin:0 0 18px; }
+        /* ── profile body ── */
+        .prof-body { padding: 72px 32px 32px; }
 
-        /* Activity */
-        .prof-activity-item { display:flex; align-items:center; gap:14px; padding:15px; background:#f8fdfc; border:1.5px solid #e4f2ef; border-radius:14px; margin-bottom:10px; }
-        .prof-activity-icon { width:42px; height:42px; border-radius:50%; display:grid; place-items:center; font-size:20px; flex-shrink:0; }
-        .prof-activity-title { font-size:14px; font-weight:700; color:#3d5a58; margin:0 0 3px; }
-        .prof-activity-sub { font-size:12px; color:#9ab5b2; margin:0; }
+        .role-pill {
+          display: inline-block; padding: 5px 13px; border-radius: 999px;
+          font-size: 11px; font-weight: 700; letter-spacing: .08em;
+          text-transform: uppercase; margin-bottom: 10px;
+        }
 
-        /* Empty */
-        .prof-empty { text-align:center; padding:32px 20px; }
-        .prof-empty p { color:#9ab5b2; font-size:14px; margin:0 0 14px; }
-        .prof-btn-start { padding:11px 26px; border-radius:50px; border:none; background:#3d5a58; color:#fff; font-family:'Nunito',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:all .2s; }
-        .prof-btn-start:hover { background:#2d4a47; box-shadow:0 4px 12px rgba(61,90,88,.22); }
+        .prof-name {
+          font-family: 'Playfair Display', serif;
+          font-size: 28px; font-weight: 700; margin: 0 0 6px; color: #1a3530;
+        }
 
-        /* Quick actions */
-        .prof-actions-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
-        @media(max-width:520px){ .prof-actions-grid{grid-template-columns:1fr;} }
-        .prof-action-card { background:#fff; border:1.5px solid #eaf4f2; border-radius:20px; padding:28px 14px 22px; text-align:center; cursor:pointer; transition:all .25s ease; box-shadow:0 3px 14px rgba(80,140,130,.08); }
-        .prof-action-card:hover { transform:translateY(-4px); box-shadow:0 10px 28px rgba(80,140,130,.16); border-color:#b8ddd8; }
-        .prof-action-emoji { font-size:36px; margin-bottom:10px; display:block; transition:transform .3s ease; }
-        .prof-action-card:hover .prof-action-emoji { transform:scale(1.15); }
-        .prof-action-title { font-size:14px; font-weight:700; color:#3d5a58; margin:0 0 4px; }
-        .prof-action-desc { font-size:12px; color:#9ab5b2; margin:0; }
+        .prof-meta { color: #6b8f88; font-size: 14px; margin: 0 0 4px; }
 
-        /* Meta */
-        .prof-meta { text-align:center; font-size:12px; color:#b0ceca; padding:4px 0 8px; }
-        .prof-meta p { margin:0 0 3px; }
+        .info-row {
+          display: flex; justify-content: space-between;
+          align-items: flex-start; gap: 16px; flex-wrap: wrap;
+          margin-bottom: 28px;
+        }
 
-        /* Spinner */
-        .prof-spinner { width:38px; height:38px; border:3px solid #d4ede8; border-top-color:#5b9e96; border-radius:50%; animation:profspin .75s linear infinite; margin:0 auto; }
-        @keyframes profspin { to { transform:rotate(360deg); } }
+        /* ── buttons ── */
+        .btn {
+          border: none; border-radius: 12px; padding: 11px 20px;
+          font-size: 14px; font-weight: 600; cursor: pointer;
+          transition: all .2s; font-family: 'DM Sans', sans-serif;
+        }
+        .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .btn-primary   { background: #1a4d45; color: #fff; }
+        .btn-primary:hover { background: #133b35; }
+        .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+        .btn-outline {
+          background: transparent; color: #1a4d45;
+          border: 1.5px solid #c5ddd8;
+        }
+        .btn-outline:hover { background: #f0f8f6; }
+
+        .btn-ghost-red {
+          background: transparent; color: #b91c1c;
+          border: 1.5px solid #fecaca;
+        }
+        .btn-ghost-red:hover { background: #fff5f5; }
+
+        /* ── edit box ── */
+        .edit-box {
+          background: #f8fcfb; border: 1px solid #ddeee9;
+          border-radius: 18px; padding: 24px; margin-bottom: 28px;
+        }
+        .edit-box h3 {
+          font-family: 'Playfair Display', serif;
+          font-size: 20px; margin: 0 0 20px; color: #1a3530;
+        }
+        .field { margin-bottom: 14px; }
+        .field label {
+          display: block; font-size: 11px; font-weight: 700;
+          color: #6b8f88; text-transform: uppercase; letter-spacing: .08em;
+          margin-bottom: 6px;
+        }
+        .field input {
+          width: 100%; padding: 12px 15px;
+          border: 1.5px solid #d5e8e2; border-radius: 12px;
+          font-size: 14px; font-family: 'DM Sans', sans-serif;
+          outline: none; transition: border-color .2s; background: #fff;
+        }
+        .field input:focus { border-color: #2d7268; }
+
+        /* ── stats ── */
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 14px;
+        }
+        .stat-card {
+          background: #f8fcfb; border: 1px solid #e0eeea;
+          border-radius: 18px; padding: 22px 16px;
+          transition: transform .2s, box-shadow .2s;
+        }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(30,80,70,.1); }
+        .stat-num {
+          font-family: 'Playfair Display', serif;
+          font-size: 30px; font-weight: 700;
+          color: #1a4d45; margin-bottom: 6px;
+        }
+        .stat-lbl { font-size: 13px; color: #6b8f88; }
+
+        /* ── divider ── */
+        .divider { height: 1px; background: #e8f2ef; margin: 28px 0; }
+
+        /* ── activity ── */
+        .section-pad { padding: 28px 32px; }
+        .section-title {
+          font-family: 'Playfair Display', serif;
+          font-size: 22px; margin: 0 0 20px; color: #1a3530;
+        }
+
+        .act-item {
+          display: flex; align-items: center; gap: 14px;
+          background: #f8fcfb; border: 1px solid #e0eeea;
+          border-radius: 16px; padding: 16px; margin-bottom: 10px;
+          transition: transform .2s;
+        }
+        .act-item:hover { transform: translateX(4px); }
+        .act-icon {
+          width: 44px; height: 44px; border-radius: 12px;
+          background: #d8eeea; display: grid; place-items: center;
+          font-family: 'Playfair Display', serif;
+          font-size: 13px; font-weight: 700; color: #1a4d45; flex-shrink: 0;
+        }
+        .act-title { font-size: 15px; font-weight: 600; color: #1a3530; margin: 0 0 3px; }
+        .act-sub   { font-size: 13px; color: #7c9993; margin: 0; }
+
+        /* ── quick links ── */
+        .quick-grid {
+          display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+        }
+        .quick-card {
+          background: #fff; border: 1px solid #e0eeea;
+          border-radius: 20px; padding: 24px 18px;
+          text-align: left; cursor: pointer;
+          transition: all .25s;
+          box-shadow: 0 4px 16px rgba(30,80,70,0.06);
+        }
+        .quick-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 12px 28px rgba(30,80,70,0.13);
+        }
+        .quick-icon {
+          width: 46px; height: 46px; border-radius: 13px;
+          background: #d8eeea; display: grid; place-items: center;
+          font-family: 'Playfair Display', serif;
+          font-size: 18px; font-weight: 700; color: #1a4d45;
+          margin-bottom: 14px;
+        }
+        .quick-title { font-size: 16px; font-weight: 700; color: #1a3530; margin: 0 0 5px; }
+        .quick-desc  { font-size: 13px; color: #7c9993; margin: 0; }
+
+        /* ── footer meta ── */
+        .foot-meta { text-align: center; color: #9ab3ad; font-size: 12px; }
+
+        /* ── spinner inline ── */
+        .spin-sm {
+          width: 18px; height: 18px;
+          border: 2px solid rgba(255,255,255,.4);
+          border-top-color: #fff; border-radius: 50%;
+          animation: s .7s linear infinite; display: inline-block;
+        }
+        @keyframes s { to { transform: rotate(360deg); } }
+
+        /* ── responsive ── */
+        @media (max-width: 720px) {
+          .stats-grid { grid-template-columns: repeat(2, 1fr); }
+          .quick-grid { grid-template-columns: 1fr; }
+          .prof-body, .section-pad { padding-left: 18px; padding-right: 18px; }
+          .info-row { flex-direction: column; }
+          .avatar-ring { left: 18px; }
+        }
       `}</style>
+
+      {/* Toast */}
+      {toast && (
+        <div className={`toast ${toast.type}`}>
+          {toast.type === "success" ? "✓" : "✕"} {toast.message}
+        </div>
+      )}
 
       <div className="prof-page">
         <Navbar />
 
         <main className="prof-main">
-          <div className="prof-inner">
+          <div className="prof-wrap">
 
-            {/* Header */}
-            <div className="prof-header">
-              <h1 className="prof-title">My Profile</h1>
-              <p className="prof-subtitle">Track your wellness journey and manage your account</p>
+            {/* Heading */}
+            <div className="prof-heading">
+              <h1>My Profile</h1>
+              <p>Manage your account and track your wellness journey</p>
             </div>
 
-            {/* Profile Card */}
-            <div className="prof-card">
-              <div className="prof-cover">
-                <div className="prof-cover-dots" />
-                <div className="prof-avatar-wrap" onClick={() => picInputRef.current?.click()} title="Change profile picture">
-                  <div className="prof-avatar-inner">
-                    {profilePic
-                      ? <img src={profilePic} alt="Profile" className="prof-avatar-img" />
-                      : getRoleIcon(user?.role)
-                    }
-                    <div className="prof-avatar-overlay">
-                      <span className="prof-avatar-overlay-icon">📷</span>
-                      <span className="prof-avatar-overlay-text">Change</span>
-                    </div>
-                    {uploadingPic && (
-                      <div className="prof-avatar-uploading">
-                        <div className="prof-pic-spinner" />
-                      </div>
+            {/* Main card */}
+            <div className="card">
+              {/* Banner */}
+              <div className="hero-banner">
+                <div
+                  className="avatar-ring"
+                  onClick={() => !uploadingPic && picInputRef.current?.click()}
+                  title="Change profile picture"
+                >
+                  <div className="avatar-inner">
+                    {getProfileImage() ? (
+                      <img src={getProfileImage()} alt="Profile" />
+                    ) : (
+                      user?.name?.charAt(0)?.toUpperCase() || "U"
                     )}
+                    <div className="avatar-overlay">
+                      {uploadingPic ? <div className="spin-sm" /> : "Edit"}
+                    </div>
                   </div>
                 </div>
-                <input
-                  ref={picInputRef}
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={handlePicChange}
-                />
               </div>
+
+              <input
+                ref={picInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handlePicChange}
+              />
 
               <div className="prof-body">
                 {!editing ? (
-                  <div className="prof-info-row">
+                  <div className="info-row">
                     <div>
-                      <span className="prof-role-badge" style={{ background: roleBadge.bg, color: roleBadge.color }}>
-                        {user?.role}
+                      <span
+                        className="role-pill"
+                        style={{ background: roleBadge.bg, color: roleBadge.color }}
+                      >
+                        {roleBadge.label}
                       </span>
                       <h2 className="prof-name">{user?.name}</h2>
-                      <p className="prof-email">{user?.email}</p>
-                      <p className="prof-since">✨ Member since {new Date(user?.createdAt).toLocaleDateString()}</p>
+                      <p className="prof-meta">{user?.email}</p>
+                      <p className="prof-meta">
+                        Member since {new Date(user?.createdAt).toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" })}
+                      </p>
                     </div>
-                    <div className="prof-action-btns">
-                      <button className="prof-btn prof-btn-edit" onClick={() => setEditing(true)}>Edit Profile</button>
-                      <button className="prof-btn prof-btn-logout" onClick={handleLogout}>Logout</button>
+                    <div className="btn-row">
+                      <button className="btn btn-outline" onClick={() => setEditing(true)}>
+                        Edit Profile
+                      </button>
+                      <button className="btn btn-ghost-red" onClick={handleLogout}>
+                        Logout
+                      </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="prof-edit-form">
-                    <h3 className="prof-edit-title">Edit Profile</h3>
-                    <div className="prof-field">
-                      <label className="prof-label">Name</label>
-                      <input className="prof-input" type="text" name="name" value={formData.name} onChange={handleInputChange} />
+                  <div className="edit-box">
+                    <h3>Edit Profile</h3>
+                    <div className="field">
+                      <label>Name</label>
+                      <input
+                        type="text" name="name"
+                        value={formData.name} onChange={handleInputChange}
+                        placeholder="Your name"
+                      />
                     </div>
-                    <div className="prof-field">
-                      <label className="prof-label">Email</label>
-                      <input className="prof-input" type="email" name="email" value={formData.email} onChange={handleInputChange} />
+                    <div className="field">
+                      <label>Email</label>
+                      <input
+                        type="email" name="email"
+                        value={formData.email} onChange={handleInputChange}
+                        placeholder="Your email"
+                      />
                     </div>
-                    <div className="prof-field">
-                      <label className="prof-label">Role</label>
-                      <select className="prof-select" name="role" value={formData.role} onChange={handleInputChange}>
-                        <option value="student">Student</option>
-                        <option value="psychiatrist">Psychiatrist</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                    </div>
-                    <div className="prof-edit-btns">
-                      <button className="prof-btn-save" onClick={handleSaveProfile}>Save Changes</button>
-                      <button className="prof-btn-cancel" onClick={() => setEditing(false)}>Cancel</button>
+                    <div className="btn-row" style={{ marginTop: 20 }}>
+                      <button
+                        className="btn btn-primary"
+                        onClick={handleSaveProfile}
+                        disabled={saveLoading}
+                      >
+                        {saveLoading ? <span className="spin-sm" /> : "Save Changes"}
+                      </button>
+                      <button className="btn btn-outline" onClick={() => setEditing(false)}>
+                        Cancel
+                      </button>
                     </div>
                   </div>
                 )}
 
+                <div className="divider" />
+
                 {/* Stats */}
-                <div className="prof-stats">
+                <div className="stats-grid">
                   {[
-                    { num: stats.totalMoods,           label: 'Moods Logged',     bg: '#f0f9f7', border: '#d4ede8', color: '#3d7a73' },
-                    { num: stats.completedChallenges,  label: 'Challenges Done',  bg: '#f0fdf4', border: '#bbf7d0', color: '#16a34a' },
-                    { num: stats.streak,               label: 'Day Streak 🔥',    bg: '#fff7ed', border: '#fed7aa', color: '#ea580c' },
-                    { num: stats.chatbotMessages,         label: 'Chat Messages',    bg: '#faf5ff', border: '#e9d5ff', color: '#9333ea' },
-                  ].map(({ num, label, bg, border, color }) => (
-                    <div key={label} className="prof-stat" style={{ background: bg, borderColor: border }}>
-                      <div className="prof-stat-num" style={{ color }}>{num}</div>
-                      <div className="prof-stat-label">{label}</div>
+                    { num: stats.totalMoods,          label: "Moods Logged" },
+                    { num: stats.completedChallenges,  label: "Challenges Done" },
+                    { num: stats.streak,               label: "Day Streak" },
+                    { num: stats.chatbotMessages,      label: "Chat Messages" },
+                  ].map((s) => (
+                    <div key={s.label} className="stat-card">
+                      <div className="stat-num">{s.num}</div>
+                      <div className="stat-lbl">{s.label}</div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Recent Activity */}
-            <div className="prof-card" style={{ padding: '28px 32px' }}>
-              <h2 className="prof-section-title">Recent Activity</h2>
+            {/* Activity */}
+            <div className="card section-pad">
+              <h2 className="section-title">Recent Activity</h2>
               {stats.totalMoods > 0 ? (
                 <>
-                  <div className="prof-activity-item">
-                    <div className="prof-activity-icon" style={{ background: '#f0f9f7' }}>😊</div>
+                  <div className="act-item">
+                    <div className="act-icon">01</div>
                     <div>
-                      <p className="prof-activity-title">Logged {stats.totalMoods} mood{stats.totalMoods !== 1 ? 's' : ''}</p>
-                      <p className="prof-activity-sub">Keep checking in! 🌟</p>
+                      <p className="act-title">
+                        Logged {stats.totalMoods} mood{stats.totalMoods !== 1 ? "s" : ""}
+                      </p>
+                      <p className="act-sub">Keep checking in consistently.</p>
                     </div>
                   </div>
-                  <div className="prof-activity-item">
-                    <div className="prof-activity-icon" style={{ background: '#f0fdf4' }}>🏆</div>
+                  <div className="act-item">
+                    <div className="act-icon">02</div>
                     <div>
-                      <p className="prof-activity-title">Completed {stats.completedChallenges} challenge{stats.completedChallenges !== 1 ? 's' : ''}</p>
-                      <p className="prof-activity-sub">Great progress! 🎉</p>
+                      <p className="act-title">
+                        Completed {stats.completedChallenges} challenge{stats.completedChallenges !== 1 ? "s" : ""}
+                      </p>
+                      <p className="act-sub">Your progress is building up.</p>
                     </div>
                   </div>
                 </>
               ) : (
-                <div className="prof-empty">
-                  <p>No recent activity yet. Start your wellness journey!</p>
-                  <button className="prof-btn-start" onClick={() => navigate('/mood')}>Log Your First Mood</button>
+                <div style={{ textAlign: "center", padding: "8px 0 4px" }}>
+                  <p style={{ color: "#7c9993", marginBottom: 16 }}>
+                    No activity yet — start your first wellness check-in.
+                  </p>
+                  <button className="btn btn-primary" onClick={() => navigate("/mood")}>
+                    Start Now
+                  </button>
                 </div>
               )}
             </div>
 
-            {/* Quick Actions */}
-            <div className="prof-actions-grid">
+            {/* Quick Links */}
+            <div className="quick-grid">
               {[
-                { emoji: '😊', title: 'Log Mood',       desc: 'Check in how you feel', path: '/mood' },
-                { emoji: '🎮', title: 'Play Games',      desc: 'Take a fun break',      path: '/challenges' },
-                { emoji: '💬', title: 'Chat with Zenly', desc: 'Talk it out',            path: '/chat' },
-              ].map(({ emoji, title, desc, path }) => (
-                <button key={title} className="prof-action-card" onClick={() => navigate(path)}>
-                  <span className="prof-action-emoji">{emoji}</span>
-                  <p className="prof-action-title">{title}</p>
-                  <p className="prof-action-desc">{desc}</p>
+                { icon: "M", title: "Log Mood",     desc: "Track how you feel today",    path: "/mood" },
+                { icon: "C", title: "Challenges",   desc: "Complete wellness tasks",      path: "/challenges" },
+                { icon: "Z", title: "Zenly Chat",   desc: "Talk with your AI assistant", path: "/chat" },
+              ].map((item) => (
+                <button key={item.title} className="quick-card" onClick={() => navigate(item.path)}>
+                  <div className="quick-icon">{item.icon}</div>
+                  <p className="quick-title">{item.title}</p>
+                  <p className="quick-desc">{item.desc}</p>
                 </button>
               ))}
             </div>
 
-            {/* Account meta */}
-            <div className="prof-meta">
+            {/* Footer meta */}
+            <div className="foot-meta">
               <p>Account created: {new Date(user?.createdAt).toLocaleDateString()}</p>
               <p>Last updated: {new Date(user?.updatedAt).toLocaleDateString()}</p>
             </div>

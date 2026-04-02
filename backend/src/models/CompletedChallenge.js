@@ -13,9 +13,16 @@ const completedChallengeSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+
+    completedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   { timestamps: true }
 );
+
+completedChallengeSchema.index({ user: 1, challengeId: 1 }, { unique: true });
 
 const CompletedChallenge = mongoose.model(
   "CompletedChallenge",

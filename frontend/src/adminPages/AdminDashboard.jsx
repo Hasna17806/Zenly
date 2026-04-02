@@ -264,7 +264,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   return (
     <div className="custom-tooltip">
       <div className="tooltip-label">{label}</div>
-      <div className="tooltip-value">{payload[0].value}h</div>
+      <div className="tooltip-value">{payload[0].value} min</div>
     </div>
   );
 };
@@ -274,12 +274,14 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const COLORS = ["#6c8ef7", "#2dd4bf", "#f59e0b", "#fb7185", "#a78bfa"];
 
-  const [stats, setStats] = useState({ totalUsers:0, focusHoursToday:0, moodLogsToday:0, challengesCompleted:0, newUsers:0, focusChange:0, moodChange:0, challengeChange:0 });
+  const [stats, setStats] = useState({ totalUsers:0, focusMinutesToday:0, moodLogsToday:0, challengesCompleted:0, newUsers:0, focusChange:0, moodChange:0, challengeChange:0 });
   const [focusData, setFocusData] = useState([]);
   const [moodData, setMoodData] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [recentChallenges, setRecentChallenges] = useState([]);
+
 
   const today = new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
 
@@ -291,40 +293,77 @@ const AdminDashboard = () => {
   }, []);
 
   const fetchDashboardData = async () => {
-    try {
-      const token = localStorage.getItem('adminToken') || localStorage.getItem('token') ||
-                    sessionStorage.getItem('adminToken') || sessionStorage.getItem('token');
-      if (!token) { setError('No authentication token found'); setLoading(false); return; }
+  try {
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('token') ||
+                  sessionStorage.getItem('adminToken') || sessionStorage.getItem('token');
+    if (!token) { setError('No authentication token found'); setLoading(false); return; }
 
-      const headers = { Authorization: `Bearer ${token}` };
-      const [statsRes, focusRes, moodRes, activityRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/admin/stats', { headers }).catch(() => ({ data: null })),
-        axios.get('http://localhost:5000/api/admin/focus-weekly', { headers }).catch(() => ({ data: null })),
-        axios.get('http://localhost:5000/api/admin/mood-distribution', { headers }).catch(() => ({ data: null })),
-        axios.get('http://localhost:5000/api/admin/recent-activity', { headers }).catch(() => ({ data: null })),
-      ]);
+    const headers = { Authorization: `Bearer ${token}` };
+    
+    // ADD: Fetch recent challenges separately
+    const [statsRes, focusRes, moodRes, activityRes, challengesRes] = await Promise.all([
+      axios.get('http://localhost:5000/api/admin/stats', { headers }).catch(() => ({ data: null })),
+      axios.get('http://localhost:5000/api/admin/focus-weekly', { headers }).catch(() => ({ data: null })),
+      axios.get('http://localhost:5000/api/admin/mood-distribution', { headers }).catch(() => ({ data: null })),
+      axios.get('http://localhost:5000/api/admin/recent-activity', { headers }).catch(() => ({ data: null })),
+      axios.get('http://localhost:5000/api/admin/recent-challenges', { headers }).catch(() => ({ data: null })), // NEW
+    ]);
 
-      setStats(statsRes.data || { totalUsers:1248, focusHoursToday:126*3600, moodLogsToday:312, challengesCompleted:89, newUsers:150, focusChange:8, moodChange:15, challengeChange:6 });
-      setFocusData(focusRes.data || [{ day:'Mon',hours:3 },{ day:'Tue',hours:4 },{ day:'Wed',hours:2 },{ day:'Thu',hours:5 },{ day:'Fri',hours:4 },{ day:'Sat',hours:1 },{ day:'Sun',hours:2 }]);
-      setMoodData(moodRes.data || [{ name:'Happy',value:35 },{ name:'Calm',value:16 },{ name:'Sad',value:13 },{ name:'Stressed',value:25 },{ name:'Angry',value:11 }]);
-      setRecentActivity(activityRes.data || [
-        { emoji:'🟢', user:'Hasna', action:'Logged a mood entry', time:'5m ago' },
-        { emoji:'🔵', user:'Ahmed', action:'Completed daily challenge', time:'12m ago' },
-        { emoji:'🟣', user:'Rahna', action:'New account registration', time:'25m ago' },
-        { emoji:'🟡', user:'Yousaf', action:'Started focus session', time:'1h ago' },
-        { emoji:'🔴', user:'John', action:'Logged a mood entry', time:'2h ago' },
-      ]);
-      setLoading(false);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch dashboard data');
-      setLoading(false);
-    }
-  };
+    // Convert hours to minutes
+    const convertToMinutes = (focusDataArray) => {
+      return focusDataArray?.map(item => ({
+        ...item,
+        minutes: (item.hours || 0) * 60,
+        hours: item.hours
+      })) || [];
+    };
 
-  const formatFocusHours = (s) => {
-    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
-    return m > 0 ? `${h}h ${m}m` : `${h}h`;
-  };
+    setStats(statsRes.data || { 
+      totalUsers:1248, 
+      focusMinutesToday:126 * 60,
+      moodLogsToday:312, 
+      challengesCompleted:89, 
+      newUsers:150, 
+      focusChange:8, 
+      moodChange:15, 
+      challengeChange:6 
+    });
+    
+    const rawFocusData = focusRes.data || [
+      { day:'Mon', hours:3, minutes:180 },
+      { day:'Tue', hours:4, minutes:240 },
+      { day:'Wed', hours:2, minutes:120 },
+      { day:'Thu', hours:5, minutes:300 },
+      { day:'Fri', hours:4, minutes:240 },
+      { day:'Sat', hours:1, minutes:60 },
+      { day:'Sun', hours:2, minutes:120 }
+    ];
+    
+    setFocusData(convertToMinutes(rawFocusData));
+    setMoodData(moodRes.data || [{ name:'Happy',value:35 },{ name:'Calm',value:16 },{ name:'Sad',value:13 },{ name:'Stressed',value:25 },{ name:'Angry',value:11 }]);
+    setRecentActivity(activityRes.data || []);
+    setRecentChallenges(challengesRes.data || []); // NEW: Set recent challenges
+    
+    setLoading(false);
+  } catch (err) {
+    setError(err.response?.data?.message || 'Failed to fetch dashboard data');
+    setLoading(false);
+  }
+};
+
+  const formatFocusMinutes = (minutes) => {
+  if (!minutes || isNaN(minutes)) {
+    return "0 min";
+  }
+  
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  
+  if (h === 0 && m === 0) return "0 min";
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h} hr`;
+  return `${h} hr ${m} min`;
+};
 
   const handleLogout = () => {
     ['adminToken','token'].forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
@@ -357,9 +396,9 @@ const AdminDashboard = () => {
   );
 
   const moodTotal = moodData.reduce((a, c) => a + c.value, 0);
-  const focusAvg = focusData.length ? Math.round(focusData.reduce((a,c) => a+c.hours, 0) / focusData.length) : 0;
-  const focusTotal = focusData.reduce((a,c) => a+c.hours, 0);
-  const focusPeak = focusData.length ? focusData.reduce((mx, it) => it.hours > mx.hours ? it : mx, focusData[0]).day : '—';
+  const focusAvg = focusData.length ? Math.round(focusData.reduce((a,c) => a + c.minutes, 0) / focusData.length) : 0;
+  const focusTotal = focusData.reduce((a,c) => a + c.minutes, 0);
+  const focusPeak = focusData.length ? focusData.reduce((mx, it) => it.minutes > mx.minutes ? it : mx, focusData[0]).day : '—';
 
   return (
     <>
@@ -423,20 +462,20 @@ const AdminDashboard = () => {
             </div>
 
             <div className="stat-card stat-card-blue">
-              <div className="stat-icon icon-blue">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-              </div>
-              <div className="stat-label">Focus Hours Today</div>
-              <div className="stat-value">{formatFocusHours(stats.focusHoursToday)}</div>
-              <div className="stat-footer">
-                <span className={`stat-delta ${stats.focusChange >= 0 ? 'delta-up' : 'delta-down'}`}>
-                  {stats.focusChange > 0 ? '+' : ''}{stats.focusChange}%
-                </span>
-                <span className="stat-period">vs yesterday</span>
-              </div>
+            <div className="stat-icon icon-blue">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
             </div>
+            <div className="stat-label">Focus Minutes Today</div>
+            <div className="stat-value">{formatFocusMinutes(stats.focusMinutesToday)}</div>
+            <div className="stat-footer">
+              <span className={`stat-delta ${stats.focusChange >= 0 ? 'delta-up' : 'delta-down'}`}>
+                {stats.focusChange > 0 ? '+' : ''}{stats.focusChange || 0}%
+              </span>
+              <span className="stat-period">vs yesterday</span>
+            </div>
+          </div>
 
             <div className="stat-card stat-card-teal">
               <div className="stat-icon icon-teal">
@@ -480,7 +519,7 @@ const AdminDashboard = () => {
                   <span className="card-dot dot-blue"></span>
                   <span className="card-title">Weekly Focus Trend</span>
                 </div>
-                <span className="card-meta">Last 7 days</span>
+                <span className="card-meta">Last 7 days (minutes)</span>
               </div>
               <ResponsiveContainer width="100%" height={260}>
                 <AreaChart data={focusData} margin={{ top: 5, right: 10, bottom: 0, left: -20 }}>
@@ -494,7 +533,7 @@ const AdminDashboard = () => {
                   <XAxis dataKey="day" tick={{ fill:'#7a8099', fontSize:12, fontFamily:'DM Sans' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill:'#7a8099', fontSize:12, fontFamily:'DM Sans' }} axisLine={false} tickLine={false} />
                   <Tooltip content={<CustomTooltip />} cursor={{ stroke:'rgba(255,255,255,0.06)', strokeWidth:1 }} />
-                  <Area type="monotone" dataKey="hours" stroke="#4db8ff" strokeWidth={2.5}
+                  <Area type="monotone" dataKey="minutes" stroke="#4db8ff" strokeWidth={2.5}
                     fill="url(#focusGrad)" dot={{ fill:'#4db8ff', strokeWidth:0, r:5 }}
                     activeDot={{ r:7, fill:'#4db8ff', stroke:'#0a0c10', strokeWidth:2 }} />
                 </AreaChart>
@@ -502,7 +541,7 @@ const AdminDashboard = () => {
               <div className="chart-stats-row">
                 <div className="chart-stat">
                   <div className="chart-stat-label">Avg / Day</div>
-                  <div className="chart-stat-value">{focusAvg}h</div>
+                  <div className="chart-stat-value">{formatFocusMinutes(focusAvg)}</div>
                 </div>
                 <div className="chart-stat">
                   <div className="chart-stat-label">Peak Day</div>
@@ -510,7 +549,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="chart-stat">
                   <div className="chart-stat-label">Total</div>
-                  <div className="chart-stat-value">{focusTotal}h</div>
+                  <div className="chart-stat-value">{formatFocusMinutes(focusTotal)}</div>
                 </div>
               </div>
             </div>
@@ -590,6 +629,51 @@ const AdminDashboard = () => {
               </div>
             ) : (
               <div style={{ textAlign:'center', padding:'70px 0', color:'var(--text-muted)', fontSize:14 }}>No mood data available</div>
+            )}
+          </div>
+
+          {/* Recent Completed Challenges*/}
+          <div className="card" style={{ marginTop: '24px' }}>
+            <div className="card-header">
+              <div className="card-title-group">
+                <span className="card-dot" style={{ background: 'var(--accent-amber)' }}></span>
+                <span className="card-title">Recent Completed Challenges</span>
+              </div>
+              <span className="card-meta">Latest completions</span>
+            </div>
+            
+            {recentChallenges && recentChallenges.length > 0 ? (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '13px' }}>
+                      <th style={{ textAlign: 'left', padding: '12px 8px' }}>User</th>
+                      <th style={{ textAlign: 'left', padding: '12px 8px' }}>Challenge ID</th>
+                      <th style={{ textAlign: 'left', padding: '12px 8px' }}>Completed At</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentChallenges.slice(0, 5).map((challenge, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '12px 8px' }}>
+                          <div style={{ fontWeight: 500 }}>{challenge.user?.name || 'Unknown'}</div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{challenge.user?.email || ''}</div>
+                        </td>
+                        <td style={{ padding: '12px 8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                          {challenge.challengeId?.substring(0, 8)}...
+                        </td>
+                        <td style={{ padding: '12px 8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                          {challenge.completedAt ? new Date(challenge.completedAt).toLocaleString() : 'N/A'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)', fontSize: 14 }}>
+                No challenges completed yet
+              </div>
             )}
           </div>
 

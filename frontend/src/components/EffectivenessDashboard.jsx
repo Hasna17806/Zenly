@@ -1,6 +1,6 @@
 import React from 'react';
 
-const EffectivenessDashboard = ({ gameType, stats, benefits, research }) => {
+const EffectivenessDashboard = ({ stats, benefits, research }) => {
   const gameData = {
     breathing: {
       title: "Stress Management",
@@ -88,7 +88,6 @@ const EffectivenessDashboard = ({ gameType, stats, benefits, research }) => {
     }
   };
 
-  const data = gameData[gameType] || gameData.mindfulness;
   const displayBenefits = benefits || data.defaultBenefits;
   const displayResearch = research || data.defaultResearch;
 

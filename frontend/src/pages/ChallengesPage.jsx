@@ -13,8 +13,8 @@ const ChallengesPage = () => {
 
   const categories = [
     { name: 'Mood Boost', icon: '🌿' },
-    { name: 'Study',      icon: '📚' },
-    { name: 'Fun',        icon: '🎮' },
+    { name: 'Study', icon: '📚' },
+    { name: 'Fun', icon: '🎮' },
     { name: 'Quick Play', icon: '⚡' },
   ];
 
@@ -54,7 +54,7 @@ const ChallengesPage = () => {
         time: '2 mins',
         image: 'https://res.cloudinary.com/dkqjn6dqw/image/upload/v1772259297/30_Bubbles_Clipart__Iridescent_Bubbles__Foam_Water_Bubble__Baby_Shower__Printable_Watercolor-removebg-preview_scwri9.png',
         moodTag: ['stressed/Heavy', 'angry/Frustrated'],
-        gameType: 'bubbles', 
+        gameType: 'bubbles',
       },
     ],
     'Study': [
@@ -141,7 +141,7 @@ const ChallengesPage = () => {
         time: '1 min',
         image: 'https://res.cloudinary.com/dkqjn6dqw/image/upload/v1772261663/Mind_Your_Breath___and_Prosper_-_Gulfshore_Life-removebg-preview_yeuart.png',
         moodTag: ['stressed/Heavy', 'angry/Frustrated'],
-        gameType: 'breathing',
+        gameType: '60-second-breath',
       },
       {
         id: 'blink-break',
@@ -164,112 +164,113 @@ const ChallengesPage = () => {
     ],
   };
 
-  useEffect(() => { 
-    fetchCompletedChallenges(); 
+  const categoryMap = {
+    'Mood Boost': 'Mood Boost',
+    'Study': 'Study',
+    'Fun': 'Fun',
+    'Quick Play': 'Quick Play',
+  };
+
+  useEffect(() => {
+    fetchCompletedChallenges();
   }, []);
 
-  useEffect(() => { 
-    setChallenges(allChallenges[activeCategory] || []); 
+  useEffect(() => {
+    fetchChallengesByCategory();
   }, [activeCategory]);
 
-  const fetchCompletedChallenges = async () => {
+  const fetchChallengesByCategory = async () => {
     try {
+      setLoading(true);
+
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-      const response = await axios.get('http://localhost:5000/api/completed-challenges', {
-        headers: { Authorization: `Bearer ${token}` },
+
+      const response = await axios.get(
+        `http://localhost:5000/api/challenges/category/${encodeURIComponent(categoryMap[activeCategory])}`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
+
+      const apiChallenges = (response.data || []).map((challenge) => ({
+        id: challenge._id,
+        title: challenge.title,
+        description: challenge.description,
+        time: challenge.duration || '2 mins',
+        image: challenge.image || 'https://via.placeholder.com/150',
+        moodTag: challenge.moodTag || [],
+        gameType: challenge.gameType || 'timer',
+      }));
+
+      const mergedChallenges = [...apiChallenges];
+
+      const staticChallenges = allChallenges[activeCategory] || [];
+      staticChallenges.forEach((staticChallenge) => {
+        const alreadyExists = apiChallenges.some(
+          (apiChallenge) =>
+            apiChallenge.title.trim().toLowerCase() ===
+            staticChallenge.title.trim().toLowerCase()
+        );
+
+        if (!alreadyExists) {
+          mergedChallenges.push(staticChallenge);
+        }
       });
-      
-      // Handle different response formats
-      let completedIds = [];
-      if (Array.isArray(response.data)) {
-        completedIds = response.data.map(c => c.challengeId);
-      } else if (response.data.completed) {
-        completedIds = response.data.completed.map(c => c.challenge?.title || c.challenge?._id || c.title || c._id);
-      }
-      
-      setCompletedChallenges(completedIds.filter(Boolean));
+
+      setChallenges(mergedChallenges);
     } catch (error) {
-      console.error('Error fetching completed challenges:', error);
+      console.error('Error fetching challenges:', error);
+      setChallenges(allChallenges[activeCategory] || []);
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePlayChallenge = (challenge) => {
-  const routes = {
+  const fetchCompletedChallenges = async () => {
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token) return;
 
-    // Mood Boost
-    breathing: '/games/breathe',
-    gratitude: '/games/gratitude-tap',
-    'smile-challenge': '/games/smile-challenge',
-    bubbles: '/games/calm-taps',
-    
-    // Study
-    'focus-sprint': '/games/focus-sprint',
-    memory: '/games/memory-flip',
-    quiz: '/games/quick-quiz',
-    focus: '/games/distraction-block',
-    
-    // Fun
-    sound: '/games/guess-sound',
-    matching: '/games/emoji-match',
-    stars: '/games/tap-star',
-    wheel: '/games/spin-wheel',
-    
-    // Quick Play
-    '60-second': '/games/60-second-breath',
-    'blink-break': '/games/blink-break',
-    journal: '/games/one-thought',
-    
-    // Fallback
-    timer: '/games/timer'
-  };
-  
-  navigate(routes[challenge.gameType] || '/games/timer', { state: { challenge } });
-};
+      const response = await axios.get('http://localhost:5000/api/completed-challenges', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-  const handleCompleteChallenge = async (challenge) => {
-  try {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    if (!token) { 
-      alert('Please login first'); 
-      return; 
-    }
-    
-   if (completedChallenges.includes(challenge.id)) { 
-      alert('Challenge already completed!'); 
-      return; 
-    }
-    
-    console.log("Completing challenge:", challenge); 
-    
-    const response = await axios.post(
-      'http://localhost:5000/api/completed-challenges',
-      { 
-        challengeId: challenge.id,  
-      },
-      { 
-        headers: { 
-          Authorization: `Bearer ${token}`, 
-          'Content-Type': 'application/json' 
-        } 
+      let completedIds = [];
+
+      if (Array.isArray(response.data)) {
+        completedIds = response.data.map((c) => c.challengeId);
+      } else if (response.data.completed) {
+        completedIds = response.data.completed.map((c) => c.challengeId);
       }
-    );
-    
-    console.log("Complete response:", response.data); 
-    
-    setCompletedChallenges(prev => [...prev, challenge.id]);
-    alert('🎉 Challenge Completed! +5 Focus Points');
-  } catch (error) {
-    console.error('Error completing challenge:', error);
-    console.error('Error response:', error.response?.data); 
-    alert(`Error: ${error.response?.data?.message || error.message}`);
-  }
-};
+
+      setCompletedChallenges(completedIds.filter(Boolean));
+    } catch (error) {
+      console.error('Error fetching completed challenges:', error);
+    }
+  };
+
+  const handlePlayChallenge = (challenge) => {
+    const routes = {
+      breathing: '/games/breathe',
+      gratitude: '/games/gratitude-tap',
+      'smile-challenge': '/games/smile-challenge',
+      bubbles: '/games/calm-taps',
+      'focus-sprint': '/games/focus-sprint',
+      memory: '/games/memory-flip',
+      quiz: '/games/quick-quiz',
+      focus: '/games/distraction-block',
+      sound: '/games/guess-sound',
+      matching: '/games/emoji-match',
+      stars: '/games/tap-star',
+      wheel: '/games/spin-wheel',
+      '60-second-breath': '/games/60-second-breath',
+      'blink-break': '/games/blink-break',
+      journal: '/games/one-thought',
+      timer: '/games/timer',
+    };
+
+    navigate(routes[challenge.gameType] || '/games/timer', { state: { challenge } });
+  };
 
   const isCompleted = (challenge) => completedChallenges.includes(challenge.id);
   const getCompletedCount = () => completedChallenges.length;
@@ -297,7 +298,6 @@ const ChallengesPage = () => {
           margin: 0 auto;
         }
 
-        /* ── Header ── */
         .ch-header {
           text-align: center;
           margin-bottom: 44px;
@@ -320,7 +320,6 @@ const ChallengesPage = () => {
           margin: 0;
         }
 
-        /* ── Category Tabs ── */
         .ch-tabs {
           display: flex;
           justify-content: center;
@@ -381,7 +380,6 @@ const ChallengesPage = () => {
 
         .ch-tab-icon { font-size: 17px; line-height: 1; }
 
-        /* ── Cards Grid ── */
         .ch-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
@@ -394,7 +392,6 @@ const ChallengesPage = () => {
           .ch-tabs { flex-wrap: wrap; border-radius: 16px; }
         }
 
-        /* ── Card ── */
         .ch-card {
           background: #fff;
           border-radius: 20px;
@@ -417,7 +414,6 @@ const ChallengesPage = () => {
           background: #f8fdfb;
         }
 
-        /* Image panel */
         .ch-img-panel {
           width: 185px;
           flex-shrink: 0;
@@ -447,7 +443,6 @@ const ChallengesPage = () => {
           transform: scale(1.08) translateY(-5px);
         }
 
-        /* Done tick */
         .ch-done-badge {
           position: absolute;
           top: 10px;
@@ -464,7 +459,6 @@ const ChallengesPage = () => {
           box-shadow: 0 2px 8px rgba(76,175,132,0.4);
         }
 
-        /* Content panel */
         .ch-card-body {
           flex: 1;
           padding: 22px 20px 18px;
@@ -521,7 +515,6 @@ const ChallengesPage = () => {
           border-radius: 100px;
         }
 
-        /* Start button */
         .ch-start-btn {
           width: 100%;
           padding: 11px;
@@ -559,7 +552,6 @@ const ChallengesPage = () => {
           box-shadow: none;
         }
 
-        /* ── Loading ── */
         .ch-loading {
           display: flex;
           flex-direction: column;
@@ -581,7 +573,6 @@ const ChallengesPage = () => {
 
         .ch-loading-text { font-size: 14px; color: #9ab5b2; }
 
-        /* ── Footer Banner ── */
         .ch-banner {
           background: linear-gradient(135deg, #5b9e96 0%, #3d7a73 100%);
           border-radius: 22px;
@@ -659,13 +650,11 @@ const ChallengesPage = () => {
         <main className="ch-main">
           <div className="ch-inner">
 
-            {/* Header */}
             <div className="ch-header">
               <h1 className="ch-title">Take a Fun Break</h1>
               <p className="ch-subtitle">Refresh your brain with light activities.</p>
             </div>
 
-            {/* Category Tabs */}
             <div className="ch-tabs">
               {categories.map((cat) => (
                 <button
@@ -679,7 +668,6 @@ const ChallengesPage = () => {
               ))}
             </div>
 
-            {/* Challenges Grid */}
             {loading ? (
               <div className="ch-loading">
                 <div className="ch-spinner" />
@@ -692,13 +680,11 @@ const ChallengesPage = () => {
                   return (
                     <div key={challenge.id} className={`ch-card ${completed ? 'done' : ''}`}>
 
-                      {/* Large image panel on the left */}
                       <div className="ch-img-panel">
                         <img src={challenge.image} alt={challenge.title} />
                         {completed && <span className="ch-done-badge">✓</span>}
                       </div>
 
-                      {/* Content on the right */}
                       <div className="ch-card-body">
                         <div>
                           <h3 className="ch-card-title">{challenge.title}</h3>
@@ -731,11 +717,10 @@ const ChallengesPage = () => {
               </div>
             )}
 
-            {/* Footer Banner */}
             <div className="ch-banner">
               <span className="ch-banner-emoji">🎉</span>
               <h3 className="ch-banner-title">
-                {getCompletedCount() > 0 
+                {getCompletedCount() > 0
                   ? `Nice job! You've completed ${getCompletedCount()} challenge${getCompletedCount() !== 1 ? 's' : ''} today.`
                   : "Ready to start your wellness journey?"}
               </h3>
@@ -744,8 +729,8 @@ const ChallengesPage = () => {
                   ? "Zenly uses your daily challenges to help you feel better, step by step."
                   : "Try a fun challenge to boost your mood and energy!"}
               </p>
-              <button 
-                className="ch-banner-btn" 
+              <button
+                className="ch-banner-btn"
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               >
                 Explore All Challenges →

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { Timer, X, CheckCircle, AlertCircle, Play, Pause, RotateCcw, Save } from "lucide-react";
 
@@ -8,18 +8,43 @@ const FocusTimerModal = ({ isOpen, onClose }) => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const startTimeRef = useRef(null);
+  const intervalRef = useRef(null);
 
-  // Timer effect
+  // Clean up interval on unmount
   useEffect(() => {
-    let interval;
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
 
+  // Timer effect using useRef to avoid stale closures
+  useEffect(() => {
     if (isRunning) {
-      interval = setInterval(() => {
-        setSeconds(prev => prev + 1);
-      }, 1000);
+      console.log("Timer started at:", new Date().toLocaleTimeString());
+      startTimeRef.current = Date.now() - (seconds * 1000);
+      
+      intervalRef.current = setInterval(() => {
+        const elapsedSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        console.log("Elapsed seconds:", elapsedSeconds);
+        setSeconds(elapsedSeconds);
+      }, 100);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      console.log("Timer stopped at:", seconds, "seconds");
     }
-
-    return () => clearInterval(interval);
+    
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, [isRunning]);
 
   // Format time
@@ -29,64 +54,125 @@ const FocusTimerModal = ({ isOpen, onClose }) => {
     return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
+  // Get minutes for display
+  const getMinutes = () => {
+    return Math.floor(seconds / 60);
+  };
+
   // Save to backend
   const saveSession = async () => {
+    if (isSaving) {
+      console.log("Already saving, please wait...");
+      return;
+    }
+
+    console.log("=== SAVING FOCUS SESSION ===");
+    console.log("Total seconds recorded:", seconds);
+    console.log("Total minutes recorded:", getMinutes());
+    console.log("Current time:", new Date().toLocaleTimeString());
+
     try {
+      setIsSaving(true);
+      
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
       if (!token) {
+        console.log("No token found");
         setErrorMessage("You must be logged in to save sessions");
         setShowErrorModal(true);
+        setIsSaving(false);
         return;
       }
 
-      await axios.post(
+      if (seconds === 0) {
+        console.log("No time recorded - seconds is 0");
+        setErrorMessage("Please focus for at least 1 second before saving");
+        setShowErrorModal(true);
+        setIsSaving(false);
+        return;
+      }
+
+      console.log("Sending request to /api/focus with duration:", seconds, "seconds");
+
+      const response = await axios.post(
         "http://localhost:5000/api/focus",
         { duration: seconds },
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
           },
         }
       );
 
+      console.log("Session saved successfully:", response.data);
+      console.log("Saved duration (minutes):", response.data.durationMinutes || getMinutes());
+      
       setShowSuccessModal(true);
       handleReset();
+      
     } catch (error) {
-      console.error(error);
-      setErrorMessage(error.response?.data?.message || "Error saving session");
+      console.error("=== ERROR SAVING SESSION ===");
+      console.error("Error details:", error);
+      console.error("Error response:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+      
+      let errorMsg = "Error saving session";
+      if (error.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+      
+      setErrorMessage(errorMsg);
       setShowErrorModal(true);
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleStart = () => setIsRunning(true);
-  const handlePause = () => setIsRunning(false);
+  const handleStart = () => {
+    console.log("Starting timer...");
+    setIsRunning(true);
+  };
+  
+  const handlePause = () => {
+    console.log("Pausing timer at:", seconds, "seconds");
+    setIsRunning(false);
+  };
+  
   const handleReset = () => {
+    console.log("Resetting timer. Previous value:", seconds);
     setIsRunning(false);
     setSeconds(0);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
   };
 
   const handleCloseSuccessModal = () => {
+    console.log("Closing success modal");
     setShowSuccessModal(false);
     onClose();
   };
 
   if (!isOpen) return null;
 
+  // Debug render
+  console.log("Modal render - seconds:", seconds, "isRunning:", isRunning);
+
   return (
     <>
       {/* Main Timer Modal */}
       <div className="fixed inset-0 z-50 overflow-y-auto">
-        {/* Backdrop */}
         <div 
           className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
           onClick={onClose}
         />
         
-        {/* Modal */}
         <div className="flex min-h-full items-center justify-center p-4">
           <div className="relative w-full max-w-md transform overflow-hidden rounded-3xl bg-white shadow-2xl transition-all animate-slide-up">
-            {/* Close button */}
             <button
               onClick={onClose}
               className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
@@ -94,7 +180,6 @@ const FocusTimerModal = ({ isOpen, onClose }) => {
               <X className="w-5 h-5 text-gray-500" />
             </button>
 
-            {/* Header */}
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6">
               <div className="flex items-center gap-3 text-white">
                 <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
@@ -107,16 +192,19 @@ const FocusTimerModal = ({ isOpen, onClose }) => {
               </div>
             </div>
 
-            {/* Timer Display */}
             <div className="p-8">
               <div className="text-center mb-8">
                 <div className="text-7xl font-bold font-mono bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                   {formatTime()}
                 </div>
                 <p className="text-gray-500 mt-2">Elapsed time</p>
+                {seconds > 0 && (
+                  <p className="text-sm text-gray-400 mt-1">
+                    {getMinutes()} minute{getMinutes() !== 1 ? 's' : ''} so far
+                  </p>
+                )}
               </div>
 
-              {/* Progress bar */}
               <div className="w-full h-2 bg-gray-100 rounded-full mb-8 overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-300"
@@ -124,7 +212,6 @@ const FocusTimerModal = ({ isOpen, onClose }) => {
                 />
               </div>
 
-              {/* Control Buttons */}
               <div className="grid grid-cols-2 gap-3 mb-3">
                 {!isRunning ? (
                   <button
@@ -156,10 +243,24 @@ const FocusTimerModal = ({ isOpen, onClose }) => {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={saveSession}
-                  className="col-span-1 flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold py-4 rounded-xl hover:shadow-lg hover:shadow-green-200 transition-all hover:scale-105"
+                  disabled={seconds === 0 || isSaving}
+                  className={`col-span-1 flex items-center justify-center gap-2 font-semibold py-4 rounded-xl transition-all hover:scale-105 ${
+                    seconds > 0 && !isSaving
+                      ? "bg-gradient-to-r from-green-600 to-green-700 text-white hover:shadow-lg hover:shadow-green-200"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
                 >
-                  <Save className="w-5 h-5" />
-                  Finish
+                  {isSaving ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5" />
+                      Finish
+                    </>
+                  )}
                 </button>
 
                 <button
@@ -171,7 +272,6 @@ const FocusTimerModal = ({ isOpen, onClose }) => {
                 </button>
               </div>
 
-              {/* Session info */}
               {seconds > 0 && (
                 <p className="text-center text-sm text-gray-500 mt-6">
                   {Math.floor(seconds / 60)} minute{Math.floor(seconds / 60) !== 1 ? 's' : ''} of focus

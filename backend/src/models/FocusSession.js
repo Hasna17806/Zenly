@@ -8,7 +8,7 @@ const focusSessionSchema = mongoose.Schema(
     },
     duration: {
       type: Number,
-      required: true,
+      required: true, 
     },
   },
   { timestamps: true }

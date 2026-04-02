@@ -6,7 +6,8 @@ const MyPsychiatrists = () => {
   const [list, setList]       = useState([]);
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState({});
-  const [confirm, setConfirm] = useState(null); // { id, name } when modal open
+  const [confirm, setConfirm] = useState(null);
+  const [toast, setToast]     = useState(null); // Toast state
 
   const fetchMyPsychiatrists = async () => {
     try {
@@ -21,27 +22,59 @@ const MyPsychiatrists = () => {
 
   useEffect(() => { fetchMyPsychiatrists(); }, []);
 
+  const showToast = (type, title, message) => {
+    setToast({ type, title, message });
+    setTimeout(() => {
+      setToast(null);
+    }, 3000);
+  };
+
   const bookAppointment = async (psychiatristId) => {
     setBooking(prev => ({ ...prev, [psychiatristId]: "pending" }));
+
     try {
-      await API.post("/appointments/book", { psychiatristId });
+      const res = await API.post("/appointments/book", { psychiatristId });
+      console.log("BOOK SUCCESS:", res.data);
+
       setBooking(prev => ({ ...prev, [psychiatristId]: "done" }));
+      showToast("success", "Appointment Requested", "Your appointment request has been sent. Please wait for confirmation.");
+
     } catch (err) {
-      console.error(err);
+      console.error("BOOK ERROR FULL:", err);
+      console.error("BOOK ERROR RESPONSE:", err.response);
+      console.error("BOOK ERROR DATA:", err.response?.data);
+
+      if (err.response?.status === 400) {
+        const errorMsg = err.response?.data?.message || "You already have a pending request.";
+        showToast("error", "Request Failed", errorMsg);
+        setBooking(prev => ({ ...prev, [psychiatristId]: "done" }));
+        return;
+      }
+
       setBooking(prev => ({ ...prev, [psychiatristId]: "error" }));
-      setTimeout(() => setBooking(prev => { const n={...prev}; delete n[psychiatristId]; return n; }), 3000);
+      showToast("error", "Booking Failed", "Failed to book appointment. Please try again.");
+
+      setTimeout(() => {
+        setBooking(prev => {
+          const n = { ...prev };
+          delete n[psychiatristId];
+          return n;
+        });
+      }, 3000);
     }
   };
 
   const removePsychiatrist = async () => {
     if (!confirm) return;
-    const { id } = confirm;
+    const { id, name } = confirm;
     setConfirm(null);
     try {
       await API.delete(`/my-psychiatrists/remove/${id}`);
       setList(prev => prev.filter(p => p._id !== id));
+      showToast("success", "Removed", `Dr. ${cleanName(name)} has been removed from your list.`);
     } catch (err) {
       console.error(err);
+      showToast("error", "Removal Failed", "Failed to remove psychiatrist. Please try again.");
     }
   };
 
@@ -71,6 +104,53 @@ const MyPsychiatrists = () => {
         *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
         ::-webkit-scrollbar { width:5px; }
         ::-webkit-scrollbar-thumb { background:#ddd5c8; border-radius:10px; }
+
+        /* Toast Container */
+        .toast-container {
+          position: fixed;
+          top: 24px;
+          right: 24px;
+          z-index: 10001;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          pointer-events: none;
+        }
+
+        .toast-container > * {
+          pointer-events: auto;
+        }
+
+        /* Toast Notification */
+        .toast {
+          background: #fff;
+          border-radius: 16px;
+          padding: 16px 20px;
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          min-width: 320px;
+          max-width: 400px;
+          box-shadow: 0 12px 32px rgba(44, 35, 24, 0.15);
+          animation: slideIn 0.3s ease forwards;
+        }
+        .toast-success { border-left: 4px solid #5A9E6A; }
+        .toast-error { border-left: 4px solid #BF6050; }
+        .toast-info { border-left: 4px solid #C8A87A; }
+        .toast-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .toast-success .toast-icon { background: #EAF3EA; color: #2E7D32; }
+        .toast-error .toast-icon { background: #FCEAEA; color: #B71C1C; }
+        .toast-info .toast-icon { background: #FDF6EE; color: #A0856A; }
+        .toast-content { flex: 1; }
+        .toast-title { font-size: 14px; font-weight: 600; color: #2C2318; margin-bottom: 2px; }
+        .toast-message { font-size: 13px; color: #9D8E82; }
+        .toast-close { background: transparent; border: none; color: #C4B5A5; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: color 0.2s; }
+        .toast-close:hover { color: #2C2318; }
+
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateX(30px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
 
         .mp-page { min-height:100vh; background:#FAF7F3; font-family:'DM Sans',sans-serif; color:#2C2318; display:flex; flex-direction:column; }
         .mp-main { flex:1; padding:56px 24px 80px; }
@@ -260,6 +340,35 @@ const MyPsychiatrists = () => {
         @keyframes fadeDown { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
         @keyframes fadeUp   { from{opacity:0;transform:translateY(16px)}  to{opacity:1;transform:translateY(0)} }
       `}</style>
+
+      {/* Toast Container */}
+      <div className="toast-container">
+        {toast && (
+          <div className={`toast toast-${toast.type}`}>
+            <div className="toast-icon">
+              {toast.type === "success" && (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              {toast.type === "error" && (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+            </div>
+            <div className="toast-content">
+              <div className="toast-title">{toast.title}</div>
+              <div className="toast-message">{toast.message}</div>
+            </div>
+            <button className="toast-close" onClick={() => setToast(null)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* ─── Custom confirm modal ─── */}
       {confirm && (

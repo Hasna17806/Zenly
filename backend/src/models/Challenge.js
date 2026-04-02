@@ -15,10 +15,10 @@ const challengeSchema = mongoose.Schema(
       type: String,
       required: true,
       enum: [
-        "mood-boost",
-        "study",
-        "fun",
-        "quick-play",
+        "Mood Boost",
+        "Study",
+        "Fun",
+        "Quick Play",
       ],
     },
 
@@ -30,9 +30,20 @@ const challengeSchema = mongoose.Schema(
       type: String,
     },
 
-    route: {
+    moodTag: {
+      type: [String],
+      default: [],
+    },
+
+    // ADD THIS FIELD - maps to game routes
+    gameType: {
       type: String,
-      required: true,
+      enum: [
+        'breathing', 'gratitude', 'smile-challenge', 'bubbles', 
+        'focus-sprint', 'memory', 'quiz', 'focus', 'sound', 
+        'matching', 'stars', 'wheel', 'timer', 'blink-break', 'journal'
+      ],
+      default: 'timer'
     },
   },
   { timestamps: true }

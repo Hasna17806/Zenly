@@ -14,6 +14,7 @@ import UserPsychiatrists from './pages/UserPsychiatrists';
 import UserAppointments from './pages/UserAppointments';
 import SessionChat from './pages/SessionChat';
 import NotificationsPage from './pages/NotificationsPage';
+import ProgressPage from './pages/ProgressPage';
 import "./utils/axiosConfig";
 
 
@@ -81,6 +82,7 @@ function App() {
         <Route path="/session/:appointmentId" element={<ProtectedRoute><SessionChat /></ProtectedRoute>} />
         <Route path="/my-psychiatrists" element={<ProtectedRoute><MyPsychiatrists /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+        <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
        
 
         {/* Games */}

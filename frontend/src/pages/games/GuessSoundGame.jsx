@@ -10,58 +10,54 @@ const GuessSoundGame = () => {
   const [showResult, setShowResult] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
+
   const navigate = useNavigate();
+  const location = useLocation();
+  const challenge = location.state?.challenge;
 
   const sounds = [
-    { 
-      emoji: "🎹", 
+    {
+      emoji: "🎹",
       name: "Piano",
-      options: ["Piano", "Guitar", "Drums", "Violin"], 
+      options: ["Piano", "Guitar", "Drums", "Violin"],
       correct: "Piano",
       funFact: "The piano has 88 keys!"
     },
-    { 
-      emoji: "🌧️", 
+    {
+      emoji: "🌧️",
       name: "Rain",
-      options: ["Rain", "Ocean", "Wind", "Thunder"], 
+      options: ["Rain", "Ocean", "Wind", "Thunder"],
       correct: "Rain",
       funFact: "Rain sounds can help you sleep better!"
     },
-    { 
-      emoji: "☕", 
+    {
+      emoji: "☕",
       name: "Coffee Shop",
-      options: ["Coffee Shop", "Library", "Restaurant", "Park"], 
+      options: ["Coffee Shop", "Library", "Restaurant", "Park"],
       correct: "Coffee Shop",
       funFact: "Background cafe noise can boost creativity!"
     },
-    { 
-      emoji: "🐦", 
+    {
+      emoji: "🐦",
       name: "Birds",
-      options: ["Birds", "Crickets", "Frogs", "Cats"], 
+      options: ["Birds", "Crickets", "Frogs", "Cats"],
       correct: "Birds",
       funFact: "Some birds learn new songs throughout their lives!"
     }
   ];
 
-  // Simulated sound playback (in real app, you'd use actual audio files)
   const playSound = () => {
     setIsPlaying(true);
-    // Simulate sound playing for 2 seconds
     setTimeout(() => setIsPlaying(false), 2000);
-    
-    // In production, you'd do:
-    // if (audioRef.current) {
-    //   audioRef.current.play();
-    // }
   };
 
   const handleGuess = (option) => {
     if (option === sounds[currentSound].correct) {
-      setScore(score + 1);
+      setScore((prev) => prev + 1);
     }
-    
+
     if (currentSound < sounds.length - 1) {
-      setCurrentSound(currentSound + 1);
+      setCurrentSound((prev) => prev + 1);
     } else {
       setShowResult(true);
     }
@@ -70,14 +66,17 @@ const GuessSoundGame = () => {
   const handleComplete = async () => {
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
       await axios.post(
         "http://localhost:5000/api/completed-challenges",
-        { challengeId: location.state?.challenge?.id },
+        { challengeId: challenge?.id || challenge?._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       navigate('/challenges');
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error completing challenge:", error);
+      alert(error.response?.data?.message || "Could not complete challenge");
     }
   };
 
@@ -92,10 +91,10 @@ const GuessSoundGame = () => {
                 <span className="text-sm text-slate-500">Sound {currentSound + 1}/4</span>
                 <span className="text-sm text-slate-500">Score: {score}</span>
               </div>
-              
+
               <div className="text-center mb-8">
                 <div className="text-8xl mb-4 animate-pulse">{sounds[currentSound].emoji}</div>
-                
+
                 <button
                   onClick={playSound}
                   disabled={isPlaying}
@@ -118,7 +117,7 @@ const GuessSoundGame = () => {
               </div>
 
               <h2 className="text-xl font-semibold mb-4">What sound is this?</h2>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 {sounds[currentSound].options.map((option) => (
                   <button

@@ -10,6 +10,7 @@ const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,7 +30,7 @@ const Navbar = () => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     const userEmail = localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail');
     const userName = localStorage.getItem('userName') || sessionStorage.getItem('userName');
-    
+
     if (token) {
       setIsLoggedIn(true);
       setUser({
@@ -40,6 +41,7 @@ const Navbar = () => {
     } else {
       setIsLoggedIn(false);
       setUser(null);
+      setUnreadCount(0);
     }
   };
 
@@ -49,7 +51,7 @@ const Navbar = () => {
 
       if (!token) return;
 
-      const { data } = await axios.get('http://localhost:5000/api/notifications', {
+      const { data } = await axios.get("http://localhost:5000/api/notifications", {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -58,7 +60,7 @@ const Navbar = () => {
       const unread = data.filter((item) => !item.isRead).length;
       setUnreadCount(unread);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error("Notification fetch error:", error);
     }
   };
 
@@ -69,11 +71,11 @@ const Navbar = () => {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('userEmail');
     sessionStorage.removeItem('userName');
-    
+
     setIsLoggedIn(false);
     setIsProfileMenuOpen(false);
     setUnreadCount(0);
-    
+
     toast.success('Logged out successfully', {
       icon: '👋',
       style: {
@@ -82,7 +84,7 @@ const Navbar = () => {
         color: '#fff',
       },
     });
-    
+
     navigate('/');
   };
 
@@ -131,28 +133,25 @@ const Navbar = () => {
           <div className="flex items-center gap-4">
             {isLoggedIn ? (
               <>
+                {/* Notification Bell */}
+                <Link to="/notifications" className="relative">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 hover:bg-blue-50 flex items-center justify-center transition-colors">
+                    <Bell className="w-5 h-5 text-gray-700" />
+                  </div>
+
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Link>
+
                 {/* Greeting */}
                 {user && (
                   <span className="hidden md:block text-sm text-gray-600">
                     Hi, <span className="font-semibold text-blue-600">{user.name}</span>
                   </span>
                 )}
-
-                {/* Notification Bell */}
-                <div className="relative">
-                  <button
-                    onClick={() => navigate('/notifications')}
-                    className="relative flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                  >
-                    <Bell className="w-5 h-5" />
-                  </button>
-
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1 shadow-md">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </div>
 
                 {/* Profile Avatar */}
                 <div className="relative">
@@ -166,11 +165,13 @@ const Navbar = () => {
                   {/* Profile Dropdown Menu */}
                   {isProfileMenuOpen && (
                     <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
+                      {/* User Info */}
                       <div className="px-4 py-3 border-b border-gray-100">
                         <p className="font-semibold text-gray-800">{user?.name}</p>
                         <p className="text-sm text-gray-500">{user?.email}</p>
                       </div>
 
+                      {/* Menu Items */}
                       <div className="py-2">
                         <Link
                           to="/profile"
@@ -180,7 +181,7 @@ const Navbar = () => {
                           <User className="w-4 h-4" />
                           <span className="text-sm">My Profile</span>
                         </Link>
-                        
+
                         <Link
                           to="/settings"
                           onClick={() => setIsProfileMenuOpen(false)}
@@ -191,6 +192,7 @@ const Navbar = () => {
                         </Link>
                       </div>
 
+                      {/* Logout */}
                       <div className="border-t border-gray-100 pt-2">
                         <button
                           onClick={handleLogout}
@@ -230,6 +232,7 @@ const Navbar = () => {
           <div className="md:hidden py-4 border-t border-gray-100">
             {isLoggedIn ? (
               <>
+                {/* Mobile Greeting */}
                 {user && (
                   <div className="px-4 py-3 bg-blue-50 rounded-lg mb-3">
                     <p className="text-sm text-gray-600">Hi,</p>
@@ -237,6 +240,7 @@ const Navbar = () => {
                   </div>
                 )}
 
+                {/* Mobile Navigation Links */}
                 <div className="flex flex-col space-y-2">
                   {navItems.map((item) => (
                     <Link
@@ -251,19 +255,14 @@ const Navbar = () => {
 
                   <Link
                     to="/notifications"
-                    className="text-gray-600 hover:text-blue-600 px-4 py-2 font-medium flex items-center justify-between"
+                    className="text-gray-600 hover:text-blue-600 px-4 py-2 font-medium"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <span>Notifications</span>
-                    {unreadCount > 0 && (
-                      <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                        {unreadCount}
-                      </span>
-                    )}
+                    Notifications {unreadCount > 0 && `(${unreadCount})`}
                   </Link>
-                  
+
                   <hr className="my-2 border-gray-100" />
-                  
+
                   <Link
                     to="/profile"
                     className="text-gray-600 hover:text-blue-600 px-4 py-2 font-medium"
@@ -271,7 +270,7 @@ const Navbar = () => {
                   >
                     My Profile
                   </Link>
-                  
+
                   <Link
                     to="/settings"
                     className="text-gray-600 hover:text-blue-600 px-4 py-2 font-medium"
@@ -279,7 +278,7 @@ const Navbar = () => {
                   >
                     Settings
                   </Link>
-                  
+
                   <button
                     onClick={() => {
                       handleLogout();

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import PsychiatristSidebar from "../components/PsychiatristSidebar";
+import PsychiatristLayout from "../components/PsychiatristLayout";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip
@@ -49,7 +49,7 @@ const PsychiatristDashboard = () => {
       title: "Total Appointments",
       value: totalAppointments,
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
           <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
         </svg>
@@ -61,7 +61,7 @@ const PsychiatristDashboard = () => {
       title: "Today's Sessions",
       value: todaySessions,
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
         </svg>
       ),
@@ -72,7 +72,7 @@ const PsychiatristDashboard = () => {
       title: "Pending Requests",
       value: pendingAppointments,
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
           <line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
@@ -84,7 +84,7 @@ const PsychiatristDashboard = () => {
       title: "Accepted Sessions",
       value: acceptedAppointments,
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
       ),
@@ -95,7 +95,7 @@ const PsychiatristDashboard = () => {
       title: "Total Patients",
       value: uniquePatients,
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
           <circle cx="9" cy="7" r="4"/>
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -112,11 +112,11 @@ const PsychiatristDashboard = () => {
       return (
         <div style={{
           background: "#1a2d3f", border: "1px solid rgba(100,180,200,0.2)",
-          borderRadius: 8, padding: "10px 14px", fontFamily: "'IBM Plex Sans', sans-serif"
+          borderRadius: 10, padding: "12px 18px", fontFamily: "'IBM Plex Sans', sans-serif"
         }}>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginBottom: 4 }}>{label}</p>
-          <p style={{ color: "#64b4c8", fontSize: 15, fontWeight: 600 }}>
-            {payload[0].value} <span style={{ fontWeight: 400, fontSize: 12 }}>appointments</span>
+          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginBottom: 6 }}>{label}</p>
+          <p style={{ color: "#64b4c8", fontSize: 18, fontWeight: 600 }}>
+            {payload[0].value} <span style={{ fontWeight: 400, fontSize: 14 }}>appointments</span>
           </p>
         </div>
       );
@@ -125,193 +125,216 @@ const PsychiatristDashboard = () => {
   };
 
   return (
-    <>
+    <PsychiatristLayout>
+      <div className="dash-main">
+        <div className="dash-topbar">
+          <div className="dash-eyebrow">Overview</div>
+          <h1 className="dash-title">Dashboard</h1>
+          <p className="dash-sub">Your appointments and patient activity at a glance.</p>
+        </div>
+
+        {/* Stat Cards */}
+        <div className="dash-cards">
+          {loading
+            ? Array(5).fill(0).map((_, i) => (
+                <div key={i} className="dash-card">
+                  <div className="skeleton" style={{ width: 52, height: 52, borderRadius: 14, marginBottom: 20 }} />
+                  <div className="skeleton" style={{ width: "75%", height: 14, marginBottom: 12 }} />
+                  <div className="skeleton" style={{ width: "45%", height: 42 }} />
+                </div>
+              ))
+            : cards.map((card) => (
+                <div className="dash-card" key={card.title}>
+                  <div
+                    className="dash-card-icon"
+                    style={{ background: card.accentBg, color: card.accent }}
+                  >
+                    {card.icon}
+                  </div>
+                  <div className="dash-card-label">{card.title}</div>
+                  <div className="dash-card-value" style={{ color: card.accent }}>
+                    {card.value}
+                  </div>
+                  <div className="dash-card-glow" style={{ background: card.accent }} />
+                </div>
+              ))
+          }
+        </div>
+
+        {/* Bar Chart */}
+        <div className="dash-chart-card">
+          <div className="dash-chart-header">
+            <span className="dash-chart-title">Appointments — Last 7 Days</span>
+            <span className="dash-chart-sub">Daily volume</span>
+          </div>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={last7Days} barSize={32}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+              <XAxis
+                dataKey="date"
+                tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: "IBM Plex Sans", fontWeight: 500 }}
+                axisLine={false} tickLine={false}
+              />
+              <YAxis
+                allowDecimals={false}
+                tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: "IBM Plex Sans", fontWeight: 500 }}
+                axisLine={false} tickLine={false} width={32}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+              <Bar dataKey="appointments" fill="#64b4c8" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        .dash-page {
-          display: flex;
-          min-height: 100vh;
-          background: #0b1520;
-          font-family: 'IBM Plex Sans', sans-serif;
-        }
-
         .dash-main {
           flex: 1;
-          padding: 40px 48px;
+          padding: 48px 56px;
           overflow-y: auto;
         }
 
-        .dash-topbar { margin-bottom: 36px; }
+        .dash-topbar { margin-bottom: 44px; }
 
         .dash-eyebrow {
-          font-size: 10px; font-weight: 600; letter-spacing: 0.14em;
-          text-transform: uppercase; color: #64b4c8; margin-bottom: 6px;
+          font-size: 13px;
+          font-weight: 600;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: #64b4c8;
+          margin-bottom: 10px;
         }
 
         .dash-title {
-          font-size: 24px; font-weight: 600; color: #eef2f5;
-          letter-spacing: -0.02em; margin: 0;
+          font-size: 32px;
+          font-weight: 700;
+          color: #eef2f5;
+          letter-spacing: -0.02em;
+          margin: 0;
         }
 
         .dash-sub {
-          font-size: 13px; color: rgba(255,255,255,0.28);
-          font-weight: 300; margin-top: 4px;
+          font-size: 16px;
+          color: rgba(255,255,255,0.4);
+          font-weight: 400;
+          margin-top: 8px;
+          line-height: 1.5;
         }
 
-        /* Cards grid */
         .dash-cards {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-          gap: 16px;
-          margin-bottom: 32px;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 20px;
+          margin-bottom: 40px;
         }
 
         .dash-card {
           background: #111d2b;
           border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 14px;
-          padding: 22px 20px;
+          border-radius: 18px;
+          padding: 26px 24px;
           position: relative;
           overflow: hidden;
-          transition: transform 0.16s ease, box-shadow 0.16s ease;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .dash-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+          transform: translateY(-3px);
+          box-shadow: 0 16px 40px rgba(0,0,0,0.35);
         }
 
         .dash-card-icon {
-          width: 40px; height: 40px; border-radius: 10px;
-          display: flex; align-items: center; justify-content: center;
-          margin-bottom: 16px;
+          width: 52px;
+          height: 52px;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 20px;
         }
 
         .dash-card-label {
-          font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
-          text-transform: uppercase; color: rgba(255,255,255,0.3);
-          margin-bottom: 8px;
+          font-size: 13px;
+          font-weight: 600;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.4);
+          margin-bottom: 10px;
         }
 
         .dash-card-value {
-          font-size: 32px; font-weight: 600;
-          letter-spacing: -0.03em; line-height: 1;
+          font-size: 42px;
+          font-weight: 700;
+          letter-spacing: -0.03em;
+          line-height: 1;
         }
 
         .dash-card-glow {
           position: absolute; bottom: -30px; right: -30px;
-          width: 90px; height: 90px; border-radius: 50%;
-          filter: blur(28px); opacity: 0.15; pointer-events: none;
+          width: 110px; height: 110px; border-radius: 50%;
+          filter: blur(32px); opacity: 0.18; pointer-events: none;
         }
 
-        /* Chart */
         .dash-chart-card {
           background: #111d2b;
           border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 16px;
-          padding: 28px 32px 24px;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+          border-radius: 20px;
+          padding: 32px 36px 28px;
+          box-shadow: 0 12px 40px rgba(0,0,0,0.25);
         }
 
         .dash-chart-header {
           display: flex; align-items: baseline;
-          justify-content: space-between; margin-bottom: 24px;
+          justify-content: space-between;
+          margin-bottom: 28px;
+          flex-wrap: wrap;
+          gap: 12px;
         }
 
         .dash-chart-title {
-          font-size: 15px; font-weight: 600;
-          color: #eef2f5; letter-spacing: -0.01em;
+          font-size: 18px;
+          font-weight: 600;
+          color: #eef2f5;
+          letter-spacing: -0.01em;
         }
 
         .dash-chart-sub {
-          font-size: 11.5px; color: rgba(255,255,255,0.25); font-weight: 300;
+          font-size: 14px;
+          color: rgba(255,255,255,0.35);
+          font-weight: 400;
         }
 
-        /* Skeleton */
         .skeleton {
           background: linear-gradient(90deg,
             rgba(255,255,255,0.04) 25%,
-            rgba(255,255,255,0.08) 50%,
+            rgba(255,255,255,0.09) 50%,
             rgba(255,255,255,0.04) 75%);
           background-size: 200% 100%;
           animation: shimmer 1.4s ease-in-out infinite;
-          border-radius: 8px;
+          border-radius: 10px;
         }
 
         @keyframes shimmer {
           0% { background-position: 200% 0; }
           100% { background-position: -200% 0; }
         }
+
+        @media (max-width: 768px) {
+          .dash-main {
+            padding: 32px 24px;
+          }
+          .dash-title {
+            font-size: 28px;
+          }
+          .dash-card-value {
+            font-size: 36px;
+          }
+          .dash-chart-card {
+            padding: 24px;
+          }
+        }
       `}</style>
-
-      <div className="dash-page">
-        <PsychiatristSidebar />
-
-        <div className="dash-main">
-          <div className="dash-topbar">
-            <div className="dash-eyebrow">Overview</div>
-            <h1 className="dash-title">Dashboard</h1>
-            <p className="dash-sub">Your appointments and patient activity at a glance.</p>
-          </div>
-
-          {/* Stat Cards */}
-          <div className="dash-cards">
-            {loading
-              ? Array(5).fill(0).map((_, i) => (
-                  <div key={i} className="dash-card">
-                    <div className="skeleton" style={{ width: 40, height: 40, borderRadius: 10, marginBottom: 16 }} />
-                    <div className="skeleton" style={{ width: "70%", height: 11, marginBottom: 10 }} />
-                    <div className="skeleton" style={{ width: "40%", height: 32 }} />
-                  </div>
-                ))
-              : cards.map((card) => (
-                  <div className="dash-card" key={card.title}>
-                    <div
-                      className="dash-card-icon"
-                      style={{ background: card.accentBg, color: card.accent }}
-                    >
-                      {card.icon}
-                    </div>
-                    <div className="dash-card-label">{card.title}</div>
-                    <div className="dash-card-value" style={{ color: card.accent }}>
-                      {card.value}
-                    </div>
-                    <div className="dash-card-glow" style={{ background: card.accent }} />
-                  </div>
-                ))
-            }
-          </div>
-
-          {/* Bar Chart */}
-          <div className="dash-chart-card">
-            <div className="dash-chart-header">
-              <span className="dash-chart-title">Appointments — Last 7 Days</span>
-              <span className="dash-chart-sub">Daily volume</span>
-            </div>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={last7Days} barSize={28}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12, fontFamily: "IBM Plex Sans" }}
-                  axisLine={false} tickLine={false}
-                />
-                <YAxis
-                  allowDecimals={false}
-                  tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12, fontFamily: "IBM Plex Sans" }}
-                  axisLine={false} tickLine={false} width={28}
-                />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
-                <Bar dataKey="appointments" fill="#64b4c8" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-    </>
+    </PsychiatristLayout>
   );
 };
 

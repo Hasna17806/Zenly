@@ -25,23 +25,20 @@ export const getChallengesByMood = async (req, res) => {
 // Create challenge
 export const createChallenge = async (req, res) => {
   try {
-    const { title, description, category, duration, image } = req.body;
+    const { title, description, category, duration, image, moodTag } = req.body;
 
-    const challenge = new Challenge({
+    const challenge = await Challenge.create({
       title,
       description,
       category,
       duration,
-      image
+      image,
+      moodTag,
     });
 
-    await challenge.save();
-
-    res.status(201).json({
-      message: "Challenge created successfully",
-      challenge
-    });
+    res.status(201).json(challenge);
   } catch (error) {
+    console.error("Create challenge error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -50,7 +47,7 @@ export const createChallenge = async (req, res) => {
 export const updateChallenge = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, category, duration, image } = req.body;
+    const { title, description, category, duration, image, moodTag } = req.body;
 
     const challenge = await Challenge.findByIdAndUpdate(
       id,
@@ -59,7 +56,8 @@ export const updateChallenge = async (req, res) => {
         description,
         category,
         duration,
-        image
+        image,
+        moodTag,
       },
       { new: true }
     );
@@ -70,9 +68,10 @@ export const updateChallenge = async (req, res) => {
 
     res.status(200).json({
       message: "Challenge updated successfully",
-      challenge
+      challenge,
     });
   } catch (error) {
+    console.error("Update challenge error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -99,10 +98,9 @@ export const completeChallenge = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // prevent duplicate completion
     const alreadyCompleted = await CompletedChallenge.findOne({
       user: req.user._id,
-      challenge: id
+      challenge: id,
     });
 
     if (alreadyCompleted) {
@@ -111,13 +109,30 @@ export const completeChallenge = async (req, res) => {
 
     const completion = new CompletedChallenge({
       user: req.user._id,
-      challenge: id
+      challenge: id,
     });
 
     await completion.save();
 
     res.status(201).json({ message: "Challenge completed successfully" });
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get challenges by mood tag
+export const getChallengesByMoodTag = async (req, res) => {
+  try {
+    const { moodTag } = req.params;
+    
+    // Find challenges that have this mood tag in their moodTag array
+    const challenges = await Challenge.find({ 
+      moodTag: { $in: [moodTag] } 
+    });
+    
+    res.status(200).json(challenges);
+  } catch (error) {
+    console.error("Error fetching challenges by mood:", error);
     res.status(500).json({ message: error.message });
   }
 };
