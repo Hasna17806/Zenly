@@ -625,21 +625,30 @@ const AdminPsychiatrists = () => {
   const [consultationFee, setConsultationFee] = useState("");
   const [phone, setPhone] = useState("");
   const [documents, setDocuments] = useState([]);
+  const [existingDocuments, setExistingDocuments] = useState([]);
   const [toast, setToast] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, name: "" });
 
   const token = localStorage.getItem("adminToken");
 
   const fetchPsychiatrists = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/admin/psychiatrists", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setPsychiatrists(res.data);
-    } catch (e) {
-      console.error(e);
-    }
-  };
+  try {
+    const { data } = await axios.get("http://localhost:5000/api/psychiatrist/all", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    setPsychiatrists(data);
+  } catch (error) {
+    console.error("Error fetching psychiatrists:", error);
+    showToast(
+      "error",
+      "Fetch Failed",
+      error.response?.data?.message || "Could not load psychiatrists."
+    );
+  }
+};
 
   useEffect(() => {
     fetchPsychiatrists();
@@ -651,15 +660,16 @@ const AdminPsychiatrists = () => {
   };
 
   const resetForm = () => {
-    setName("");
-    setEmail("");
-    setPassword("");
-    setSpecialization("");
-    setConsultationFee("");
-    setPhone("");
-    setDocuments([]);
-    setShowPw(false);
-    setEditingId(null);
+  setName("");
+  setEmail("");
+  setPassword("");
+  setSpecialization("");
+  setConsultationFee("");
+  setPhone("");
+  setDocuments([]);
+  setExistingDocuments([]);
+  setShowPw(false);
+  setEditingId(null);
   };
 
   const handleFileChange = (e) => {
@@ -669,6 +679,10 @@ const AdminPsychiatrists = () => {
 
   const removeFile = (index) => {
     setDocuments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingFile = (index) => {
+  setExistingDocuments(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleAdd = async () => {
@@ -710,54 +724,59 @@ const AdminPsychiatrists = () => {
   };
 
   const handleEdit = async () => {
-    try {
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("email", email);
-      if (password.trim()) formData.append("password", password);
-      formData.append("specialization", specialization);
-      formData.append("consultationFee", consultationFee);
-      formData.append("phone", phone);
+  try {
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("email", email);
+    if (password.trim()) formData.append("password", password);
+    formData.append("specialization", specialization);
+    formData.append("consultationFee", consultationFee);
+    formData.append("phone", phone);
 
-      documents.forEach((file) => {
-        formData.append("documents", file);
-      });
+    // keep already existing docs
+    formData.append("existingDocuments", JSON.stringify(existingDocuments));
 
-      await axios.put(`http://localhost:5000/api/admin/psychiatrists/${editingId}`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data"
-        }
-      });
+    // add newly selected docs
+    documents.forEach((file) => {
+      formData.append("documents", file);
+    });
 
-      showToast("success", "Psychiatrist Updated", `${name}'s details have been updated.`);
-      resetForm();
-      setTimeout(() => setView("list"), 1200);
-      fetchPsychiatrists();
-    } catch (e) {
-      console.error("EDIT ERROR FULL:", e);
-      console.error("EDIT ERROR RESPONSE:", e.response);
-      console.error("EDIT ERROR DATA:", e.response?.data);
+    await axios.put(`http://localhost:5000/api/admin/psychiatrists/${editingId}`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data"
+      }
+    });
 
-      showToast(
-        "error",
-        "Update Failed",
-        e.response?.data?.message || "Could not update psychiatrist."
-      );
-    }
-  };
+    showToast("success", "Psychiatrist Updated", `${name}'s details have been updated.`);
+    resetForm();
+    setTimeout(() => setView("list"), 1200);
+    fetchPsychiatrists();
+  } catch (e) {
+    console.error("EDIT ERROR FULL:", e);
+    console.error("EDIT ERROR RESPONSE:", e.response);
+    console.error("EDIT ERROR DATA:", e.response?.data);
+
+    showToast(
+      "error",
+      "Update Failed",
+      e.response?.data?.message || "Could not update psychiatrist."
+    );
+  }
+};
 
   const openEditForm = (doc) => {
-    setEditingId(doc._id);
-    setName(doc.name || "");
-    setEmail(doc.email || "");
-    setPassword("");
-    setSpecialization(doc.specialization || "");
-    setConsultationFee(doc.consultationFee || "");
-    setPhone(doc.phone || "");
-    setDocuments([]);
-    setView("edit");
-  };
+  setEditingId(doc._id);
+  setName(doc.name || "");
+  setEmail(doc.email || "");
+  setPassword("");
+  setSpecialization(doc.specialization || "");
+  setConsultationFee(doc.consultationFee || "");
+  setPhone(doc.phone || "");
+  setDocuments([]);
+  setExistingDocuments(doc.documents || []);
+  setView("edit");
+};
 
   const handleBlock = async (id) => {
     try {
@@ -1028,12 +1047,56 @@ const AdminPsychiatrists = () => {
                         Upload certificates, licenses, profile images, or PDF documents.
                       </p>
 
-                      {documents.length > 0 && (
-                        <div className="file-preview-list">
+                      {(existingDocuments.length > 0 || documents.length > 0) && (
+                      <div className="file-preview-list">
+
+                     {/* Existing uploaded documents */}
+
+                          {existingDocuments.map((file, index) => (
+                            <div key={`existing-${index}`} className="file-preview-item">
+                              <span>
+                                {typeof file === "string"
+                                  ? file.split("/").pop()
+                                  : file.originalname || file.filename || "Saved Document"}
+                              </span>
+
+                              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                                {typeof file === "string" && (
+                                  <a
+                                    href={`http://localhost:5000/${file}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                      color: "var(--blue)",
+                                      fontSize: "13px",
+                                      fontWeight: "600",
+                                      textDecoration: "none"
+                                    }}
+                                  >
+                                    View
+                                  </a>
+                                )}
+
+                                <button
+                                  className="remove-file-btn"
+                                  type="button"
+                                  onClick={() => removeExistingFile(index)}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+
+                          {/* Newly selected documents */}
                           {documents.map((file, index) => (
-                            <div key={index} className="file-preview-item">
+                            <div key={`new-${index}`} className="file-preview-item">
                               <span>{file.name}</span>
-                              <button className="remove-file-btn" type="button" onClick={() => removeFile(index)}>
+                              <button
+                                className="remove-file-btn"
+                                type="button"
+                                onClick={() => removeFile(index)}
+                              >
                                 Remove
                               </button>
                             </div>

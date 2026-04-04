@@ -2,6 +2,186 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import AdminSidebar from "../components/Sidebar";
 
+// Custom Delete Confirmation Modal Component
+const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, challengeTitle }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="delete-modal" onClick={e => e.stopPropagation()}>
+        <div className="delete-modal-header">
+          <div className="delete-modal-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div className="delete-modal-title">Delete Challenge</div>
+        </div>
+        
+        <div className="delete-modal-body">
+          <p className="delete-modal-message">
+            Are you sure you want to delete <strong>"{challengeTitle}"</strong>?
+          </p>
+          
+          <div className="delete-modal-warning">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>This action cannot be undone. All data associated with this challenge will be permanently removed.</span>
+          </div>
+
+          <div className="delete-modal-actions">
+            <button className="delete-modal-btn delete-modal-btn-cancel" onClick={onClose}>
+              Cancel
+            </button>
+            <button className="delete-modal-btn delete-modal-btn-confirm" onClick={onConfirm}>
+              Delete Challenge
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <style>{`
+        .modal-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.8);
+          backdrop-filter: blur(8px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+          padding: 20px;
+          animation: fadeIn 0.2s ease;
+        }
+        
+        .delete-modal {
+          background: #111115;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 20px;
+          width: 420px;
+          max-width: 90%;
+          box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+          animation: slideUp 0.3s ease;
+        }
+        
+        .delete-modal-header {
+          padding: 20px 24px;
+          border-bottom: 1px solid rgba(255,255,255,0.08);
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        
+        .delete-modal-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          background: rgba(239, 68, 68, 0.15);
+          color: #ef4444;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .delete-modal-title {
+          font-size: 18px;
+          font-weight: 700;
+          color: #f5f5f5;
+        }
+        
+        .delete-modal-body {
+          padding: 24px;
+        }
+        
+        .delete-modal-message {
+          font-size: 15px;
+          color: #a1a1aa;
+          line-height: 1.6;
+          margin-bottom: 16px;
+        }
+        
+        .delete-modal-message strong {
+          color: #f5f5f5;
+        }
+        
+        .delete-modal-warning {
+          font-size: 13px;
+          color: #ef4444;
+          background: rgba(239, 68, 68, 0.1);
+          border: 1px solid rgba(239, 68, 68, 0.2);
+          border-radius: 12px;
+          padding: 12px 16px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 24px;
+        }
+        
+        .delete-modal-actions {
+          display: flex;
+          gap: 12px;
+        }
+        
+        .delete-modal-btn {
+          flex: 1;
+          padding: 12px;
+          border-radius: 10px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+        
+        .delete-modal-btn-cancel {
+          background: #1a1a1e;
+          color: #a1a1aa;
+          border: 1px solid rgba(255,255,255,0.08);
+        }
+        
+        .delete-modal-btn-cancel:hover {
+          background: #222226;
+          color: #f5f5f5;
+          border-color: rgba(255,255,255,0.15);
+        }
+        
+        .delete-modal-btn-confirm {
+          background: linear-gradient(135deg, #ef4444, #dc2626);
+          color: white;
+          box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+        }
+        
+        .delete-modal-btn-confirm:hover {
+          opacity: 0.9;
+          transform: translateY(-1px);
+          box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+    </div>
+  );
+};
+
 const AdminChallenges = () => {
   const [challenges, setChallenges] = useState([]);
   const [title, setTitle] = useState("");
@@ -11,6 +191,7 @@ const AdminChallenges = () => {
   const [image, setImage] = useState("");
   const [duration, setDuration] = useState("");
   const [moodTags, setMoodTags] = useState([]);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, title: "" });
 
   const moodOptions = [
     "stressed/Heavy","sad/Low","calm/Okay",
@@ -45,12 +226,20 @@ const AdminChallenges = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this challenge?")) return;
+  const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/challenges/admin/delete/${id}`);
+      await axios.delete(`http://localhost:5000/api/challenges/admin/delete/${deleteModal.id}`);
       fetchChallenges();
+      setDeleteModal({ isOpen: false, id: null, title: "" });
     } catch (error) { console.error(error); }
+  };
+
+  const openDeleteModal = (id, title) => {
+    setDeleteModal({ isOpen: true, id, title });
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ isOpen: false, id: null, title: "" });
   };
 
   const handleEdit = (c) => {
@@ -376,6 +565,14 @@ const AdminChallenges = () => {
         <div className="ch-main">
           <div className="ch-inner">
 
+            {/* Delete Confirmation Modal */}
+            <DeleteConfirmModal
+              isOpen={deleteModal.isOpen}
+              onClose={closeDeleteModal}
+              onConfirm={handleDelete}
+              challengeTitle={deleteModal.title}
+            />
+
             {/* Header */}
             <div className="page-header">
               <div className="hdr-icon">
@@ -530,7 +727,7 @@ const AdminChallenges = () => {
                       {/* Actions */}
                       <div className="card-actions">
                         <button className="cta cta-edit" onClick={() => handleEdit(c)}>— Edit</button>
-                        <button className="cta cta-del" onClick={() => handleDelete(c._id)}>✕ Delete</button>
+                        <button className="cta cta-del" onClick={() => openDeleteModal(c._id, c.title)}>✕ Delete</button>
                       </div>
 
                     </div>

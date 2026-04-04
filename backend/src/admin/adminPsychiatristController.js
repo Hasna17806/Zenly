@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import Psychiatrist from "../models/Psychiatrist.js";
-import bcrypt from "bcryptjs";
 
 /* ---------------- GET ALL PSYCHIATRISTS ---------------- */
 export const getPsychiatrists = async (req, res) => {
@@ -30,10 +29,6 @@ export const createPsychiatrist = async (req, res) => {
       return res.status(400).json({ message: "Psychiatrist already exists with this email" });
     }
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
     // Handle document uploads
     const documents = [];
     if (req.files && req.files.length > 0) {
@@ -45,7 +40,7 @@ export const createPsychiatrist = async (req, res) => {
     const psychiatrist = new Psychiatrist({
       name,
       email,
-      password: hashedPassword,
+      password, 
       specialization,
       consultationFee: Number(consultationFee),
       phone: phone || "",

@@ -306,9 +306,23 @@ const UserAppointments = () => {
   const navigate = useNavigate();
 
   // Get token from storage
-  const getToken = () => {
-    return localStorage.getItem("token") || sessionStorage.getItem("token");
-  };
+ const getToken = () => {
+  const directToken =
+    localStorage.getItem("token") || sessionStorage.getItem("token");
+
+  if (directToken) return directToken;
+
+  const localUserInfo = localStorage.getItem("userInfo");
+  const sessionUserInfo = sessionStorage.getItem("userInfo");
+
+  const userInfo = localUserInfo
+    ? JSON.parse(localUserInfo)
+    : sessionUserInfo
+    ? JSON.parse(sessionUserInfo)
+    : null;
+
+  return userInfo?.token || null;
+};
 
   const showToast = (type, title, message) => {
     setToast({ type, title, message });
@@ -346,44 +360,45 @@ const UserAppointments = () => {
   };
 
   const fetchAppointments = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const token = getToken();
-      
-      console.log("Token being used:", token ? "Token exists" : "No token found");
-      
-      if (!token) {
-        setError("Please login to view your appointments");
-        setLoading(false);
-        return;
-      }
+  try {
+    setLoading(true);
+    setError(null);
 
-      const res = await axios.get("http://localhost:5000/api/appointments/user", {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      console.log("Appointments fetched:", res.data);
-      setAppointments(res.data);
-    } catch (error) {
-      console.log("Error response:", error.response?.data);
-      console.error(error);
-      
-      if (error.response?.status === 401) {
-        setError("Your session has expired. Please login again.");
-        localStorage.removeItem("token");
-        sessionStorage.removeItem("token");
-      } else {
-        setError(error.response?.data?.message || "Failed to load appointments");
-      }
-    } finally {
+    const token = getToken();
+
+    console.log("Token being used:", token ? "Token exists" : "No token found");
+
+    if (!token) {
+      setError("Please login to view your appointments");
       setLoading(false);
+      return;
     }
-  };
+
+    const res = await axios.get("http://localhost:5000/api/appointments/user", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log("Appointments fetched:", res.data);
+    setAppointments(Array.isArray(res.data) ? res.data : []);
+  } catch (error) {
+    console.log("Error response:", error.response?.data);
+    console.error("FETCH APPOINTMENTS ERROR:", error);
+
+    if (error.response?.status === 401) {
+      setError("Your session has expired. Please login again.");
+      localStorage.removeItem("token");
+      sessionStorage.removeItem("token");
+      localStorage.removeItem("userInfo");
+      sessionStorage.removeItem("userInfo");
+    } else {
+      setError(error.response?.data?.message || "Failed to load appointments");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => { 
     fetchAppointments(); 
@@ -720,7 +735,11 @@ const UserAppointments = () => {
             ) : error ? (
               <div className="ua-error">
                 <div className="ua-error-icon">🔒</div>
-                <div className="ua-error-title">Authentication Error</div>
+                <div className="ua-error-title">
+                  {error.toLowerCase().includes("login") || error.toLowerCase().includes("session")
+                    ? "Authentication Error"
+                    : "Something Went Wrong"}
+                </div>
                 <div className="ua-error-sub">{error}</div>
                 <button 
                   className="ua-empty-btn"

@@ -96,11 +96,15 @@ export const deleteChallenge = async (req, res) => {
 // Complete challenge
 export const completeChallenge = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { challengeId } = req.body;
+
+    if (!challengeId) {
+      return res.status(400).json({ message: "Challenge ID is required" });
+    }
 
     const alreadyCompleted = await CompletedChallenge.findOne({
       user: req.user._id,
-      challenge: id,
+      challengeId: String(challengeId),
     });
 
     if (alreadyCompleted) {
@@ -109,13 +113,18 @@ export const completeChallenge = async (req, res) => {
 
     const completion = new CompletedChallenge({
       user: req.user._id,
-      challenge: id,
+      challengeId: String(challengeId),
+      completedAt: new Date(),
     });
 
     await completion.save();
 
-    res.status(201).json({ message: "Challenge completed successfully" });
+    res.status(201).json({
+      message: "Challenge completed successfully",
+      completion,
+    });
   } catch (error) {
+    console.error("Complete challenge error:", error);
     res.status(500).json({ message: error.message });
   }
 };

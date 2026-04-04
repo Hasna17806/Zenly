@@ -6,6 +6,7 @@ import FocusSession from "../models/FocusSession.js";
 import CompletedChallenge from "../models/CompletedChallenge.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import PsychiatristReview from "../models/PsychiatristReview.js";
 
 /* ===============================
    ADMIN LOGIN
@@ -657,4 +658,18 @@ const formatTimeAgo = (date) => {
   if (diffDays < 7) return `${diffDays}d ago`;
   
   return `${Math.floor(diffDays / 7)}w ago`;
+};
+
+export const getAllPsychiatristReviews = async (req, res) => {
+  try {
+    const reviews = await PsychiatristReview.find()
+      .populate("user", "name email")
+      .populate("psychiatrist", "name specialization email")
+      .sort({ createdAt: -1 });
+
+    res.json(reviews);
+  } catch (error) {
+    console.error("Admin review fetch error:", error);
+    res.status(500).json({ message: error.message });
+  }
 };

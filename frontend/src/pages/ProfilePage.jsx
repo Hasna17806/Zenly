@@ -44,7 +44,7 @@ const ProfilePage = () => {
 
   const fetchUserProfile = async () => {
     try {
-      const { data } = await axios.get(`${API}/api/users/profile`, {
+      const { data } = await axios.get(`${API}/api/auth/profile`, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       setUser(data);
@@ -85,7 +85,7 @@ const ProfilePage = () => {
   const handleSaveProfile = async () => {
     setSaveLoading(true);
     try {
-      const { data } = await axios.put(`${API}/api/users/profile`, formData, {
+      const { data } = await axios.put(`${API}/api/auth/profile`, formData, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       setUser(data.user || data);
@@ -112,19 +112,20 @@ const ProfilePage = () => {
   const handlePicUpload = async (file) => {
     setUploadingPic(true);
     try {
-      const token = getToken(); // ← fix: get token inside the function
+      const token = getToken(); 
       const fd = new FormData();
       fd.append("profilePic", file);
 
-      const { data } = await axios.post(`${API}/api/users/profile-pic`, fd, {
+      const { data } = await axios.post(`${API}/api/auth/profile-pic`, fd, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
       });
 
-      // ← fix: update user state, not a non-existent setProfilePicture
+     
       setUser((prev) => ({ ...prev, profilePicture: data.profilePicture }));
+      // window.dispatchEvent(new Event('userUpdated'));
       showToast("Profile picture updated ✓");
     } catch (err) {
       console.error("Error uploading picture:", err);
@@ -259,13 +260,18 @@ const ProfilePage = () => {
         }
         .avatar-inner img { width: 100%; height: 100%; object-fit: cover; }
         .avatar-overlay {
-          position: absolute; inset: 0; border-radius: 50%;
-          background: rgba(0,0,0,0); display: flex;
-          align-items: center; justify-content: center;
-          color: #fff; font-size: 11px; font-weight: 700;
-          letter-spacing: .05em; transition: background .2s;
-        }
-        .avatar-ring:hover .avatar-overlay { background: rgba(0,0,0,.38); }
+        position: absolute; inset: 0; border-radius: 50%;
+        background: rgba(0,0,0,0); display: flex;
+        align-items: center; justify-content: center;
+        color: #fff; font-size: 11px; font-weight: 700;
+        letter-spacing: .05em;
+        opacity: 0;                          
+        transition: background .2s, opacity .2s;
+      }
+      .avatar-ring:hover .avatar-overlay {
+        background: rgba(0,0,0,.38);
+        opacity: 1;                         
+      }
 
         /* ── profile body ── */
         .prof-body { padding: 72px 32px 32px; }

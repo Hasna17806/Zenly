@@ -1,379 +1,215 @@
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef } from "react";
 import axios from "axios";
-import { Timer, X, CheckCircle, AlertCircle, Play, Pause, RotateCcw, Save } from "lucide-react";
+import { Timer, X, CheckCircle, Play, Pause, RotateCcw, Save } from "lucide-react";
 
 const FocusTimerModal = ({ isOpen, onClose }) => {
-  const [seconds, setSeconds] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [time, setTime] = useState(0); // in seconds
+  const [isActive, setIsActive] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const startTimeRef = useRef(null);
   const intervalRef = useRef(null);
 
-  // Clean up interval on unmount
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
+  // Start timer
+  const startTimer = () => {
+    if (intervalRef.current) return;
+    
+    intervalRef.current = setInterval(() => {
+      setTime(prev => prev + 1);
+    }, 1000);
+    setIsActive(true);
+  };
 
-  // Timer effect using useRef to avoid stale closures
-  useEffect(() => {
-    if (isRunning) {
-      console.log("Timer started at:", new Date().toLocaleTimeString());
-      startTimeRef.current = Date.now() - (seconds * 1000);
+  // Pause timer
+  const pauseTimer = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setIsActive(false);
+  };
+
+  // Reset timer
+  const resetTimer = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setTime(0);
+    setIsActive(false);
+  };
+
+  // Format time display
+  const formatTime = () => {
+    const mins = Math.floor(time / 60);
+    const secs = time % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Save session
+  const saveSession = async () => {
+    if (time === 0) {
+      alert("Please focus for at least a few seconds!");
+      return;
+    }
+
+    setIsSaving(true);
+    
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       
-      intervalRef.current = setInterval(() => {
-        const elapsedSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        console.log("Elapsed seconds:", elapsedSeconds);
-        setSeconds(elapsedSeconds);
-      }, 100);
-    } else {
+      if (!token) {
+        alert("Please login again");
+        return;
+      }
+
+      await axios.post(
+        "http://localhost:5000/api/focus",
+        { duration: time },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Stop timer and show success
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      console.log("Timer stopped at:", seconds, "seconds");
-    }
-    
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [isRunning]);
-
-  // Format time
-  const formatTime = () => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
-  };
-
-  // Get minutes for display
-  const getMinutes = () => {
-    return Math.floor(seconds / 60);
-  };
-
-  // Save to backend
-  const saveSession = async () => {
-    if (isSaving) {
-      console.log("Already saving, please wait...");
-      return;
-    }
-
-    console.log("=== SAVING FOCUS SESSION ===");
-    console.log("Total seconds recorded:", seconds);
-    console.log("Total minutes recorded:", getMinutes());
-    console.log("Current time:", new Date().toLocaleTimeString());
-
-    try {
-      setIsSaving(true);
-      
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-
-      if (!token) {
-        console.log("No token found");
-        setErrorMessage("You must be logged in to save sessions");
-        setShowErrorModal(true);
-        setIsSaving(false);
-        return;
-      }
-
-      if (seconds === 0) {
-        console.log("No time recorded - seconds is 0");
-        setErrorMessage("Please focus for at least 1 second before saving");
-        setShowErrorModal(true);
-        setIsSaving(false);
-        return;
-      }
-
-      console.log("Sending request to /api/focus with duration:", seconds, "seconds");
-
-      const response = await axios.post(
-        "http://localhost:5000/api/focus",
-        { duration: seconds },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-        }
-      );
-
-      console.log("Session saved successfully:", response.data);
-      console.log("Saved duration (minutes):", response.data.durationMinutes || getMinutes());
-      
-      setShowSuccessModal(true);
-      handleReset();
+      setShowSuccess(true);
       
     } catch (error) {
-      console.error("=== ERROR SAVING SESSION ===");
-      console.error("Error details:", error);
-      console.error("Error response:", error.response?.data);
-      console.error("Error status:", error.response?.status);
-      
-      let errorMsg = "Error saving session";
-      if (error.response?.data?.message) {
-        errorMsg = error.response.data.message;
-      } else if (error.message) {
-        errorMsg = error.message;
-      }
-      
-      setErrorMessage(errorMsg);
-      setShowErrorModal(true);
+      console.error(error);
+      alert("Failed to save session. Please try again.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleStart = () => {
-    console.log("Starting timer...");
-    setIsRunning(true);
-  };
-  
-  const handlePause = () => {
-    console.log("Pausing timer at:", seconds, "seconds");
-    setIsRunning(false);
-  };
-  
-  const handleReset = () => {
-    console.log("Resetting timer. Previous value:", seconds);
-    setIsRunning(false);
-    setSeconds(0);
+  const closeModal = () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    setTime(0);
+    setIsActive(false);
+    onClose();
   };
 
-  const handleCloseSuccessModal = () => {
-    console.log("Closing success modal");
-    setShowSuccessModal(false);
-    onClose();
+  const closeSuccess = () => {
+    setShowSuccess(false);
+    closeModal();
   };
 
   if (!isOpen) return null;
 
-  // Debug render
-  console.log("Modal render - seconds:", seconds, "isRunning:", isRunning);
+  const minutes = Math.floor(time / 60);
 
   return (
     <>
-      {/* Main Timer Modal */}
-      <div className="fixed inset-0 z-50 overflow-y-auto">
-        <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
-          onClick={onClose}
-        />
-        
-        <div className="flex min-h-full items-center justify-center p-4">
-          <div className="relative w-full max-w-md transform overflow-hidden rounded-3xl bg-white shadow-2xl transition-all animate-slide-up">
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
-            >
-              <X className="w-5 h-5 text-gray-500" />
+      {/* Timer Modal */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="bg-white rounded-3xl w-full max-w-md mx-4 overflow-hidden shadow-2xl">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <Timer className="w-6 h-6" />
+              <h2 className="text-2xl font-bold">Focus Session</h2>
+            </div>
+            <button onClick={closeModal} className="p-1 hover:bg-white/20 rounded-full transition">
+              <X className="w-5 h-5" />
             </button>
+          </div>
 
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6">
-              <div className="flex items-center gap-3 text-white">
-                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                  <Timer className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="font-heading text-2xl font-bold">Focus Session</h2>
-                  <p className="text-white/80 text-sm">Stay focused, one breath at a time</p>
-                </div>
-              </div>
+          {/* Timer Display */}
+          <div className="p-8 text-center">
+            <div className="text-7xl font-mono font-bold text-gray-800 mb-2">
+              {formatTime()}
             </div>
+            <p className="text-gray-500 text-sm">Elapsed time</p>
+            
+            {time > 0 && (
+              <p className="text-sm text-purple-600 mt-2 font-medium">
+                {minutes} minute{minutes !== 1 ? 's' : ''} of focus
+              </p>
+            )}
+          </div>
 
-            <div className="p-8">
-              <div className="text-center mb-8">
-                <div className="text-7xl font-bold font-mono bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  {formatTime()}
-                </div>
-                <p className="text-gray-500 mt-2">Elapsed time</p>
-                {seconds > 0 && (
-                  <p className="text-sm text-gray-400 mt-1">
-                    {getMinutes()} minute{getMinutes() !== 1 ? 's' : ''} so far
-                  </p>
-                )}
-              </div>
-
-              <div className="w-full h-2 bg-gray-100 rounded-full mb-8 overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-300"
-                  style={{ width: `${Math.min((seconds / 3600) * 100, 100)}%` }}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                {!isRunning ? (
-                  <button
-                    onClick={handleStart}
-                    className="col-span-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold py-4 rounded-xl hover:shadow-lg hover:shadow-indigo-200 transition-all hover:scale-105"
-                  >
-                    <Play className="w-5 h-5" />
-                    Start
-                  </button>
-                ) : (
-                  <button
-                    onClick={handlePause}
-                    className="col-span-1 flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white font-semibold py-4 rounded-xl hover:shadow-lg hover:shadow-yellow-200 transition-all hover:scale-105"
-                  >
-                    <Pause className="w-5 h-5" />
-                    Pause
-                  </button>
-                )}
-
+          {/* Buttons */}
+          <div className="p-6 pt-0 space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              {!isActive ? (
                 <button
-                  onClick={handleReset}
-                  className="col-span-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 font-semibold py-4 rounded-xl hover:bg-gray-200 transition-all hover:scale-105"
+                  onClick={startTimer}
+                  className="col-span-1 bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
                 >
-                  <RotateCcw className="w-5 h-5" />
-                  Reset
+                  <Play className="w-4 h-4" /> Start
                 </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+              ) : (
                 <button
-                  onClick={saveSession}
-                  disabled={seconds === 0 || isSaving}
-                  className={`col-span-1 flex items-center justify-center gap-2 font-semibold py-4 rounded-xl transition-all hover:scale-105 ${
-                    seconds > 0 && !isSaving
-                      ? "bg-gradient-to-r from-green-600 to-green-700 text-white hover:shadow-lg hover:shadow-green-200"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  }`}
+                  onClick={pauseTimer}
+                  className="col-span-1 bg-yellow-500 text-white py-3 rounded-xl font-semibold hover:bg-yellow-600 transition flex items-center justify-center gap-2"
                 >
-                  {isSaving ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-5 h-5" />
-                      Finish
-                    </>
-                  )}
+                  <Pause className="w-4 h-4" /> Pause
                 </button>
-
-                <button
-                  onClick={onClose}
-                  className="col-span-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 font-semibold py-4 rounded-xl hover:bg-gray-200 transition-all hover:scale-105"
-                >
-                  <X className="w-5 h-5" />
-                  Close
-                </button>
-              </div>
-
-              {seconds > 0 && (
-                <p className="text-center text-sm text-gray-500 mt-6">
-                  {Math.floor(seconds / 60)} minute{Math.floor(seconds / 60) !== 1 ? 's' : ''} of focus
-                </p>
               )}
+              
+              <button
+                onClick={resetTimer}
+                className="col-span-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-300 transition flex items-center justify-center gap-2"
+              >
+                <RotateCcw className="w-4 h-4" /> Reset
+              </button>
+              
+              <button
+                onClick={saveSession}
+                disabled={time === 0 || isSaving}
+                className={`col-span-1 py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2 ${
+                  time > 0
+                    ? "bg-green-600 text-white hover:bg-green-700"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
+              >
+                {isSaving ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" /> Finish
+                  </>
+                )}
+              </button>
             </div>
+            
+            <button
+              onClick={closeModal}
+              className="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-semibold hover:bg-gray-200 transition"
+            >
+              Close
+            </button>
           </div>
         </div>
       </div>
 
       {/* Success Modal */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-[60] overflow-y-auto">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowSuccessModal(false)} />
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-md transform overflow-hidden rounded-3xl bg-white shadow-2xl transition-all animate-slide-up">
-              <div className="p-8 text-center">
-                <div className="w-20 h-20 bg-green-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-10 h-10 text-green-600" />
-                </div>
-                <h3 className="font-heading text-2xl font-bold text-gray-900 mb-2">
-                  Session Saved! 🎉
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Great job! You've completed {Math.floor(seconds / 60)} minute{Math.floor(seconds / 60) !== 1 ? 's' : ''} of focused work.
-                </p>
-                <div className="bg-green-50 rounded-xl p-4 mb-6">
-                  <p className="text-sm text-green-700">
-                    ✓ Session logged to your progress tracker
-                  </p>
-                </div>
-                <button
-                  onClick={handleCloseSuccessModal}
-                  className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold py-4 rounded-xl hover:shadow-lg hover:shadow-green-200 transition-all"
-                >
-                  Continue
-                </button>
-              </div>
+      {showSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-md mx-4 p-8 text-center shadow-2xl">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-10 h-10 text-green-600" />
             </div>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">Session Saved! 🎉</h3>
+            <p className="text-gray-600 mb-4">
+              Great job! You've completed {minutes} minute{minutes !== 1 ? 's' : ''} of focused work.
+            </p>
+            <div className="bg-green-50 rounded-xl p-3 mb-6">
+              <p className="text-sm text-green-700">✓ Session logged to your progress tracker</p>
+            </div>
+            <button
+              onClick={closeSuccess}
+              className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition"
+            >
+              Continue
+            </button>
           </div>
         </div>
       )}
-
-      {/* Error Modal */}
-      {showErrorModal && (
-        <div className="fixed inset-0 z-[60] overflow-y-auto">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowErrorModal(false)} />
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-md transform overflow-hidden rounded-3xl bg-white shadow-2xl transition-all animate-slide-up">
-              <div className="p-8 text-center">
-                <div className="w-20 h-20 bg-red-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
-                  <AlertCircle className="w-10 h-10 text-red-600" />
-                </div>
-                <h3 className="font-heading text-2xl font-bold text-gray-900 mb-2">
-                  Oops! Something went wrong
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  {errorMessage}
-                </p>
-                <div className="bg-red-50 rounded-xl p-4 mb-6">
-                  <p className="text-sm text-red-700">
-                    ✨ Don't worry, your focus time is still counting
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setShowErrorModal(false)}
-                    className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold py-4 rounded-xl hover:shadow-lg hover:shadow-red-200 transition-all"
-                  >
-                    Try Again
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowErrorModal(false);
-                      onClose();
-                    }}
-                    className="flex-1 border border-gray-200 text-gray-700 font-semibold py-4 rounded-xl hover:bg-gray-50 transition-all"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <style jsx>{`
-        @keyframes slide-up {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-slide-up {
-          animation: slide-up 0.3s ease-out;
-        }
-      `}</style>
     </>
   );
 };

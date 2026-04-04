@@ -11,6 +11,7 @@ import {
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import FocusTimerModal from "../components/FocusTimerModal";
+  
 
 /* ─────────────────────────────────────────────
    Custom Modal Component

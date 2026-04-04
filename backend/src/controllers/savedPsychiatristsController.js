@@ -48,12 +48,19 @@ export const getMyPsychiatrists = async (req, res) => {
 
 export const removePsychiatrist = async (req, res) => {
   try {
+    const deleted = await SavedPsychiatrists.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user._id,
+    });
 
-    await SavedPsychiatrists.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: "Saved psychiatrist not found" });
+    }
 
     res.json({ message: "Removed" });
 
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: "Server error" });
   }
 };

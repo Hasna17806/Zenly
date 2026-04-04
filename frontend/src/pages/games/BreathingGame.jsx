@@ -15,6 +15,10 @@ const BreathingGame = () => {
   const [isActive, setIsActive] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [totalSeconds, setTotalSeconds] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
+
   const phaseRef = useRef(phase);
   const cyclesRef = useRef(cycles);
   phaseRef.current = phase;
@@ -27,11 +31,14 @@ const BreathingGame = () => {
     let interval;
     if (isActive && phase !== "ready") {
       interval = setInterval(() => {
-        setTimer(prev => {
-          if (prev <= 1) { nextPhase(); return 0; }
+        setTimer((prev) => {
+          if (prev <= 1) {
+            nextPhase();
+            return 0;
+          }
           return prev - 1;
         });
-        setTotalSeconds(s => s + 1);
+        setTotalSeconds((s) => s + 1);
       }, 1000);
     }
     return () => clearInterval(interval);
@@ -40,58 +47,92 @@ const BreathingGame = () => {
   const nextPhase = () => {
     const p = phaseRef.current;
     const c = cyclesRef.current;
-    if (p === "inhale") { setPhase("hold"); setTimer(phases.hold); }
-    else if (p === "hold") { setPhase("exhale"); setTimer(phases.exhale); }
-    else if (p === "exhale") {
-      if (c + 1 >= totalCycles) { finishSession(); }
-      else { setCycles(c + 1); setPhase("inhale"); setTimer(phases.inhale); }
+
+    if (p === "inhale") {
+      setPhase("hold");
+      setTimer(phases.hold);
+    } else if (p === "hold") {
+      setPhase("exhale");
+      setTimer(phases.exhale);
+    } else if (p === "exhale") {
+      if (c + 1 >= totalCycles) {
+        finishSession();
+      } else {
+        setCycles(c + 1);
+        setPhase("inhale");
+        setTimer(phases.inhale);
+      }
     }
   };
 
   const startSession = () => {
-    setIsActive(true); setPhase("inhale");
-    setCycles(0); setTimer(phases.inhale); setTotalSeconds(0);
-  };
-
-  const finishSession = () => { setIsActive(false); setCompleted(true); };
-const handleComplete = async () => {
-  try {
-    setLoading(true);
+    setIsActive(true);
+    setPhase("inhale");
+    setCycles(0);
+    setTimer(phases.inhale);
+    setTotalSeconds(0);
     setErrorMsg("");
-
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-
-    await axios.post(
-      "http://localhost:5000/api/completed-challenges",
-      { challengeId: challenge?._id || challenge?.id },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    setTimeout(() => navigate("/challenges"), 2000);
-  } catch (error) {
-    console.error("Error completing challenge:", error);
-    setErrorMsg(error.response?.data?.message || "Could not complete challenge. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const restart = () => { setCompleted(false); setPhase("ready"); setCycles(0); setTotalSeconds(0); };
-
-  // Circle scale & color per phase
-  const phaseConfig = {
-    ready:  { scale: 1,    color: "#a78bfa", glow: "rgba(167,139,250,0.3)", label: "",              sub: "" },
-    inhale: { scale: 1.32, color: "#60a5fa", glow: "rgba(96,165,250,0.4)",  label: "Inhale",        sub: "Breathe in slowly through your nose" },
-    hold:   { scale: 1.15, color: "#c084fc", glow: "rgba(192,132,252,0.45)",label: "Hold",           sub: "Hold your breath gently" },
-    exhale: { scale: 0.72, color: "#34d399", glow: "rgba(52,211,153,0.4)",  label: "Exhale",        sub: "Release slowly through your mouth" },
   };
+
+  const stopChallenge = () => {
+    setIsActive(false);
+    navigate("/challenges");
+  };
+
+  const finishSession = () => {
+    setIsActive(false);
+    setCompleted(true);
+    setShowPopup(true);
+
+    setTimeout(() => {
+      setShowPopup(false);
+    }, 2200);
+  };
+
+  const handleComplete = async () => {
+    try {
+      setLoading(true);
+      setErrorMsg("");
+
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+      await axios.post(
+        "http://localhost:5000/api/completed-challenges",
+        { challengeId: challenge?._id || challenge?.id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setTimeout(() => navigate("/challenges"), 1800);
+    } catch (error) {
+      console.error("Error completing challenge:", error);
+      setErrorMsg(error.response?.data?.message || "Could not complete challenge. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const restart = () => {
+    setCompleted(false);
+    setPhase("ready");
+    setCycles(0);
+    setTotalSeconds(0);
+    setErrorMsg("");
+  };
+
+  const phaseConfig = {
+    ready:  { scale: 1, color: "#a78bfa", glow: "rgba(167,139,250,0.3)", label: "", sub: "" },
+    inhale: { scale: 1.32, color: "#60a5fa", glow: "rgba(96,165,250,0.4)", label: "Inhale", sub: "Breathe in slowly through your nose" },
+    hold:   { scale: 1.15, color: "#c084fc", glow: "rgba(192,132,252,0.45)", label: "Hold", sub: "Hold your breath gently" },
+    exhale: { scale: 0.72, color: "#34d399", glow: "rgba(52,211,153,0.4)", label: "Exhale", sub: "Release slowly through your mouth" },
+  };
+
   const cfg = phaseConfig[phase];
 
   const progressPercent = isActive
     ? ((cycles + (phase === "exhale" ? 0.8 : phase === "hold" ? 0.4 : 0.1)) / totalCycles) * 100
     : 0;
 
-  const fmt = (s) => `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+  const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
   return (
     <>
@@ -116,6 +157,7 @@ const handleComplete = async () => {
             radial-gradient(ellipse 40% 30% at 90% 80%, rgba(96,165,250,0.07) 0%, transparent 60%);
           font-family: 'DM Sans', sans-serif;
           color: var(--text);
+          position: relative;
         }
 
         .br-main { display: flex; justify-content: center; align-items: center; padding: 5rem 1.5rem 4rem; }
@@ -133,23 +175,13 @@ const handleComplete = async () => {
           position: relative;
           overflow: hidden;
         }
+
         .br-card::before {
           content: '';
           position: absolute;
           top: 0; left: 0; right: 0;
           height: 1px;
           background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-        }
-
-        /* Stars/particles background inside card */
-        .br-particles {
-          position: absolute; inset: 0; overflow: hidden; pointer-events: none; border-radius: var(--radius);
-        }
-        .br-dot {
-          position: absolute;
-          border-radius: 50%;
-          background: rgba(255,255,255,0.5);
-          animation: twinkle var(--dur, 3s) ease-in-out infinite var(--delay, 0s);
         }
 
         .br-badge {
@@ -174,6 +206,7 @@ const handleComplete = async () => {
           margin: 0 0 0.4rem;
           line-height: 1.2;
         }
+
         .br-desc {
           color: var(--muted);
           font-size: 0.9rem;
@@ -182,59 +215,72 @@ const handleComplete = async () => {
           line-height: 1.6;
         }
 
-        /* ── Ready state ── */
         .br-info-grid {
           display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin-bottom: 2rem;
         }
+
         .br-info-cell {
           background: rgba(255,255,255,0.03);
           border: 1px solid var(--border);
           border-radius: 14px;
           padding: 0.9rem 0.5rem;
         }
+
         .br-info-num {
           font-family: 'DM Serif Display', serif;
           font-size: 1.6rem;
           color: var(--text);
           line-height: 1;
         }
-        .br-info-lbl { font-size: 0.68rem; color: var(--muted); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.2rem; }
+
+        .br-info-lbl {
+          font-size: 0.68rem;
+          color: var(--muted);
+          font-weight: 600;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          margin-top: 0.2rem;
+        }
+
+        .br-start-btn, .br-stop-btn, .br-btn-ghost, .br-btn-solid {
+          padding: 1rem;
+          border-radius: 14px;
+          cursor: pointer;
+          font-weight: 600;
+          transition: 0.2s;
+          border: none;
+        }
 
         .br-start-btn {
           width: 100%;
-          padding: 1rem;
           background: linear-gradient(135deg, #7c6fe0, #a78bfa);
           color: white;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 1rem;
-          font-weight: 600;
-          border: none;
-          border-radius: 14px;
-          cursor: pointer;
           box-shadow: 0 8px 30px rgba(124,111,224,0.4);
-          transition: transform 0.15s, box-shadow 0.15s;
-          letter-spacing: 0.02em;
         }
-        .br-start-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(124,111,224,0.55); }
 
-        /* ── Active state ── */
+        .br-stop-btn {
+          width: 100%;
+          margin-top: 1.2rem;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          color: #fca5a5;
+        }
+
+        .br-stop-btn:hover {
+          background: rgba(239,68,68,0.12);
+        }
+
         .br-orb-wrap {
           position: relative; display: flex; align-items: center; justify-content: center;
           width: 220px; height: 220px; margin: 0 auto 2rem;
         }
+
         .br-orb-ring {
           position: absolute; inset: 0; border-radius: 50%;
           border: 1.5px solid var(--border);
           animation: spinSlow 20s linear infinite;
         }
-        .br-orb-ring::after {
-          content: '';
-          position: absolute;
-          top: -3px; left: 50%; transform: translateX(-50%);
-          width: 6px; height: 6px;
-          border-radius: 50%;
-          background: v-bind;
-        }
+
         .br-orb {
           width: 140px; height: 140px;
           border-radius: 50%;
@@ -243,13 +289,12 @@ const handleComplete = async () => {
           display: flex; align-items: center; justify-content: center;
           flex-direction: column;
         }
+
         .br-timer-num {
           font-family: 'DM Serif Display', serif;
           font-size: 2.6rem;
-          line-height: 1;
           color: white;
         }
-        .br-timer-s { font-size: 0.8rem; color: rgba(255,255,255,0.6); font-weight: 500; }
 
         .br-phase-label {
           font-family: 'DM Serif Display', serif;
@@ -257,9 +302,9 @@ const handleComplete = async () => {
           color: var(--text);
           margin: 0 0 0.3rem;
         }
+
         .br-phase-sub { color: var(--muted); font-size: 0.88rem; margin-bottom: 1.6rem; }
 
-        /* Progress bar */
         .br-progress-track {
           height: 4px;
           background: rgba(255,255,255,0.06);
@@ -267,35 +312,43 @@ const handleComplete = async () => {
           overflow: hidden;
           margin-bottom: 1rem;
         }
+
         .br-progress-fill {
           height: 100%;
           border-radius: 4px;
           transition: width 1s linear, background 0.6s ease;
         }
+
         .br-cycle-row {
           display: flex; justify-content: center; gap: 0.5rem;
         }
+
         .br-cycle-dot {
           width: 8px; height: 8px; border-radius: 50%;
           border: 1.5px solid rgba(255,255,255,0.2);
-          transition: background 0.4s, border-color 0.4s;
         }
-        .br-cycle-dot.done { background: #a78bfa; border-color: #a78bfa; }
-        .br-cycle-dot.active { background: transparent; border-color: #e9d5ff; box-shadow: 0 0 6px #a78bfa; }
 
-        /* ── Completed ── */
+        .br-cycle-dot.done { background: #a78bfa; border-color: #a78bfa; }
+        .br-cycle-dot.active { border-color: #e9d5ff; box-shadow: 0 0 6px #a78bfa; }
+
         .br-complete-icon {
-          font-size: 3.5rem; margin-bottom: 0.5rem;
+          font-size: 3.5rem;
+          margin-bottom: 0.5rem;
           animation: floatIcon 3s ease-in-out infinite;
           display: block;
         }
+
         .br-complete-title {
           font-family: 'DM Serif Display', serif;
-          font-size: 2rem; color: var(--text); margin: 0 0 0.4rem;
+          font-size: 2rem;
+          color: var(--text);
+          margin: 0 0 0.4rem;
         }
+
         .br-stat-row {
           display: flex; gap: 0.8rem; justify-content: center; margin: 1.6rem 0;
         }
+
         .br-stat-box {
           flex: 1;
           background: rgba(255,255,255,0.03);
@@ -303,43 +356,92 @@ const handleComplete = async () => {
           border-radius: 14px;
           padding: 0.9rem 0.6rem;
         }
-        .br-stat-val { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--text); }
-        .br-stat-lbl { font-size: 0.68rem; color: var(--muted); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+
+        .br-stat-val {
+          font-family: 'DM Serif Display', serif;
+          font-size: 1.5rem;
+          color: var(--text);
+        }
+
+        .br-stat-lbl {
+          font-size: 0.68rem;
+          color: var(--muted);
+          font-weight: 600;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
 
         .br-btn-row { display: flex; gap: 0.8rem; }
+
         .br-btn-ghost {
-          flex: 1; padding: 0.9rem;
+          flex: 1;
           background: rgba(255,255,255,0.04);
           border: 1px solid var(--border);
           color: var(--muted);
-          font-family: 'DM Sans', sans-serif;
-          font-size: 0.95rem; font-weight: 600;
-          border-radius: 14px; cursor: pointer;
-          transition: color 0.2s, border-color 0.2s, background 0.2s;
         }
-        .br-btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.06); }
 
         .br-btn-solid {
-          flex: 1.5; padding: 0.9rem;
+          flex: 1.5;
           background: linear-gradient(135deg, #34d399, #059669);
           color: white;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 0.95rem; font-weight: 600;
-          border: none; border-radius: 14px; cursor: pointer;
-          box-shadow: 0 6px 24px rgba(52,211,153,0.3);
-          transition: transform 0.15s, box-shadow 0.15s;
         }
-        .br-btn-solid:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(52,211,153,0.45); }
 
-        /* Animations */
-        @keyframes twinkle {
-          0%,100% { opacity: 0.15; transform: scale(1); }
-          50%      { opacity: 0.6;  transform: scale(1.4); }
+        .br-error {
+          margin-top: 1rem;
+          color: #fca5a5;
+          font-size: 0.9rem;
         }
+
+        .br-popup {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.45);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+          animation: fadeIn 0.3s ease;
+        }
+
+        .br-popup-card {
+          background: rgba(18, 22, 36, 0.95);
+          border: 1px solid rgba(255,255,255,0.08);
+          padding: 2rem 2.4rem;
+          border-radius: 24px;
+          text-align: center;
+          box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+          animation: popIn 0.45s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        .br-popup-icon {
+          font-size: 3rem;
+          margin-bottom: 0.7rem;
+          animation: floatIcon 2.5s ease-in-out infinite;
+        }
+
+        .br-popup-title {
+          font-family: 'DM Serif Display', serif;
+          font-size: 1.8rem;
+          margin-bottom: 0.4rem;
+        }
+
+        .br-popup-text {
+          color: var(--muted);
+          font-size: 0.95rem;
+        }
+
         @keyframes spinSlow { to { transform: rotate(360deg); } }
         @keyframes floatIcon {
           0%,100% { transform: translateY(0); }
-          50%     { transform: translateY(-8px); }
+          50% { transform: translateY(-8px); }
+        }
+        @keyframes popIn {
+          from { transform: scale(0.8); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
       `}</style>
 
@@ -347,26 +449,10 @@ const handleComplete = async () => {
         <Navbar />
         <main className="br-main">
           <div className="br-card">
-
-            {/* Particle dots */}
-            <div className="br-particles">
-              {[...Array(18)].map((_, i) => (
-                <div key={i} className="br-dot" style={{
-                  width: `${1 + Math.random() * 2}px`,
-                  height: `${1 + Math.random() * 2}px`,
-                  top: `${Math.random() * 100}%`,
-                  left: `${Math.random() * 100}%`,
-                  '--dur': `${2.5 + Math.random() * 3}s`,
-                  '--delay': `${Math.random() * 3}s`,
-                }} />
-              ))}
-            </div>
-
             <div className="br-badge">✦ Mindfulness Exercise</div>
             <h1 className="br-title">{challenge?.title || "4-7-8 Breathing"}</h1>
             <p className="br-desc">Calm your nervous system and restore inner clarity</p>
 
-            {/* ── Ready ── */}
             {!isActive && !completed && (
               <>
                 <div className="br-info-grid">
@@ -389,16 +475,18 @@ const handleComplete = async () => {
               </>
             )}
 
-            {/* ── Active ── */}
             {isActive && (
               <>
                 <div className="br-orb-wrap">
-                  <div className="br-orb-ring" style={{ borderColor: cfg.color + '40' }} />
-                  <div className="br-orb" style={{
-                    transform: `scale(${cfg.scale})`,
-                    background: `radial-gradient(circle at 35% 35%, ${cfg.color}dd, ${cfg.color}88)`,
-                    boxShadow: `0 0 40px ${cfg.glow}, 0 0 80px ${cfg.glow}`,
-                  }}>
+                  <div className="br-orb-ring" style={{ borderColor: cfg.color + "40" }} />
+                  <div
+                    className="br-orb"
+                    style={{
+                      transform: `scale(${cfg.scale})`,
+                      background: `radial-gradient(circle at 35% 35%, ${cfg.color}dd, ${cfg.color}88)`,
+                      boxShadow: `0 0 40px ${cfg.glow}, 0 0 80px ${cfg.glow}`,
+                    }}
+                  >
                     <span className="br-timer-num">{timer}</span>
                     <span className="br-timer-s">sec</span>
                   </div>
@@ -408,20 +496,30 @@ const handleComplete = async () => {
                 <p className="br-phase-sub">{cfg.sub}</p>
 
                 <div className="br-progress-track">
-                  <div className="br-progress-fill" style={{
-                    width: `${progressPercent}%`,
-                    background: `linear-gradient(90deg, #7c6fe0, ${cfg.color})`,
-                  }} />
+                  <div
+                    className="br-progress-fill"
+                    style={{
+                      width: `${progressPercent}%`,
+                      background: `linear-gradient(90deg, #7c6fe0, ${cfg.color})`,
+                    }}
+                  />
                 </div>
+
                 <div className="br-cycle-row">
                   {[...Array(totalCycles)].map((_, i) => (
-                    <div key={i} className={`br-cycle-dot ${i < cycles ? 'done' : i === cycles ? 'active' : ''}`} />
+                    <div
+                      key={i}
+                      className={`br-cycle-dot ${i < cycles ? "done" : i === cycles ? "active" : ""}`}
+                    />
                   ))}
                 </div>
+
+                <button className="br-stop-btn" onClick={stopChallenge}>
+                  Stop Challenge
+                </button>
               </>
             )}
 
-            {/* ── Completed ── */}
             {completed && (
               <>
                 <span className="br-complete-icon">🌿</span>
@@ -445,14 +543,27 @@ const handleComplete = async () => {
 
                 <div className="br-btn-row">
                   <button className="br-btn-ghost" onClick={restart}>Practice Again</button>
-                  <button className="br-btn-solid" onClick={handleComplete}>Finish →</button>
+                  <button className="br-btn-solid" onClick={handleComplete} disabled={loading}>
+                    {loading ? "Saving..." : "Finish →"}
+                  </button>
                 </div>
+
+                {errorMsg && <p className="br-error">{errorMsg}</p>}
               </>
             )}
-
           </div>
         </main>
         <Footer />
+
+        {showPopup && (
+          <div className="br-popup">
+            <div className="br-popup-card">
+              <div className="br-popup-icon">✨</div>
+              <h3 className="br-popup-title">Challenge Completed!</h3>
+              <p className="br-popup-text">Take a deep breath — you did great 🌿</p>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

@@ -4,12 +4,40 @@ import Footer from '../components/Footer';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+// SVG Icons
+const SparkleIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2L15 9H22L16 14L19 21L12 16.5L5 21L8 14L2 9H9L12 2Z" />
+  </svg>
+);
+
+const PlayIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="5 3 19 12 5 21 5 3" />
+  </svg>
+);
+
+const RefreshIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M23 4v6h-6M1 20v-6h6" />
+    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+  </svg>
+);
+
+const ArrowRightIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <polyline points="12 5 19 12 12 19" />
+  </svg>
+);
+
 const ChallengesPage = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('Mood Boost');
   const [challenges, setChallenges] = useState([]);
   const [completedChallenges, setCompletedChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [justCompletedId, setJustCompletedId] = useState(null);
 
   const categories = [
     { name: 'Mood Boost', icon: '🌿' },
@@ -107,8 +135,8 @@ const ChallengesPage = () => {
       },
       {
         id: 'emoji-match',
-        title: 'Emoji Match',
-        description: 'Match emotions by dragging emojis',
+        title: 'Mood Decode',
+        description: 'Notice what you feel before it controls you.',
         time: '2 mins',
         image: 'https://res.cloudinary.com/dkqjn6dqw/image/upload/v1772260984/download__41_-removebg-preview_tdx3l6.png',
         moodTag: ['happy/Energetic', 'sad/Low'],
@@ -193,7 +221,9 @@ const ChallengesPage = () => {
       );
 
       const apiChallenges = (response.data || []).map((challenge) => ({
+        _id: challenge._id,
         id: challenge._id,
+        staticId: challenge.gameType || challenge.title?.toLowerCase().replace(/\s+/g, '-'),
         title: challenge.title,
         description: challenge.description,
         time: challenge.duration || '2 mins',
@@ -205,15 +235,31 @@ const ChallengesPage = () => {
       const mergedChallenges = [...apiChallenges];
 
       const staticChallenges = allChallenges[activeCategory] || [];
+
       staticChallenges.forEach((staticChallenge) => {
-        const alreadyExists = apiChallenges.some(
+        const matchedApiChallenge = apiChallenges.find(
           (apiChallenge) =>
             apiChallenge.title.trim().toLowerCase() ===
             staticChallenge.title.trim().toLowerCase()
         );
 
-        if (!alreadyExists) {
-          mergedChallenges.push(staticChallenge);
+        if (matchedApiChallenge) {
+          const index = mergedChallenges.findIndex((c) => c._id === matchedApiChallenge._id);
+          if (index !== -1) {
+            mergedChallenges[index] = {
+              ...matchedApiChallenge,
+              ...staticChallenge,
+              _id: matchedApiChallenge._id,
+              id: matchedApiChallenge._id,
+              staticId: staticChallenge.id,
+            };
+          }
+        } else {
+          mergedChallenges.push({
+            ...staticChallenge,
+            _id: null,
+            staticId: staticChallenge.id,
+          });
         }
       });
 
@@ -249,6 +295,28 @@ const ChallengesPage = () => {
     }
   };
 
+  const markChallengeAsCompleted = async (challenge) => {
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token) return;
+
+      const challengeId = challenge._id || challenge.id;
+      
+      await axios.post(
+        'http://localhost:5000/api/completed-challenges',
+        { challengeId: challengeId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setJustCompletedId(challengeId);
+      setTimeout(() => setJustCompletedId(null), 2000);
+
+      await fetchCompletedChallenges();
+    } catch (error) {
+      console.error('Error marking challenge as completed:', error);
+    }
+  };
+
   const handlePlayChallenge = (challenge) => {
     const routes = {
       breathing: '/games/breathe',
@@ -269,10 +337,15 @@ const ChallengesPage = () => {
       timer: '/games/timer',
     };
 
+    markChallengeAsCompleted(challenge);
     navigate(routes[challenge.gameType] || '/games/timer', { state: { challenge } });
   };
 
-  const isCompleted = (challenge) => completedChallenges.includes(challenge.id);
+  const hasBeenPlayed = (challenge) => {
+    const challengeId = challenge._id || challenge.id;
+    return completedChallenges.includes(challengeId);
+  };
+
   const getCompletedCount = () => completedChallenges.length;
 
   return (
@@ -387,6 +460,16 @@ const ChallengesPage = () => {
           margin-bottom: 44px;
         }
 
+        @keyframes chPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.02); background: #f0fff8; }
+        }
+
+        .ch-card.just-completed {
+          animation: chPulse 0.5s ease-in-out;
+          border-color: #4caf84;
+        }
+
         @media (max-width: 760px) {
           .ch-grid { grid-template-columns: 1fr; }
           .ch-tabs { flex-wrap: wrap; border-radius: 16px; }
@@ -409,11 +492,6 @@ const ChallengesPage = () => {
           border-color: #b8ddd8;
         }
 
-        .ch-card.done {
-          border-color: #a8d5c2;
-          background: #f8fdfb;
-        }
-
         .ch-img-panel {
           width: 185px;
           flex-shrink: 0;
@@ -424,10 +502,6 @@ const ChallengesPage = () => {
           overflow: hidden;
           position: relative;
           padding-top: 10px;
-        }
-
-        .ch-card.done .ch-img-panel {
-          background: linear-gradient(155deg, #e6f7ef 0%, #ceeee2 100%);
         }
 
         .ch-img-panel img {
@@ -527,6 +601,10 @@ const ChallengesPage = () => {
           color: #3d5a58;
           cursor: pointer;
           transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
         }
 
         .ch-start-btn:hover {
@@ -538,18 +616,12 @@ const ChallengesPage = () => {
 
         .ch-start-btn:active { transform: scale(0.98); }
 
-        .ch-start-btn.done-btn {
-          background: #eaf7f1;
-          border-color: #a8d5c2;
-          color: #4caf84;
-          cursor: default;
+        .ch-start-btn svg {
+          transition: transform 0.2s ease;
         }
 
-        .ch-start-btn.done-btn:hover {
-          background: #eaf7f1;
-          color: #4caf84;
-          border-color: #a8d5c2;
-          box-shadow: none;
+        .ch-start-btn:hover svg {
+          transform: scale(1.1);
         }
 
         .ch-loading {
@@ -624,7 +696,7 @@ const ChallengesPage = () => {
         .ch-banner-btn {
           display: inline-flex;
           align-items: center;
-          gap: 6px;
+          gap: 8px;
           padding: 12px 28px;
           background: #fff;
           color: #3d7a73;
@@ -676,13 +748,18 @@ const ChallengesPage = () => {
             ) : (
               <div className="ch-grid">
                 {challenges.length > 0 ? challenges.map((challenge) => {
-                  const completed = isCompleted(challenge);
+                  const played = hasBeenPlayed(challenge);
+                  const challengeId = challenge._id || challenge.id;
+                  const justCompleted = justCompletedId === challengeId;
+                  
                   return (
-                    <div key={challenge.id} className={`ch-card ${completed ? 'done' : ''}`}>
-
+                    <div 
+                      key={challenge.id} 
+                      className={`ch-card ${justCompleted ? 'just-completed' : ''}`}
+                    >
                       <div className="ch-img-panel">
                         <img src={challenge.image} alt={challenge.title} />
-                        {completed && <span className="ch-done-badge">✓</span>}
+                        {justCompleted && <span className="ch-done-badge">✓</span>}
                       </div>
 
                       <div className="ch-card-body">
@@ -700,13 +777,22 @@ const ChallengesPage = () => {
                         </div>
 
                         <button
-                          className={`ch-start-btn ${completed ? 'done-btn' : ''}`}
-                          onClick={() => !completed && handlePlayChallenge(challenge)}
+                          className="ch-start-btn"
+                          onClick={() => handlePlayChallenge(challenge)}
                         >
-                          {completed ? '✓ Completed' : 'Start'}
+                          {played ? (
+                            <>
+                              <RefreshIcon />
+                              Play Again
+                            </>
+                          ) : (
+                            <>
+                              <SparkleIcon />
+                              Start
+                            </>
+                          )}
                         </button>
                       </div>
-
                     </div>
                   );
                 }) : (
@@ -721,19 +807,20 @@ const ChallengesPage = () => {
               <span className="ch-banner-emoji">🎉</span>
               <h3 className="ch-banner-title">
                 {getCompletedCount() > 0
-                  ? `Nice job! You've completed ${getCompletedCount()} challenge${getCompletedCount() !== 1 ? 's' : ''} today.`
+                  ? `Nice job! You've played ${getCompletedCount()} challenge${getCompletedCount() !== 1 ? 's' : ''} today.`
                   : "Ready to start your wellness journey?"}
               </h3>
               <p className="ch-banner-desc">
                 {getCompletedCount() > 0
-                  ? "Zenly uses your daily challenges to help you feel better, step by step."
+                  ? "Keep playing! Each time you complete a challenge, you're building better habits."
                   : "Try a fun challenge to boost your mood and energy!"}
               </p>
               <button
                 className="ch-banner-btn"
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               >
-                Explore All Challenges →
+                Explore All Challenges
+                <ArrowRightIcon />
               </button>
             </div>
 

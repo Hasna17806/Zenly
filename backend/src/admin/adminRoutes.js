@@ -18,6 +18,7 @@ import {
   getMoodDistribution,
   getRecentActivity,
   getDashboardStats,
+  getAllPsychiatristReviews,
 } from "./adminController.js";
 
 import {
@@ -68,6 +69,7 @@ router.get("/users/count", protectAdmin, getUserCount);
 router.get("/users/:id", protectAdmin, getUserById);
 router.put("/users/:id/block", protectAdmin, toggleBlockUser);
 router.delete("/users/:id", protectAdmin, deleteUser);
+router.get("/psychiatrist-reviews", protectAdmin, getAllPsychiatristReviews);
 
 /* ---------------- DASHBOARD STATS ---------------- */
 router.get("/stats", protectAdmin, getDashboardStats);

@@ -10,8 +10,12 @@ const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [avatarError, setAvatarError] = useState(false);
 
   const navigate = useNavigate();
+
+  useEffect(() => { setAvatarError(false); }, [user?.profilePicture]);
+
 
   useEffect(() => {
     checkLoginStatus();
@@ -26,24 +30,38 @@ const Navbar = () => {
     };
   }, []);
 
-  const checkLoginStatus = () => {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    const userEmail = localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail');
-    const userName = localStorage.getItem('userName') || sessionStorage.getItem('userName');
+const checkLoginStatus = async () => {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const userName = localStorage.getItem('userName') || sessionStorage.getItem('userName');
+  const userEmail = localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail');
 
-    if (token) {
-      setIsLoggedIn(true);
-      setUser({
-        email: userEmail || 'user@example.com',
-        name: userName || userEmail?.split('@')[0] || 'User',
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || userEmail || 'User')}&background=3B82F6&color=fff&bold=true`
+  if (token) {
+    setIsLoggedIn(true);
+    setUser({
+      email: userEmail || 'user@example.com',
+      name: userName || userEmail?.split('@')[0] || 'User',
+      profilePicture: null,
+    });
+
+  
+    try {
+      const { data } = await axios.get('http://localhost:5000/api/auth/profile', {
+        headers: { Authorization: `Bearer ${token}` },
       });
-    } else {
-      setIsLoggedIn(false);
-      setUser(null);
-      setUnreadCount(0);
+      setUser({
+        email: data.email,
+        name: data.name,
+        profilePicture: data.profilePicture || null,
+      });
+    } catch (err) {
+      console.error('Could not fetch profile for navbar:', err);
     }
-  };
+  } else {
+    setIsLoggedIn(false);
+    setUser(null);
+    setUnreadCount(0);
+  }
+};
 
   const fetchNotifications = async () => {
     try {
@@ -155,12 +173,23 @@ const Navbar = () => {
 
                 {/* Profile Avatar */}
                 <div className="relative">
-                  <button
-                    onClick={handleProfileClick}
-                    className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-lg hover:bg-blue-700 transition-colors focus:outline-none"
-                  >
-                    {user?.name?.charAt(0).toUpperCase() || 'U'}
-                  </button>
+                 <button
+                  onClick={handleProfileClick}
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-lg hover:bg-blue-700 transition-colors focus:outline-none overflow-hidden"
+                >
+                  {user?.profilePicture && user.profilePicture !== "" && !avatarError ? (
+                    <img
+                      src={user.profilePicture.startsWith("http")
+                        ? user.profilePicture
+                        : `http://localhost:5000/${user.profilePicture}`}
+                      alt="Profile"
+                      className="w-full h-full object-cover rounded-full"
+                      onError={() => setAvatarError(true)}
+                    />
+                  ) : (
+                    <span>{user?.name?.charAt(0).toUpperCase() || 'U'}</span>
+                  )}
+                </button>
 
                   {/* Profile Dropdown Menu */}
                   {isProfileMenuOpen && (

@@ -39,13 +39,6 @@ export const bookAppointment = async (req, res) => {
 
     await appointment.save();
 
-    await Notification.create({
-      userId: req.user._id,
-      title: "Appointment Requested",
-      message: `Your appointment request has been sent to Dr. ${doctorName}.`,
-      type: "appointment"
-    });
-
     res.status(201).json({
       message: "Appointment request sent",
       appointment
@@ -95,6 +88,20 @@ export const acceptAppointment = async (req, res) => {
       });
     }
 
+    // Check if appointment is already accepted
+    if (appointment.status === "Accepted") {
+      return res.status(400).json({
+        message: "Appointment already accepted"
+      });
+    }
+
+    // Check if appointment is rejected
+    if (appointment.status === "Rejected") {
+      return res.status(400).json({
+        message: "Cannot accept a rejected appointment"
+      });
+    }
+
     const psychiatrist = await Psychiatrist.findById(appointment.psychiatristId);
 
     if (!psychiatrist) {
@@ -111,6 +118,7 @@ export const acceptAppointment = async (req, res) => {
 
     await appointment.save();
 
+    // ✅ KEEP - Notification for accepted appointment
     await Notification.create({
       userId: appointment.userId,
       title: "Appointment Accepted",
@@ -141,6 +149,20 @@ export const rejectAppointment = async (req, res) => {
       });
     }
 
+    // Check if appointment is already accepted
+    if (appointment.status === "Accepted") {
+      return res.status(400).json({
+        message: "Cannot reject an already accepted appointment"
+      });
+    }
+
+    // Check if appointment is already rejected
+    if (appointment.status === "Rejected") {
+      return res.status(400).json({
+        message: "Appointment already rejected"
+      });
+    }
+
     const psychiatrist = await Psychiatrist.findById(appointment.psychiatristId);
 
     if (!psychiatrist) {
@@ -155,6 +177,7 @@ export const rejectAppointment = async (req, res) => {
 
     await appointment.save();
 
+    // ✅ KEEP - Notification for rejected appointment
     await Notification.create({
       userId: appointment.userId,
       title: "Appointment Rejected",
@@ -207,11 +230,34 @@ export const cancelAppointment = async (req, res) => {
       });
     }
 
+    // Check if appointment is already accepted
+    if (appointment.status === "Accepted") {
+      return res.status(400).json({
+        message: "Cannot cancel an accepted appointment. Please contact the psychiatrist directly."
+      });
+    }
+
+    // Check if appointment is already rejected
+    if (appointment.status === "Rejected") {
+      return res.status(400).json({
+        message: "Cannot cancel a rejected appointment"
+      });
+    }
+
+    // Check if appointment is already cancelled
+    if (appointment.status === "Cancelled") {
+      return res.status(400).json({
+        message: "Appointment already cancelled"
+      });
+    }
+
     const psychiatrist = await Psychiatrist.findById(appointment.psychiatristId);
     const doctorName = psychiatrist ? cleanDoctorName(psychiatrist.name) : "your psychiatrist";
 
-    await appointment.deleteOne();
+    appointment.status = "Cancelled";
+    await appointment.save();
 
+    // ✅ KEEP - Notification for cancelled appointment
     await Notification.create({
       userId: req.user._id,
       title: "Appointment Cancelled",
@@ -225,6 +271,29 @@ export const cancelAppointment = async (req, res) => {
 
   } catch (error) {
     console.error("CANCEL APPOINTMENT ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/* GET APPOINTMENT BY ID */
+export const getAppointmentById = async (req, res) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id)
+      .populate("psychiatristId", "name specialization")
+      .populate("userId", "name email");
+    
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+    
+    // Check authorization
+    if (appointment.userId._id.toString() !== req.user._id.toString() && 
+        appointment.psychiatristId._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    res.json(appointment);
+  } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
