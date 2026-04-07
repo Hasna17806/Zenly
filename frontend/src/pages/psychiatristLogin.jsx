@@ -10,27 +10,31 @@ export default function PsychiatristLogin() {
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-  setError("");
-  setLoading(true);
-  try {
-    localStorage.removeItem("token");
-    sessionStorage.removeItem("token");
+    setError("");
+    setLoading(true);
+    try {
+      localStorage.removeItem("token");
+      sessionStorage.removeItem("token");
 
-    const res = await axios.post(
-      "http://localhost:5000/api/psychiatrist/login",
-      { email, password }
-    );
+      const res = await axios.post(
+        "http://localhost:5000/api/psychiatrist/login",
+        { email, password }
+      );
 
-    localStorage.setItem("psychiatristToken", res.data.token);
+      // Store both token and role
+      localStorage.setItem("psychiatristToken", res.data.token);
+      localStorage.setItem("role", "psychiatrist");  // ✅ ADD THIS LINE
+      
+      console.log("Psychiatrist logged in - Role set to:", localStorage.getItem("role"));
 
-    navigate("/psychiatrist/dashboard");
-  } catch (err) {
-    console.log(err);
-    setError("Invalid email or password. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+      navigate("/psychiatrist/dashboard");
+    } catch (err) {
+      console.log(err);
+      setError("Invalid email or password. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleLogin();
@@ -248,8 +252,6 @@ export default function PsychiatristLogin() {
           <div className="login-logo-zone">
              <img src="https://res.cloudinary.com/dkqjn6dqw/image/upload/v1771944890/s__1_-removebg-preview_b54v9c.png" alt="zenly logo" 
              className="w-40 h-auto" />
-            
-           
           </div>
 
           <div className="login-eyebrow">Psychiatrist Portal</div>

@@ -35,7 +35,7 @@ const challengeSchema = mongoose.Schema(
       default: [],
     },
 
-    // ADD THIS FIELD - maps to game routes
+    // ADD THIS FIELD 
     gameType: {
       type: String,
       enum: [

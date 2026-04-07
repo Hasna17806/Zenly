@@ -12,7 +12,7 @@ const PsychiatristSession = () => {
           <h2 className="session-title">Consultation Session</h2>
           <p className="session-sub">Live chat with patient</p>
         </div>
-        <SessionChat appointmentId={appointmentId} />
+        <SessionChat appointmentId={appointmentId} viewerRole="psychiatrist" />
       </div>
 
       <style>{`

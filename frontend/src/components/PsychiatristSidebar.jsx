@@ -29,8 +29,8 @@ const PsychiatristSidebar = () => {
       ),
     },
     {
-      to: "/psychiatrist/session/:appointmentId",
-      label: "Session Chat",
+      to: "/psychiatrist/chats",
+      label: "Messages",
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -70,7 +70,6 @@ const PsychiatristSidebar = () => {
           z-index: 100;
         }
 
-        /* Custom scrollbar for sidebar */
         .psy-sidebar::-webkit-scrollbar {
           width: 4px;
         }
@@ -96,7 +95,6 @@ const PsychiatristSidebar = () => {
           pointer-events: none;
         }
 
-        /* ── Logo Zone ── */
         .psy-logo-zone {
           padding: 32px 24px 28px;
           display: flex;
@@ -122,7 +120,6 @@ const PsychiatristSidebar = () => {
           text-transform: uppercase;
         }
 
-        /* ── Role Header ── */
         .psy-header {
           padding: 24px 24px 20px;
           border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -153,7 +150,6 @@ const PsychiatristSidebar = () => {
           letter-spacing: 0.01em;
         }
 
-        /* ── Nav ── */
         .psy-nav {
           flex: 1;
           padding: 20px 16px;
@@ -223,7 +219,6 @@ const PsychiatristSidebar = () => {
           opacity: 1;
         }
 
-        /* ── Footer ── */
         .psy-footer {
           padding: 20px 16px 28px;
           border-top: 1px solid rgba(255,255,255,0.06);
@@ -257,13 +252,11 @@ const PsychiatristSidebar = () => {
           height: 18px;
         }
 
-        /* Main content offset - add this to your main container */
         .main-content {
           margin-left: 260px;
           min-height: 100vh;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
           .psy-sidebar {
             width: 220px;
@@ -285,8 +278,6 @@ const PsychiatristSidebar = () => {
       `}</style>
 
       <div className="psy-sidebar">
-
-        {/* Logo Zone */}
         <div className="psy-logo-zone">
           <img 
             src="https://res.cloudinary.com/dkqjn6dqw/image/upload/v1771944890/s__1_-removebg-preview_b54v9c.png" 
@@ -295,14 +286,12 @@ const PsychiatristSidebar = () => {
           />
         </div>
 
-        {/* Role Header */}
         <div className="psy-header">
           <div className="psy-role-tag">Portal</div>
           <h2 className="psy-title">Psychiatrist</h2>
           <p className="psy-subtitle">Patient Management</p>
         </div>
 
-        {/* Nav Links */}
         <nav className="psy-nav">
           <div className="psy-nav-label">Menu</div>
           {navItems.map(({ to, label, icon }) => (
@@ -317,12 +306,13 @@ const PsychiatristSidebar = () => {
           ))}
         </nav>
 
-        {/* Logout */}
         <div className="psy-footer">
           <button
             className="psy-logout"
             onClick={() => {
               localStorage.removeItem("psychiatristToken");
+              localStorage.removeItem("token");
+              localStorage.removeItem("role");
               window.location.href = "/psychiatrist/login";
             }}
           >
@@ -334,7 +324,6 @@ const PsychiatristSidebar = () => {
             Logout
           </button>
         </div>
-
       </div>
     </>
   );

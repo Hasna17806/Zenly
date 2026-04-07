@@ -17,8 +17,6 @@ import NotificationsPage from './pages/NotificationsPage';
 import ProgressPage from './pages/ProgressPage';
 import "./utils/axiosConfig";
 
-
-
 // Import all 15 game components
 import BreathingGame from './pages/games/BreathingGame';
 import GratitudeTapGame from './pages/games/GratitudeTapGame';
@@ -55,12 +53,12 @@ import PsychiatristProfile from './pages/PsychiatristProfile';
 import PsychiatristSession from './pages/PsychiatristSession';
 import ProtectedPsychiatristRoute from './components/ProtectedPsychiatristRoute';
 import MyPsychiatrists from './pages/MyPsychiatrists';
-
+import PsychiatristChatPage from './pages/PsychiatristChatPage';
 
 function App() {
   return (
-    
     <BrowserRouter>
+      <Toaster position="top-right" />
       <Routes>
 
         {/* Public Routes */}
@@ -83,72 +81,28 @@ function App() {
         <Route path="/my-psychiatrists" element={<ProtectedRoute><MyPsychiatrists /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
         <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
-       
 
         {/* Games */}
         <Route path="/games/breathe" element={<ProtectedRoute><BreathingGame /></ProtectedRoute>} />
         <Route path="/games/gratitude-tap" element={<ProtectedRoute><GratitudeTapGame /></ProtectedRoute>} />
         <Route path="/games/smile-challenge" element={<ProtectedRoute><SmileChallengeGame /></ProtectedRoute>} />
         <Route path="/games/calm-taps" element={<ProtectedRoute><CalmTapsGame /></ProtectedRoute>} />
-
         <Route path="/games/focus-sprint" element={<ProtectedRoute><FocusSprintGame /></ProtectedRoute>} />
         <Route path="/games/memory-flip" element={<ProtectedRoute><MemoryFlipGame /></ProtectedRoute>} />
         <Route path="/games/quick-quiz" element={<ProtectedRoute><QuickQuizGame /></ProtectedRoute>} />
         <Route path="/games/distraction-block" element={<ProtectedRoute><DistractionBlockGame /></ProtectedRoute>} />
-
         <Route path="/games/guess-sound" element={<ProtectedRoute><GuessSoundGame /></ProtectedRoute>} />
         <Route path="/games/emoji-match" element={<ProtectedRoute><EmojiMatchGame /></ProtectedRoute>} />
         <Route path="/games/tap-star" element={<ProtectedRoute><TapStarGame /></ProtectedRoute>} />
         <Route path="/games/spin-wheel" element={<ProtectedRoute><SpinWheelGame /></ProtectedRoute>} />
-
         <Route path="/games/60-second-breath" element={<ProtectedRoute><SixtySecondBreathGame /></ProtectedRoute>} />
         <Route path="/games/blink-break" element={<ProtectedRoute><BlinkBreakGame /></ProtectedRoute>} />
         <Route path="/games/one-thought" element={<ProtectedRoute><OneThoughtGame /></ProtectedRoute>} />
-
         <Route path="/games/timer" element={<ProtectedRoute><TimerGame /></ProtectedRoute>} />
 
         {/* ================= ADMIN SECTION ================= */}
-
         <Route path="/admin/login" element={<AdminLogin />} />
         
-        {/* Psychiatrist */}
-
-<Route path="/psychiatrist/login" element={<PsychiatristLogin />} />
-<Route 
-  path="/psychiatrist/dashboard" 
-  element={
-    <ProtectedPsychiatristRoute>
-      <PsychiatristDashboard />
-    </ProtectedPsychiatristRoute>
-  } 
-/>
-<Route 
-  path="/psychiatrist/appointments" 
-  element={
-    <ProtectedPsychiatristRoute>
-      <PsychiatristAppointments />
-    </ProtectedPsychiatristRoute>
-  } 
-/>
-<Route 
-  path="/psychiatrist/profile" 
-  element={
-    <ProtectedPsychiatristRoute>
-      <PsychiatristProfile />
-    </ProtectedPsychiatristRoute>
-  } 
-/>
-<Route 
-  path="/psychiatrist/session/:appointmentId" 
-  element={
-    <ProtectedPsychiatristRoute>
-      <PsychiatristSession />
-    </ProtectedPsychiatristRoute>
-  } 
-/>
-
-
-        {/* Admin Protected Routes */}
         <Route
           path="/admin"
           element={
@@ -162,12 +116,50 @@ function App() {
           <Route path="psychiatrists" element={<AdminPsychiatrists />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="challenges" element={<AdminChallenges />} />
-
-          
-         
-          {/* <Route path="psychiatrist-login" element={<PsychiatristLogin />} /> */}
         </Route>
 
+        {/* ================= PSYCHIATRIST SECTION ================= */}
+        <Route path="/psychiatrist/login" element={<PsychiatristLogin />} />
+        <Route 
+          path="/psychiatrist/dashboard" 
+          element={
+            <ProtectedPsychiatristRoute>
+              <PsychiatristDashboard />
+            </ProtectedPsychiatristRoute>
+          } 
+        />
+        <Route 
+          path="/psychiatrist/appointments" 
+          element={
+            <ProtectedPsychiatristRoute>
+              <PsychiatristAppointments />
+            </ProtectedPsychiatristRoute>
+          } 
+        />
+        <Route 
+          path="/psychiatrist/chats" 
+          element={
+            <ProtectedPsychiatristRoute>
+              <PsychiatristChatPage />
+            </ProtectedPsychiatristRoute>
+          } 
+        />
+        <Route 
+          path="/psychiatrist/profile" 
+          element={
+            <ProtectedPsychiatristRoute>
+              <PsychiatristProfile />
+            </ProtectedPsychiatristRoute>
+          } 
+        />
+        <Route 
+          path="/psychiatrist/session/:appointmentId" 
+          element={
+            <ProtectedPsychiatristRoute>
+              <PsychiatristSession />
+            </ProtectedPsychiatristRoute>
+          } 
+        />
       </Routes>
     </BrowserRouter>
   );

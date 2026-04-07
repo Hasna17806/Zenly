@@ -7,7 +7,7 @@ import {
   updateChallenge,
   deleteChallenge,
   getAllChallenges,
-  getChallengesByMoodTag
+  getChallengesByMoodTag,
 } from "../controllers/challengeController.js";
 
 const router = express.Router();
