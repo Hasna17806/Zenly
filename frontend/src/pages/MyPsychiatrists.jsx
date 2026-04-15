@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import API from "../api/axios";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import SessionButton from "../components/SessionButton";
 import Modal from "../components/Modal";
 import SessionChat from "./SessionChat";
+import BookingModal from "../components/BookingModal";
+import PaymentButton from "../components/PaymentButton"; // Add this import
 
 const MyPsychiatrists = () => {
   const [list, setList] = useState([]);
@@ -12,6 +14,9 @@ const MyPsychiatrists = () => {
   const [confirm, setConfirm] = useState(null);
   const [toast, setToast] = useState(null);
   const [activeSession, setActiveSession] = useState(null);
+  const [bookingModal, setBookingModal] = useState({ isOpen: false, psychiatrist: null });
+  const [ratings, setRatings] = useState({});
+  const navigate = useNavigate();
 
   const deleteBookingState = (psychiatristId) => {
     setBooking((prev) => {
@@ -46,11 +51,36 @@ const MyPsychiatrists = () => {
       });
 
       setBooking(bookingMap);
+      
+      // Fetch ratings for each psychiatrist
+      await fetchAllRatings(psyRes.data);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchAllRatings = async (psychiatristsList) => {
+    const ratingsData = {};
+    
+    for (const item of psychiatristsList) {
+      const doc = item.psychiatristId || item.psychiatrist;
+      if (!doc) continue;
+      
+      try {
+        const res = await API.get(`/reviews/psychiatrist/${doc._id}`);
+        ratingsData[doc._id] = {
+          average: res.data.averageRating || 0,
+          total: res.data.totalReviews || 0
+        };
+      } catch (error) {
+        console.error(`Error fetching ratings for ${doc._id}:`, error);
+        ratingsData[doc._id] = { average: 0, total: 0 };
+      }
+    }
+    
+    setRatings(ratingsData);
   };
 
   useEffect(() => {
@@ -64,54 +94,13 @@ const MyPsychiatrists = () => {
     }, 3000);
   };
 
-  const bookAppointment = async (psychiatristId) => {
-    setBooking((prev) => ({ ...prev, [psychiatristId]: { status: "pending" } }));
+  const handleBookClick = (psychiatrist) => {
+    setBookingModal({ isOpen: true, psychiatrist });
+  };
 
-    try {
-      const res = await API.post("/appointments/book", { psychiatristId });
-      console.log("BOOK SUCCESS:", res.data);
-
-      setBooking((prev) => ({ ...prev, [psychiatristId]: { status: "pending", appointmentId: res.data.appointment?._id } }));
-
-      showToast(
-        "success",
-        "Appointment Requested",
-        "Your appointment request has been sent. Please wait for confirmation."
-      );
-    } catch (err) {
-      console.error("BOOK ERROR FULL:", err);
-      console.error("BOOK ERROR RESPONSE:", err.response);
-      console.error("BOOK ERROR DATA:", err.response?.data);
-
-      if (err.response?.status === 400) {
-        const errorMsg =
-          err.response?.data?.message || "You already have a pending request.";
-
-        if (
-          errorMsg.toLowerCase().includes("already") ||
-          errorMsg.toLowerCase().includes("pending")
-        ) {
-          setBooking((prev) => ({ ...prev, [psychiatristId]: { status: "pending" } }));
-        } else {
-          deleteBookingState(psychiatristId);
-        }
-
-        showToast("error", "Request Failed", errorMsg);
-        return;
-      }
-
-      setBooking((prev) => ({ ...prev, [psychiatristId]: { status: "error" } }));
-
-      showToast(
-        "error",
-        "Booking Failed",
-        "Failed to book appointment. Please try again."
-      );
-
-      setTimeout(() => {
-        deleteBookingState(psychiatristId);
-      }, 3000);
-    }
+  const handleBookingSuccess = () => {
+    showToast("success", "Appointment Requested", "Your appointment request has been sent. Please wait for confirmation.");
+    fetchMyPsychiatrists();
   };
 
   const removePsychiatrist = async () => {
@@ -144,6 +133,21 @@ const MyPsychiatrists = () => {
 
   const closeSession = () => {
     setActiveSession(null);
+  };
+
+  const handlePaymentSuccess = () => {
+    showToast("success", "Payment Successful", "Your payment has been processed successfully.");
+    fetchMyPsychiatrists();
+  };
+
+  const renderStars = (rating) => {
+    return (
+      <div className="stars-display">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <span key={star} className={`star ${Math.round(rating) >= star ? "filled" : "empty"}`}>★</span>
+        ))}
+      </div>
+    );
   };
 
   /* helpers */
@@ -439,6 +443,40 @@ const MyPsychiatrists = () => {
           flex-shrink:0;
         }
 
+        .rating-container {
+          margin-top: 8px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+        .stars-display {
+          display: flex;
+          gap: 2px;
+        }
+        .star {
+          font-size: 14px;
+        }
+        .star.filled {
+          color: #ffc107;
+        }
+        .star.empty {
+          color: #ddd;
+        }
+        .rating-text {
+          font-size: 13px;
+          color: #A0856A;
+        }
+        .review-count {
+          font-size: 12px;
+          color: #C8A87A;
+          cursor: pointer;
+          text-decoration: underline;
+        }
+        .review-count:hover {
+          color: #A0856A;
+        }
+
         .mp-actions {
           display:flex;
           gap:10px;
@@ -532,6 +570,33 @@ const MyPsychiatrists = () => {
           color:#fff;
           border-color:#B05A5A;
           box-shadow:0 6px 18px rgba(176,90,90,0.18);
+        }
+
+        .session-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 20px;
+          background: #5A9E6A;
+          color: white;
+          border: none;
+          border-radius: 50px;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.22s ease;
+          white-space: nowrap;
+        }
+
+        .session-btn:hover {
+          background: #4A8E5A;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(90, 158, 106, 0.3);
+        }
+
+        .payment-btn-wrapper {
+          display: inline-flex;
         }
 
         .mp-empty {
@@ -757,6 +822,14 @@ const MyPsychiatrists = () => {
         </Modal>
       )}
 
+      {/* Booking Modal */}
+      <BookingModal
+        isOpen={bookingModal.isOpen}
+        onClose={() => setBookingModal({ isOpen: false, psychiatrist: null })}
+        psychiatrist={bookingModal.psychiatrist}
+        onSuccess={handleBookingSuccess}
+      />
+
       <div className="mp-page">
         <Navbar />
 
@@ -812,6 +885,7 @@ const MyPsychiatrists = () => {
                   const pal = palette(doc.name || "");
                   const inits = initials(doc.name || "");
                   const sc = specColor(doc.specialization || "");
+                  const docRatings = ratings[doc._id] || { average: 0, total: 0 };
 
                   return (
                     <div className="mp-card" key={item._id}>
@@ -835,53 +909,83 @@ const MyPsychiatrists = () => {
                           <div className="mp-fee">
                             ₹{doc.consultationFee || "N/A"}
                           </div>
+
+                          {/* Rating Section */}
+                          <div className="rating-container">
+                            <div className="stars-display">
+                              {renderStars(docRatings.average)}
+                            </div>
+                            <span className="rating-text">{docRatings.average.toFixed(1)}</span>
+                            <div 
+                              className="review-count" 
+                              onClick={() => navigate(`/psychiatrist-reviews/${doc._id}`)}
+                            >
+                              {docRatings.total} {docRatings.total === 1 ? "review" : "reviews"}
+                            </div>
+                          </div>
                         </div>
 
                         <div className="mp-actions">
-                          <button
-                            className={`mp-book-btn ${
-                              state === "pending"  ? "mp-book-pend" :
-                              state === "accepted" ? "mp-book-done" :
-                              state === "rejected" ? "mp-book-err"  :
-                              state === "error"    ? "mp-book-err"  :
-                              "mp-book-idle"
-                            }`}
-                            onClick={() => {
-                              if (!state || state === "error" || state === "rejected") {
-                                bookAppointment(doc._id);
-                              }
-                            }}
-                            disabled={state === "pending" || state === "accepted"}
-                          >
-                            {state === "pending" && <><div className="mp-spin" /> Request Pending</>}
-                            {state === "accepted" && <>✓ Request Accepted</>}
-                            {state === "rejected" && <>⚠ Book Again</>}
-                            {state === "error" && <>⚠ Retry</>}
-                            {!state && (
-                              <>
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                  />
-                                </svg>
-                                Book Appointment
-                              </>
-                            )}
-                          </button>
-
-                          {/* Session Button - Only show when appointment is accepted */}
-                          {state === "accepted" && appointmentId && (
+                          {!state && (
                             <button
-                              className="session-btn"
-                              onClick={() => openSession(appointmentId, doc.name)}
+                              className="mp-book-btn mp-book-idle"
+                              onClick={() => handleBookClick(doc)}
                             >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
                               </svg>
-                              Join Session
+                              Book Appointment
+                            </button>
+                          )}
+
+                          {state === "pending" && (
+                            <button className="mp-book-btn mp-book-pend" disabled>
+                              <div className="mp-spin" /> Request Pending
+                            </button>
+                          )}
+
+                          {state === "accepted" && appointmentId && (
+                            <>
+                              <button
+                                className="session-btn"
+                                onClick={() => openSession(appointmentId, doc.name)}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                </svg>
+                                Join Session
+                              </button>
+                              <div className="payment-btn-wrapper">
+                                <PaymentButton 
+                                  appointmentId={appointmentId}
+                                  psychiatristName={doc.name}
+                                  amount={doc.consultationFee}
+                                  onSuccess={handlePaymentSuccess}
+                                />
+                              </div>
+                            </>
+                          )}
+
+                          {state === "rejected" && (
+                            <button
+                              className="mp-book-btn mp-book-err"
+                              onClick={() => handleBookClick(doc)}
+                            >
+                              ⚠ Book Again
+                            </button>
+                          )}
+
+                          {state === "error" && (
+                            <button
+                              className="mp-book-btn mp-book-err"
+                              onClick={() => handleBookClick(doc)}
+                            >
+                              ⚠ Retry
                             </button>
                           )}
 
@@ -910,35 +1014,6 @@ const MyPsychiatrists = () => {
           </div>
         </main>
       </div>
-
-      <style>{`
-        .session-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 20px;
-          background: #5A9E6A;
-          color: white;
-          border: none;
-          border-radius: 50px;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 13px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.22s ease;
-          white-space: nowrap;
-        }
-
-        .session-btn:hover {
-          background: #4A8E5A;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(90, 158, 106, 0.3);
-        }
-
-        .session-btn:active {
-          transform: scale(0.98);
-        }
-      `}</style>
     </>
   );
 };

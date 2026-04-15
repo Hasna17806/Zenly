@@ -35,6 +35,11 @@ const ProfilePage = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
+  // Notify navbar about profile update
+  const notifyProfileUpdate = () => {
+    window.dispatchEvent(new CustomEvent('userUpdated'));
+  };
+
   // ─── data fetching ───────────────────────────────────────────────────────────
   useEffect(() => {
     if (!getToken()) { navigate("/login"); return; }
@@ -90,6 +95,7 @@ const ProfilePage = () => {
       });
       setUser(data.user || data);
       setEditing(false);
+      notifyProfileUpdate(); // Notify navbar to update
       showToast("Profile updated successfully ✓");
     } catch (err) {
       showToast(err.response?.data?.message || "Failed to update profile", "error");
@@ -98,7 +104,7 @@ const ProfilePage = () => {
     }
   };
 
-  // ─── picture upload (FIXED) ──────────────────────────────────────────────────
+  // ─── picture upload ──────────────────────────────────────────────────
   const handlePicChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -123,9 +129,8 @@ const ProfilePage = () => {
         },
       });
 
-     
       setUser((prev) => ({ ...prev, profilePicture: data.profilePicture }));
-      // window.dispatchEvent(new Event('userUpdated'));
+      notifyProfileUpdate(); // Notify navbar to update
       showToast("Profile picture updated ✓");
     } catch (err) {
       console.error("Error uploading picture:", err);

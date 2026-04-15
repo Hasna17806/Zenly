@@ -6,10 +6,10 @@ import FocusSession from "../models/FocusSession.js";
 import CompletedChallenge from "../models/CompletedChallenge.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import PsychiatristReview from "../models/PsychiatristReview.js";
+import PsychiatristReview from "../models/Review.js";
 
 /* ===============================
-   ADMIN LOGIN
+          ADMIN LOGIN      
 ================================= */
 export const adminLogin = async (req, res) => {
   const { email, password } = req.body;

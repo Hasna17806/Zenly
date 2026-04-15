@@ -78,11 +78,65 @@ const ChallengesPage = () => {
       {
         id: 'calm-taps',
         title: 'Calm Taps',
-        description: 'Tap floating bubbles to relax',
-        time: '2 mins',
+        description: 'Tap floating thoughts to release stress',
+        time: '3 mins',
         image: 'https://res.cloudinary.com/dkqjn6dqw/image/upload/v1772259297/30_Bubbles_Clipart__Iridescent_Bubbles__Foam_Water_Bubble__Baby_Shower__Printable_Watercolor-removebg-preview_scwri9.png',
-        moodTag: ['stressed/Heavy', 'angry/Frustrated'],
-        gameType: 'bubbles',
+        moodTag: ['stressed/Heavy', 'angry/Frustrated', 'Overthinking'],
+        gameType: 'calm-taps',
+      },
+      {
+        id: 'breath-bubble',
+        title: 'Breath Bubble',
+        description: 'Follow the bubble\'s rhythm to find calm',
+        time: '4 mins',
+        image: 'https://res.cloudinary.com/dkqjn6dqw/image/upload/q_auto/f_auto/v1772261663/Illustration_-_Design_Thinking_is_a_type_of_p-removebg-preview_bmfiqp.png',
+        moodTag: ['stressed/Heavy', 'anxious/Worried', 'Overthinking'],
+        gameType: 'breath-bubble',
+      },
+      {
+        id: 'gratitude-catch',
+        title: 'Gratitude Catch',
+        description: 'Catch falling blessings before they pass',
+        time: '2 mins',
+        image: 'https://res.cloudinary.com/dkqjn6dqw/image/upload/q_auto/f_auto/v1772260740/download__45_-removebg-preview_pwu7fi.png',
+        moodTag: ['sad/Low', 'calm/Okay', 'tired/Burned Out'],
+        gameType: 'gratitude-catch',
+      },
+      {
+        id: 'mindful-match',
+        title: 'Mindful Match',
+        description: 'Match emotions with their coping skills',
+        time: '3 mins',
+        image: 'https://res.cloudinary.com/dkqjn6dqw/image/upload/v1772261838/Gemini_Generated_Image_ljvlyqljvlyqljvl-removebg-preview_xdhg9y.png',
+        moodTag: ['calm/Okay', 'happy/Energetic'],
+        gameType: 'mindful-match',
+      },
+      {
+        id: 'affirmation-stack',
+        title: 'Affirmation Stack',
+        description: 'Build a tower of positive beliefs',
+        time: '3 mins',
+        image: 'https://res.cloudinary.com/dkqjn6dqw/image/upload/v1772260605/download__42_-removebg-preview_bgh7qn.png',
+        moodTag: ['sad/Low', 'stressed/Heavy', 'Self-doubt'],
+        gameType: 'affirmation-stack',
+      },
+      {
+        id: 'color-calm',
+        title: 'Color Calm',
+        description: 'Color a mandala and find your center',
+        time: '5 mins',
+        image: 'https://res.cloudinary.com/dkqjn6dqw/image/upload/q_auto/f_auto/v1772261034/Golden_Tourne_La_Roue_PNG___Ic%C3%B4nes_De_Roue__Tour__Roue_Fichier_PNG_et_PSD_pour_le_t%C3%A9l%C3%A9chargement_libre-removebg-preview_deahtg.png',
+        moodTag: ['stressed/Heavy', 'angry/Frustrated', 'Overthinking'],
+        gameType: 'color-calm',
+      },
+      {
+        id: 'sound-sanctuary',
+        title: 'Sound Sanctuary',
+        description: 'Mix calming sounds to create peace',
+        time: '5 mins',
+        image: 'https://res.cloudinary.com/dkqjn6dqw/image/upload/v1772261663/Mind_Your_Breath___and_Prosper_-_Gulfshore_Life-removebg-preview_yeuart.png',
+        moodTag: ['stressed/Heavy', 'anxious/Worried', 'tired/Burned Out'],
+        gameType: 'sound-sanctuary',
       },
     ],
     'Study': [
@@ -319,10 +373,11 @@ const ChallengesPage = () => {
 
   const handlePlayChallenge = (challenge) => {
     const routes = {
+      // Existing games
       breathing: '/games/breathe',
       gratitude: '/games/gratitude-tap',
       'smile-challenge': '/games/smile-challenge',
-      bubbles: '/games/calm-taps',
+      'calm-taps': '/games/calm-taps',
       'focus-sprint': '/games/focus-sprint',
       memory: '/games/memory-flip',
       quiz: '/games/quick-quiz',
@@ -335,6 +390,14 @@ const ChallengesPage = () => {
       'blink-break': '/games/blink-break',
       journal: '/games/one-thought',
       timer: '/games/timer',
+      
+      // Mood Boost games
+      'breath-bubble': '/games/breath-bubble',
+      'gratitude-catch': '/games/gratitude-catch',
+      'mindful-match': '/games/mindful-match',
+      'affirmation-stack': '/games/affirmation-stack',
+      'color-calm': '/games/color-calm',
+      'sound-sanctuary': '/games/sound-sanctuary',
     };
 
     markChallengeAsCompleted(challenge);
@@ -367,7 +430,7 @@ const ChallengesPage = () => {
         }
 
         .ch-inner {
-          max-width: 1080px;
+          max-width: 1200px;
           margin: 0 auto;
         }
 
@@ -405,6 +468,7 @@ const ChallengesPage = () => {
           width: fit-content;
           margin-left: auto;
           margin-right: auto;
+          flex-wrap: wrap;
         }
 
         .ch-tab {
@@ -455,8 +519,8 @@ const ChallengesPage = () => {
 
         .ch-grid {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 20px;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 24px;
           margin-bottom: 44px;
         }
 
@@ -470,9 +534,14 @@ const ChallengesPage = () => {
           border-color: #4caf84;
         }
 
-        @media (max-width: 760px) {
+        @media (max-width: 900px) {
+          .ch-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 600px) {
           .ch-grid { grid-template-columns: 1fr; }
           .ch-tabs { flex-wrap: wrap; border-radius: 16px; }
+          .ch-tab:not(:last-child)::after { display: none; }
         }
 
         .ch-card {
@@ -480,7 +549,7 @@ const ChallengesPage = () => {
           border-radius: 20px;
           overflow: hidden;
           display: flex;
-          min-height: 210px;
+          flex-direction: column;
           box-shadow: 0 3px 18px rgba(80,140,130,0.09);
           transition: transform 0.25s ease, box-shadow 0.25s ease;
           border: 1.5px solid #eaf4f2;
@@ -493,22 +562,21 @@ const ChallengesPage = () => {
         }
 
         .ch-img-panel {
-          width: 185px;
-          flex-shrink: 0;
+          width: 100%;
+          height: 160px;
           background: linear-gradient(155deg, #edf8f5 0%, #ddf0eb 100%);
           display: flex;
-          align-items: flex-end;
+          align-items: center;
           justify-content: center;
           overflow: hidden;
           position: relative;
-          padding-top: 10px;
+          padding: 20px;
         }
 
         .ch-img-panel img {
-          width: 150px;
-          height: 160px;
+          width: 120px;
+          height: 120px;
           object-fit: contain;
-          object-position: bottom;
           transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
           filter: drop-shadow(0 5px 10px rgba(0,0,0,0.08));
         }
@@ -534,58 +602,58 @@ const ChallengesPage = () => {
         }
 
         .ch-card-body {
-          flex: 1;
-          padding: 22px 20px 18px;
+          padding: 20px;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          min-width: 0;
+          flex: 1;
         }
 
         .ch-card-title {
           font-family: 'Playfair Display', serif;
-          font-size: 19px;
+          font-size: 18px;
           font-weight: 600;
           color: #3d5a58;
-          margin: 0 0 7px;
-          line-height: 1.2;
+          margin: 0 0 8px;
+          line-height: 1.3;
         }
 
         .ch-card-desc {
-          font-size: 13.5px;
+          font-size: 13px;
           color: #8aaeaa;
           line-height: 1.55;
-          margin: 0 0 11px;
+          margin: 0 0 12px;
         }
 
         .ch-time-badge {
           display: inline-flex;
           align-items: center;
           gap: 5px;
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 600;
           color: #7a9e9b;
           background: #f0f9f7;
           border: 1px solid #d4ede8;
           padding: 4px 12px;
           border-radius: 100px;
-          margin-bottom: 14px;
+          margin-bottom: 12px;
+          width: fit-content;
         }
 
         .ch-mood-tags {
           display: flex;
           flex-wrap: wrap;
-          gap: 5px;
-          margin-bottom: 14px;
+          gap: 6px;
+          margin-bottom: 16px;
         }
 
         .ch-mood-tag {
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 600;
           color: #9ab5b2;
           background: #f0f9f7;
           border: 1px solid #d9edea;
-          padding: 3px 9px;
+          padding: 3px 8px;
           border-radius: 100px;
         }
 
@@ -593,7 +661,7 @@ const ChallengesPage = () => {
           width: 100%;
           padding: 11px;
           border: 1.5px solid #c8e0db;
-          border-radius: 11px;
+          border-radius: 12px;
           background: #fff;
           font-family: 'Nunito', sans-serif;
           font-size: 14px;
@@ -647,7 +715,7 @@ const ChallengesPage = () => {
 
         .ch-banner {
           background: linear-gradient(135deg, #5b9e96 0%, #3d7a73 100%);
-          border-radius: 22px;
+          border-radius: 28px;
           padding: 42px 40px;
           text-align: center;
           position: relative;
@@ -714,6 +782,18 @@ const ChallengesPage = () => {
           transform: scale(1.04);
           box-shadow: 0 8px 22px rgba(0,0,0,0.15);
         }
+
+        .ch-category-badge {
+          display: inline-block;
+          background: #d4ede8;
+          color: #3d7a73;
+          font-size: 10px;
+          font-weight: 700;
+          padding: 3px 10px;
+          border-radius: 20px;
+          margin-bottom: 10px;
+          letter-spacing: 0.5px;
+        }
       `}</style>
 
       <div className="ch-page">
@@ -746,83 +826,85 @@ const ChallengesPage = () => {
                 <p className="ch-loading-text">Loading challenges…</p>
               </div>
             ) : (
-              <div className="ch-grid">
-                {challenges.length > 0 ? challenges.map((challenge) => {
-                  const played = hasBeenPlayed(challenge);
-                  const challengeId = challenge._id || challenge.id;
-                  const justCompleted = justCompletedId === challengeId;
-                  
-                  return (
-                    <div 
-                      key={challenge.id} 
-                      className={`ch-card ${justCompleted ? 'just-completed' : ''}`}
-                    >
-                      <div className="ch-img-panel">
-                        <img src={challenge.image} alt={challenge.title} />
-                        {justCompleted && <span className="ch-done-badge">✓</span>}
-                      </div>
-
-                      <div className="ch-card-body">
-                        <div>
-                          <h3 className="ch-card-title">{challenge.title}</h3>
-                          <p className="ch-card-desc">{challenge.description}</p>
-                          <span className="ch-time-badge">⏱ {challenge.time}</span>
-                          {challenge.moodTag?.length > 0 && (
-                            <div className="ch-mood-tags">
-                              {challenge.moodTag.map(tag => (
-                                <span key={tag} className="ch-mood-tag">{tag}</span>
-                              ))}
-                            </div>
-                          )}
+              <>
+                <div className="ch-grid">
+                  {challenges.length > 0 ? challenges.map((challenge) => {
+                    const played = hasBeenPlayed(challenge);
+                    const challengeId = challenge._id || challenge.id;
+                    const justCompleted = justCompletedId === challengeId;
+                    
+                    return (
+                      <div 
+                        key={challenge.id || challenge._id} 
+                        className={`ch-card ${justCompleted ? 'just-completed' : ''}`}
+                      >
+                        <div className="ch-img-panel">
+                          <img src={challenge.image} alt={challenge.title} loading="lazy" />
+                          {justCompleted && <span className="ch-done-badge">✓</span>}
                         </div>
 
-                        <button
-                          className="ch-start-btn"
-                          onClick={() => handlePlayChallenge(challenge)}
-                        >
-                          {played ? (
-                            <>
-                              <RefreshIcon />
-                              Play Again
-                            </>
-                          ) : (
-                            <>
-                              <SparkleIcon />
-                              Start
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                }) : (
-                  <div className="col-span-2 text-center py-12 text-gray-500">
-                    No challenges in this category yet.
-                  </div>
-                )}
-              </div>
-            )}
+                        <div className="ch-card-body">
+                          <div>
+                            <h3 className="ch-card-title">{challenge.title}</h3>
+                            <p className="ch-card-desc">{challenge.description}</p>
+                            <span className="ch-time-badge">⏱ {challenge.time}</span>
+                            {challenge.moodTag?.length > 0 && (
+                              <div className="ch-mood-tags">
+                                {challenge.moodTag.slice(0, 3).map(tag => (
+                                  <span key={tag} className="ch-mood-tag">{tag}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
 
-            <div className="ch-banner">
-              <span className="ch-banner-emoji">🎉</span>
-              <h3 className="ch-banner-title">
-                {getCompletedCount() > 0
-                  ? `Nice job! You've played ${getCompletedCount()} challenge${getCompletedCount() !== 1 ? 's' : ''} today.`
-                  : "Ready to start your wellness journey?"}
-              </h3>
-              <p className="ch-banner-desc">
-                {getCompletedCount() > 0
-                  ? "Keep playing! Each time you complete a challenge, you're building better habits."
-                  : "Try a fun challenge to boost your mood and energy!"}
-              </p>
-              <button
-                className="ch-banner-btn"
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              >
-                Explore All Challenges
-                <ArrowRightIcon />
-              </button>
-            </div>
+                          <button
+                            className="ch-start-btn"
+                            onClick={() => handlePlayChallenge(challenge)}
+                          >
+                            {played ? (
+                              <>
+                                <RefreshIcon />
+                                Play Again
+                              </>
+                            ) : (
+                              <>
+                                <SparkleIcon />
+                                Start
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }) : (
+                    <div className="text-center py-12 text-gray-500" style={{ gridColumn: '1/-1' }}>
+                      ✨ No challenges in this category yet. ✨
+                    </div>
+                  )}
+                </div>
+
+                <div className="ch-banner">
+                  <span className="ch-banner-emoji">🎉</span>
+                  <h3 className="ch-banner-title">
+                    {getCompletedCount() > 0
+                      ? `Nice job! You've played ${getCompletedCount()} challenge${getCompletedCount() !== 1 ? 's' : ''} today.`
+                      : "Ready to start your wellness journey?"}
+                  </h3>
+                  <p className="ch-banner-desc">
+                    {getCompletedCount() > 0
+                      ? "Keep playing! Each time you complete a challenge, you're building better habits."
+                      : "Try a fun challenge to boost your mood and energy!"}
+                  </p>
+                  <button
+                    className="ch-banner-btn"
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  >
+                    Explore All Challenges
+                    <ArrowRightIcon />
+                  </button>
+                </div>
+              </>
+            )}
 
           </div>
         </main>

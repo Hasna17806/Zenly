@@ -4,7 +4,7 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import axios from "axios";
 
-const BrainSprintGame = () => {
+const QuickQuizGame = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const challenge = location.state?.challenge;
@@ -674,4 +674,4 @@ const BrainSprintGame = () => {
   );
 };
 
-export default BrainSprintGame;
+export default QuickQuizGame;

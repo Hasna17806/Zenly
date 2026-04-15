@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import ReviewModal from "../components/ReviewModal";
 
 const UserPsychiatrists = () => {
   const [psychiatrists, setPsychiatrists] = useState([]);
@@ -14,34 +15,67 @@ const UserPsychiatrists = () => {
     psychiatristId: null,
     psychiatristName: "",
   });
+  const [reviewModal, setReviewModal] = useState({
+    isOpen: false,
+    psychiatristId: null,
+    psychiatristName: "",
+  });
+  const [reviews, setReviews] = useState({});
+  const [ratings, setRatings] = useState({});
 
   const navigate = useNavigate();
 
   const cleanName = (name = "") => name.replace(/^Dr\.?\s*/i, "").trim();
 
   const fetchPsychiatrists = async () => {
-  try {
-    const [psyRes, myRes] = await Promise.all([
-      API.get("/psychiatrist/all"),
-      API.get("/my-psychiatrists/my"),
-    ]);
+    try {
+      const [psyRes, myRes] = await Promise.all([
+        API.get("/psychiatrist/all"),
+        API.get("/my-psychiatrists/my"),
+      ]);
 
-    setPsychiatrists(psyRes.data);
+      setPsychiatrists(psyRes.data);
 
-    const addedMap = {};
-    myRes.data.forEach((item) => {
-      const psychId = item.psychiatristId?._id || item.psychiatristId;
-      if (psychId) addedMap[psychId] = true;
-    });
+      const addedMap = {};
+      myRes.data.forEach((item) => {
+        const psychId = item.psychiatristId?._id || item.psychiatristId;
+        if (psychId) addedMap[psychId] = true;
+      });
 
-    setAdded(addedMap);
-  } catch (error) {
-    console.error("Error fetching psychiatrists:", error);
-    showToast("error", "Load Failed", "Failed to load psychiatrists.");
-  } finally {
-    setLoading(false);
-  }
-};
+      setAdded(addedMap);
+      
+      // Fetch reviews for each psychiatrist
+      await fetchAllReviews(psyRes.data);
+    } catch (error) {
+      console.error("Error fetching psychiatrists:", error);
+      showToast("error", "Load Failed", "Failed to load psychiatrists.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAllReviews = async (psychiatristsList) => {
+    const reviewsData = {};
+    const ratingsData = {};
+    
+    for (const doc of psychiatristsList) {
+      try {
+        const res = await API.get(`/reviews/psychiatrist/${doc._id}`);
+        reviewsData[doc._id] = res.data.reviews || [];
+        ratingsData[doc._id] = {
+          average: res.data.averageRating || 0,
+          total: res.data.totalReviews || 0
+        };
+      } catch (error) {
+        console.error(`Error fetching reviews for ${doc._id}:`, error);
+        reviewsData[doc._id] = [];
+        ratingsData[doc._id] = { average: 0, total: 0 };
+      }
+    }
+    
+    setReviews(reviewsData);
+    setRatings(ratingsData);
+  };
 
   useEffect(() => { fetchPsychiatrists(); }, []);
 
@@ -55,6 +89,12 @@ const UserPsychiatrists = () => {
 
   const closeModal = () =>
     setModal({ isOpen: false, psychiatristId: null, psychiatristName: "" });
+
+  const openReviewModal = (id, name) =>
+    setReviewModal({ isOpen: true, psychiatristId: id, psychiatristName: name });
+
+  const closeReviewModal = () =>
+    setReviewModal({ isOpen: false, psychiatristId: null, psychiatristName: "" });
 
   const confirmAddPsychiatrist = async () => {
     try {
@@ -71,6 +111,29 @@ const UserPsychiatrists = () => {
       }
       closeModal();
     }
+  };
+
+  const handleReviewSuccess = async () => {
+    showToast("success", "Review Submitted", "Thank you for your feedback!");
+    await fetchAllReviews(psychiatrists);
+  };
+
+  const renderStars = (rating) => {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    
+    return (
+      <div className="stars-display">
+        {[...Array(fullStars)].map((_, i) => (
+          <span key={`full-${i}`} className="star full">★</span>
+        ))}
+        {hasHalfStar && <span className="star half">½</span>}
+        {[...Array(emptyStars)].map((_, i) => (
+          <span key={`empty-${i}`} className="star empty">☆</span>
+        ))}
+      </div>
+    );
   };
 
   const filtered = psychiatrists.filter(
@@ -112,7 +175,7 @@ const UserPsychiatrists = () => {
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 8px; }
 
-        /* ── Toast ── */
+        /* Toast */
         .toast-container {
           position: fixed; top: 20px; right: 20px; z-index: 9999;
           display: flex; flex-direction: column; gap: 10px; pointer-events: none;
@@ -140,7 +203,7 @@ const UserPsychiatrists = () => {
         .toast-close { background: none; border: none; color: #ccc; cursor: pointer; font-size: 14px; margin-left: auto; }
         @keyframes toastIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
 
-        /* ── Modal ── */
+        /* Modal */
         .modal-overlay {
           position: fixed; inset: 0;
           background: rgba(0,0,0,0.35);
@@ -183,7 +246,7 @@ const UserPsychiatrists = () => {
         .modal-btn-cancel { background: #f5f5f5; color: #666; }
         .modal-btn-confirm { background: #1a1a1a; color: #fff; }
 
-        /* ── Page ── */
+        /* Page */
         .up-page {
           min-height: 100vh;
           background: #ffffff;
@@ -194,7 +257,6 @@ const UserPsychiatrists = () => {
         .up-main { padding: 52px 24px 80px; }
         .up-inner { max-width: 1040px; margin: 0 auto; }
 
-        /* Hero */
         .up-hero { text-align: center; margin-bottom: 32px; }
         .up-title {
           font-family: 'Lora', serif;
@@ -206,7 +268,6 @@ const UserPsychiatrists = () => {
         .up-title em { font-style: italic; color: #A0856A; }
         .up-subtitle { font-size: 14px; color: #888; margin-top: 10px; }
 
-        /* Ornament */
         .up-orn {
           display: flex; align-items: center; gap: 12px;
           justify-content: center; margin: 18px 0 32px;
@@ -214,7 +275,6 @@ const UserPsychiatrists = () => {
         .up-orn-line { height: 1px; width: 52px; background: #e8e8e8; }
         .up-orn-dot  { width: 5px; height: 5px; transform: rotate(45deg); background: #C8A87A; }
 
-        /* Toolbar */
         .up-toolbar {
           display: flex; align-items: center; gap: 12px;
           flex-wrap: wrap; margin-bottom: 28px;
@@ -245,14 +305,12 @@ const UserPsychiatrists = () => {
         .up-count { font-size: 12px; color: #aaa; white-space: nowrap; }
         .up-count strong { color: #A0856A; }
 
-        /* Grid */
         .up-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
           gap: 18px;
         }
 
-        /* Card */
         .up-card {
           background: #fff;
           border: 1px solid #eeeeee;
@@ -316,8 +374,55 @@ const UserPsychiatrists = () => {
           font-size: 22px; font-weight: 500; color: #A0856A;
         }
 
-        .up-button-row { display: flex; gap: 8px; }
+        /* Rating Stars */
+        .rating-container {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-top: 4px;
+        }
+        .stars-display {
+          display: flex;
+          gap: 2px;
+        }
+        .star {
+          font-size: 14px;
+        }
+        .star.full, .star.half {
+          color: #ffc107;
+        }
+        .star.empty {
+          color: #ddd;
+        }
+        .rating-text {
+          font-size: 12px;
+          color: #666;
+        }
+        .review-count {
+          font-size: 11px;
+          color: #999;
+          cursor: pointer;
+        }
+        .review-count:hover {
+          text-decoration: underline;
+        }
+        .write-review-btn {
+          font-size: 11px;
+          color: #A0856A;
+          background: none;
+          border: none;
+          cursor: pointer;
+          margin-left: 8px;
+        }
+        .write-review-btn:hover {
+          text-decoration: underline;
+        }
 
+        .up-button-row {
+          display: flex;
+          gap: 8px;
+          flex-direction: column;
+        }
         .up-add-btn {
           width: 100%; padding: 12px;
           border-radius: 50px;
@@ -351,7 +456,6 @@ const UserPsychiatrists = () => {
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Empty */
         .up-empty {
           grid-column: 1 / -1;
           text-align: center; padding: 64px 24px;
@@ -384,7 +488,7 @@ const UserPsychiatrists = () => {
           )}
         </div>
 
-        {/* Modal */}
+        {/* Add Modal */}
         {modal.isOpen && (
           <div className="modal-overlay" onClick={closeModal}>
             <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -409,6 +513,15 @@ const UserPsychiatrists = () => {
             </div>
           </div>
         )}
+
+        {/* Review Modal */}
+        <ReviewModal
+          isOpen={reviewModal.isOpen}
+          onClose={closeReviewModal}
+          psychiatristId={reviewModal.psychiatristId}
+          psychiatristName={reviewModal.psychiatristName}
+          onSuccess={handleReviewSuccess}
+        />
 
         <main className="up-main">
           <div className="up-inner">
@@ -463,6 +576,7 @@ const UserPsychiatrists = () => {
                     const inits = initials(doc.name);
                     const sc = specColor(doc.specialization || "");
                     const isAdded = added[doc._id];
+                    const docRatings = ratings[doc._id] || { average: 0, total: 0 };
 
                     return (
                       <div className="up-card" key={doc._id}>
@@ -481,6 +595,24 @@ const UserPsychiatrists = () => {
                           >
                             <span className="up-spec-dot" style={{ background: sc.color }} />
                             {doc.specialization || "General Psychiatry"}
+                          </div>
+
+                          <div className="rating-container">
+                            <div className="stars-display">
+                              {renderStars(docRatings.average)}
+                            </div>
+                            <div>
+                              <span className="rating-text">{docRatings.average.toFixed(1)}</span>
+                              <button 
+                                className="write-review-btn"
+                                onClick={() => openReviewModal(doc._id, doc.name)}
+                              >
+                                Write a review
+                              </button>
+                            </div>
+                          </div>
+                          <div className="review-count" onClick={() => navigate(`/psychiatrist-reviews/${doc._id}`)}>
+                            {docRatings.total} {docRatings.total === 1 ? "review" : "reviews"}
                           </div>
 
                           <div className="up-fee-box">

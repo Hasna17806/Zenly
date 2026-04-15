@@ -11,10 +11,8 @@ const localizer = momentLocalizer(moment);
 const PsychiatristAppointments = () => {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
-  const [schedule, setSchedule] = useState({});
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
-  const [fieldError, setFieldError] = useState({});
   const [toast, setToast] = useState(null);
   const [calendarView, setCalendarView] = useState("month");
   const [calendarDate, setCalendarDate] = useState(new Date());
@@ -39,18 +37,12 @@ const PsychiatristAppointments = () => {
     }
   };
 
-  const acceptAppointment = async (id) => {
-    const selected = schedule[id];
-    if (!selected || !selected.date || !selected.time) {
-      setFieldError(prev => ({ ...prev, [id]: "Please select both date and time." }));
-      return;
-    }
-    setFieldError(prev => ({ ...prev, [id]: "" }));
+  const acceptAppointment = async (id, preferredDate, preferredTime) => {
     setActionLoading(prev => ({ ...prev, [id]: "accept" }));
     try {
       await axios.put(
         `http://localhost:5000/api/appointments/accept/${id}`,
-        { date: selected.date, time: selected.time },
+        { date: preferredDate, time: preferredTime },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       showToast("Appointment accepted successfully.");
@@ -186,10 +178,14 @@ const PsychiatristAppointments = () => {
                   Pending Requests <span className="section-count">{pending.length}</span>
                 </div>
                 {pending.map(app => (
-                  <AppCard key={app._id} app={app} schedule={schedule} setSchedule={setSchedule}
-                    error={fieldError[app._id]} actionLoading={actionLoading[app._id]}
-                    onAccept={() => acceptAppointment(app._id)} onReject={() => rejectAppointment(app._id)}
-                    statusConfig={statusConfig} />
+                  <AppCard 
+                    key={app._id} 
+                    app={app} 
+                    actionLoading={actionLoading[app._id]}
+                    onAccept={() => acceptAppointment(app._id, app.date, app.time)} 
+                    onReject={() => rejectAppointment(app._id)}
+                    statusConfig={statusConfig} 
+                  />
                 ))}
               </>
             )}
@@ -199,10 +195,15 @@ const PsychiatristAppointments = () => {
                   Accepted Sessions <span className="section-count">{accepted.length}</span>
                 </div>
                 {accepted.map(app => (
-                  <AppCard key={app._id} app={app} schedule={schedule} setSchedule={setSchedule}
-                    error={fieldError[app._id]} actionLoading={actionLoading[app._id]}
-                    onAccept={() => acceptAppointment(app._id)} onReject={() => rejectAppointment(app._id)}
-                    statusConfig={statusConfig} navigate={navigate} />
+                  <AppCard 
+                    key={app._id} 
+                    app={app} 
+                    actionLoading={actionLoading[app._id]}
+                    onAccept={() => acceptAppointment(app._id, app.date, app.time)} 
+                    onReject={() => rejectAppointment(app._id)}
+                    statusConfig={statusConfig} 
+                    navigate={navigate} 
+                  />
                 ))}
               </>
             )}
@@ -212,10 +213,14 @@ const PsychiatristAppointments = () => {
                   Rejected <span className="section-count">{rejected.length}</span>
                 </div>
                 {rejected.map(app => (
-                  <AppCard key={app._id} app={app} schedule={schedule} setSchedule={setSchedule}
-                    error={fieldError[app._id]} actionLoading={actionLoading[app._id]}
-                    onAccept={() => acceptAppointment(app._id)} onReject={() => rejectAppointment(app._id)}
-                    statusConfig={statusConfig} />
+                  <AppCard 
+                    key={app._id} 
+                    app={app} 
+                    actionLoading={actionLoading[app._id]}
+                    onAccept={() => acceptAppointment(app._id, app.date, app.time)} 
+                    onReject={() => rejectAppointment(app._id)}
+                    statusConfig={statusConfig} 
+                  />
                 ))}
               </>
             )}
@@ -336,19 +341,15 @@ const PsychiatristAppointments = () => {
         .app-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 30px; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; width: fit-content; margin-top: 6px; }
         .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
 
-        .schedule-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
-        .sched-input {
-          background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
-          border-radius: 10px; color: #eef2f5; font-family: 'IBM Plex Sans', sans-serif;
-          font-size: 14px; padding: 10px 14px; outline: none; transition: border-color 0.15s; color-scheme: dark;
-        }
-        .field-error { font-size: 12px; color: #f87171; margin-top: 8px; }
-
         .btn-accept {
           padding: 10px 20px; background: rgba(109,212,164,0.12); border: 1px solid rgba(109,212,164,0.3);
           border-radius: 10px; color: #6dd4a4; font-family: 'IBM Plex Sans', sans-serif;
           font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
           display: flex; align-items: center; gap: 8px; white-space: nowrap;
+        }
+        .btn-accept:hover:not(:disabled) {
+          background: rgba(109,212,164,0.2);
+          transform: translateY(-1px);
         }
         .btn-reject {
           padding: 10px 20px; background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25);
@@ -356,10 +357,22 @@ const PsychiatristAppointments = () => {
           font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
           display: flex; align-items: center; gap: 8px; white-space: nowrap;
         }
+        .btn-reject:hover:not(:disabled) {
+          background: rgba(248,113,113,0.2);
+          transform: translateY(-1px);
+        }
+        .btn-accept:disabled, .btn-reject:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
         .btn-session {
           padding: 10px 22px; background: #64b4c8; border: none; border-radius: 10px;
           color: #0b1520; font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; font-weight: 700;
           cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; white-space: nowrap;
+        }
+        .btn-session:hover {
+          background: #7dc6d8;
+          transform: translateY(-1px);
         }
         .empty-state { text-align: center; padding: 60px 20px; color: rgba(255,255,255,0.3); font-size: 15px; background: #111d2b; border-radius: 18px; }
 
@@ -378,8 +391,9 @@ const PsychiatristAppointments = () => {
 };
 
 /* ── Appointment Card ── */
-const AppCard = ({ app, schedule, setSchedule, error, actionLoading, onAccept, onReject, statusConfig, navigate }) => {
+const AppCard = ({ app, actionLoading, onAccept, onReject, statusConfig, navigate }) => {
   const cfg = statusConfig[app.status] || statusConfig.Pending;
+  
   return (
     <div className="app-card">
       <div className="app-left">
@@ -387,34 +401,35 @@ const AppCard = ({ app, schedule, setSchedule, error, actionLoading, onAccept, o
         <div className="app-meta">
           <span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-              <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+              <line x1="9" y1="9" x2="9.01" y2="9"/>
+              <line x1="15" y1="9" x2="15.01" y2="9"/>
             </svg>
             {app.userId?.currentMood || "Mood not recorded"}
           </span>
-          {app.status === "Accepted" && app.date && app.time && (
+          {app.date && app.time && (
             <span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="4" width="18" height="18" rx="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
               </svg>
               {app.date} at {app.time}
             </span>
+          )}
+          {app.status === "Pending" && !app.date && !app.time && (
+            <span style={{ color: "#f0b45a" }}>Awaiting patient's preferred time</span>
           )}
         </div>
         <div className="app-badge" style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.color }}>
           <span className="badge-dot" style={{ background: cfg.color }} />
           {app.status}
         </div>
-        {app.status === "Pending" && (
-          <div style={{ marginTop: 14 }}>
-            <div className="schedule-row">
-              <input className="sched-input" type="date" value={schedule[app._id]?.date || ""}
-                onChange={e => setSchedule(prev => ({ ...prev, [app._id]: { ...(prev[app._id] || {}), date: e.target.value } }))} />
-              <input className="sched-input" type="time" value={schedule[app._id]?.time || ""}
-                onChange={e => setSchedule(prev => ({ ...prev, [app._id]: { ...(prev[app._id] || {}), time: e.target.value } }))} />
-            </div>
-            {error && <div className="field-error">{error}</div>}
+        {app.status === "Pending" && app.date && app.time && (
+          <div style={{ marginTop: 8, fontSize: "13px", color: "#64b4c8" }}>
+            📅 Patient requested: {app.date} at {app.time}
           </div>
         )}
       </div>
@@ -422,13 +437,21 @@ const AppCard = ({ app, schedule, setSchedule, error, actionLoading, onAccept, o
       <div className="app-right">
         {app.status === "Pending" && (
           <>
-            <button className="btn-accept" onClick={onAccept} disabled={!!actionLoading}>
+            <button 
+              className="btn-accept" 
+              onClick={onAccept} 
+              disabled={!!actionLoading}
+            >
               {actionLoading === "accept"
                 ? <><span className="spinner-sm" /> Accepting…</>
                 : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg> Accept</>
               }
             </button>
-            <button className="btn-reject" onClick={onReject} disabled={!!actionLoading}>
+            <button 
+              className="btn-reject" 
+              onClick={onReject} 
+              disabled={!!actionLoading}
+            >
               {actionLoading === "reject"
                 ? <><span className="spinner-sm" /> Rejecting…</>
                 : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Reject</>

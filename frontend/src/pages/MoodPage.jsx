@@ -103,68 +103,171 @@ const Toast = ({ message, type = 'success', onClose }) => {
   );
 };
 
-// Static challenges for fallback (UPDATED with all moodTags)
+// ========== EXPANDED CHALLENGES WITH MORE VARIETY ==========
 const allChallenges = {
   'Mood Boost': [
-    { id: 'breathe-reset', title: 'Breathe & Reset', description: 'Calm your mind with guided breathing', time: '3 mins', image: '', moodTag: ['stressed/Heavy', 'sad/Low', 'tired/Burned Out'], gameType: 'breathing' },
-    { id: 'gratitude-tap', title: 'Gratitude Tap', description: 'Think of one good thing today', time: '2 mins', image: '', moodTag: ['sad/Low', 'calm/Okay'], gameType: 'gratitude' },
-    { id: 'smile-challenge', title: 'Smile Challenge', description: 'Hold a gentle smile for 20 seconds', time: '20 secs', image: '', moodTag: ['happy/Energetic', 'calm/Okay'], gameType: 'smile-challenge' },
-    { id: 'calm-taps', title: 'Calm Taps', description: 'Tap floating bubbles to relax', time: '2 mins', image: '', moodTag: ['stressed/Heavy', 'angry/Frustrated', 'tired/Burned Out'], gameType: 'bubbles' },
+    { id: 'breathe-reset', title: 'Breathe & Reset', description: 'Calm your mind with guided breathing', time: '3 mins', image: '', moodTag: ['stressed/Heavy', 'sad/Low', 'tired/Burned Out', 'angry/Frustrated'], gameType: 'breathing', difficulty: 'easy' },
+    { id: 'gratitude-tap', title: 'Gratitude Tap', description: 'Think of one good thing today', time: '2 mins', image: '', moodTag: ['sad/Low', 'calm/Okay', 'tired/Burned Out'], gameType: 'gratitude', difficulty: 'easy' },
+    { id: 'smile-challenge', title: 'Smile Challenge', description: 'Hold a gentle smile for 20 seconds', time: '20 secs', image: '', moodTag: ['happy/Energetic', 'calm/Okay', 'sad/Low'], gameType: 'smile-challenge', difficulty: 'easy' },
+    { id: 'calm-taps', title: 'Calm Taps', description: 'Tap floating bubbles to relax', time: '2 mins', image: '', moodTag: ['stressed/Heavy', 'angry/Frustrated', 'tired/Burned Out', 'anxious/Worried'], gameType: 'bubbles', difficulty: 'medium' },
+    { id: 'breath-bubble', title: 'Breath Bubble', description: 'Follow the bubble\'s rhythm to find calm', time: '4 mins', image: '', moodTag: ['stressed/Heavy', 'anxious/Worried', 'angry/Frustrated'], gameType: 'breath-bubble', difficulty: 'easy' },
+    { id: 'gratitude-catch', title: 'Gratitude Catch', description: 'Catch falling blessings before they pass', time: '2 mins', image: '', moodTag: ['sad/Low', 'calm/Okay', 'tired/Burned Out'], gameType: 'gratitude-catch', difficulty: 'medium' },
+    { id: 'mindful-match', title: 'Mindful Match', description: 'Match emotions with their coping skills', time: '3 mins', image: '', moodTag: ['calm/Okay', 'happy/Energetic', 'stressed/Heavy'], gameType: 'mindful-match', difficulty: 'hard' },
+    { id: 'affirmation-stack', title: 'Affirmation Stack', description: 'Build a tower of positive beliefs', time: '3 mins', image: '', moodTag: ['sad/Low', 'stressed/Heavy', 'Self-doubt'], gameType: 'affirmation-stack', difficulty: 'easy' },
+    { id: 'color-calm', title: 'Color Calm', description: 'Color a mandala and find your center', time: '5 mins', image: '', moodTag: ['stressed/Heavy', 'angry/Frustrated', 'anxious/Worried'], gameType: 'color-calm', difficulty: 'easy' },
+    { id: 'sound-sanctuary', title: 'Sound Sanctuary', description: 'Mix calming sounds to create peace', time: '5 mins', image: '', moodTag: ['stressed/Heavy', 'anxious/Worried', 'tired/Burned Out'], gameType: 'sound-sanctuary', difficulty: 'easy' },
   ],
   'Study': [
-    { id: 'focus-sprint', title: 'Focus Sprint', description: 'Stay focused. You got this 💪', time: '5 mins', image: '', moodTag: ['tired/Burned Out', 'calm/Okay', 'stressed/Heavy'], gameType: 'focus-sprint' },
-    { id: 'memory-flip', title: 'Memory Flip', description: 'Match pairs to exercise your brain', time: '3 mins', image: '', moodTag: ['happy/Energetic', 'calm/Okay'], gameType: 'memory' },
-    { id: 'quick-quiz', title: 'Quick Quiz', description: 'Test your knowledge with 3 questions', time: '2 mins', image: '', moodTag: ['happy/Energetic', 'calm/Okay'], gameType: 'quiz' },
-    { id: 'distraction-block', title: 'Distraction Block', description: 'Choose one distraction to avoid', time: '5 mins', image: '', moodTag: ['tired/Burned Out', 'stressed/Heavy'], gameType: 'focus' },
+    { id: 'focus-sprint', title: 'Focus Sprint', description: 'Stay focused. You got this 💪', time: '5 mins', image: '', moodTag: ['tired/Burned Out', 'calm/Okay', 'stressed/Heavy'], gameType: 'focus-sprint', difficulty: 'medium' },
+    { id: 'memory-flip', title: 'Memory Flip', description: 'Match pairs to exercise your brain', time: '3 mins', image: '', moodTag: ['happy/Energetic', 'calm/Okay'], gameType: 'memory', difficulty: 'medium' },
+    { id: 'quick-quiz', title: 'Quick Quiz', description: 'Test your knowledge with 3 questions', time: '2 mins', image: '', moodTag: ['happy/Energetic', 'calm/Okay'], gameType: 'quiz', difficulty: 'easy' },
+    { id: 'distraction-block', title: 'Distraction Block', description: 'Choose one distraction to avoid', time: '5 mins', image: '', moodTag: ['tired/Burned Out', 'stressed/Heavy'], gameType: 'focus', difficulty: 'hard' },
   ],
   'Fun': [
-    { id: 'guess-sound', title: 'Guess the Sound', description: 'Listen and guess the sound', time: '3 mins', image: '', moodTag: ['happy/Energetic', 'calm/Okay'], gameType: 'sound' },
-    { id: 'emoji-match', title: 'Emoji Match', description: 'Match emotions by dragging emojis', time: '2 mins', image: '', moodTag: ['happy/Energetic', 'sad/Low'], gameType: 'matching' },
-    { id: 'tap-star', title: 'Tap the Star', description: 'Tap as many stars as you can', time: '30 secs', image: '', moodTag: ['angry/Frustrated', 'stressed/Heavy', 'tired/Burned Out'], gameType: 'stars' },
-    { id: 'spin-smile', title: 'Spin & Smile', description: 'Spin the wheel for a fun surprise', time: '1 min', image: '', moodTag: ['tired/Burned Out', 'sad/Low'], gameType: 'wheel' },
+    { id: 'guess-sound', title: 'Guess the Sound', description: 'Listen and guess the sound', time: '3 mins', image: '', moodTag: ['happy/Energetic', 'calm/Okay'], gameType: 'sound', difficulty: 'easy' },
+    { id: 'emoji-match', title: 'Mood Decode', description: 'Notice what you feel before it controls you.', time: '2 mins', image: '', moodTag: ['happy/Energetic', 'sad/Low'], gameType: 'matching', difficulty: 'easy' },
+    { id: 'tap-star', title: 'Tap the Star', description: 'Tap as many stars as you can', time: '30 secs', image: '', moodTag: ['angry/Frustrated', 'stressed/Heavy', 'tired/Burned Out'], gameType: 'stars', difficulty: 'easy' },
+    { id: 'spin-smile', title: 'Spin & Smile', description: 'Spin the wheel for a fun surprise', time: '1 min', image: '', moodTag: ['tired/Burned Out', 'sad/Low'], gameType: 'wheel', difficulty: 'easy' },
   ],
   'Quick Play': [
-    { id: '60-second-breath', title: '60-Second Breath', description: 'One minute of mindful breathing', time: '1 min', image: '', moodTag: ['stressed/Heavy', 'angry/Frustrated', 'tired/Burned Out'], gameType: 'breathing' },
-    { id: 'blink-break', title: 'Blink Break', description: 'Rest your eyes for 30 seconds', time: '30 secs', image: '', moodTag: ['tired/Burned Out', 'stressed/Heavy'], gameType: 'blink-break' },
-    { id: 'one-thought-dump', title: 'One-Thought Dump', description: 'Write down one thought and let it go', time: '1 min', image: '', moodTag: ['stressed/Heavy', 'sad/Low', 'tired/Burned Out'], gameType: 'journal' },
+    { id: '60-second-breath', title: '60-Second Breath', description: 'One minute of mindful breathing', time: '1 min', image: '', moodTag: ['stressed/Heavy', 'angry/Frustrated', 'tired/Burned Out'], gameType: 'breathing', difficulty: 'easy' },
+    { id: 'blink-break', title: 'Blink Break', description: 'Rest your eyes for 30 seconds', time: '30 secs', image: '', moodTag: ['tired/Burned Out', 'stressed/Heavy'], gameType: 'blink-break', difficulty: 'easy' },
+    { id: 'one-thought-dump', title: 'One-Thought Dump', description: 'Write down one thought and let it go', time: '1 min', image: '', moodTag: ['stressed/Heavy', 'sad/Low', 'tired/Burned Out'], gameType: 'journal', difficulty: 'easy' },
   ],
 };
 
-// Fallback suggestions for each mood (in case no challenges match)
+// ========== EXPANDED FALLBACK SUGGESTIONS FOR EACH MOOD ==========
 const moodFallbackSuggestions = {
   'happy/Energetic': [
-    { title: 'Smile Challenge', description: 'Hold a gentle smile for 20 seconds', gameType: 'smile-challenge' },
-    { title: 'Memory Flip', description: 'Match pairs to exercise your brain', gameType: 'memory' },
-    { title: 'Quick Quiz', description: 'Test your knowledge with 3 questions', gameType: 'quiz' },
+    { title: 'Smile Challenge', description: 'Hold a gentle smile for 20 seconds', gameType: 'smile-challenge', difficulty: 'easy' },
+    { title: 'Memory Flip', description: 'Match pairs to exercise your brain', gameType: 'memory', difficulty: 'medium' },
+    { title: 'Quick Quiz', description: 'Test your knowledge with 3 questions', gameType: 'quiz', difficulty: 'easy' },
+    { title: 'Mindful Match', description: 'Match emotions with their coping skills', gameType: 'mindful-match', difficulty: 'hard' },
+    { title: 'Gratitude Catch', description: 'Catch falling blessings', gameType: 'gratitude-catch', difficulty: 'medium' },
   ],
   'calm/Okay': [
-    { title: 'Breathe & Reset', description: 'Calm your mind with guided breathing', gameType: 'breathing' },
-    { title: 'Gratitude Tap', description: 'Think of one good thing today', gameType: 'gratitude' },
-    { title: 'Memory Flip', description: 'Match pairs to exercise your brain', gameType: 'memory' },
+    { title: 'Breathe & Reset', description: 'Calm your mind with guided breathing', gameType: 'breathing', difficulty: 'easy' },
+    { title: 'Gratitude Tap', description: 'Think of one good thing today', gameType: 'gratitude', difficulty: 'easy' },
+    { title: 'Memory Flip', description: 'Match pairs to exercise your brain', gameType: 'memory', difficulty: 'medium' },
+    { title: 'Sound Sanctuary', description: 'Create your perfect soundscape', gameType: 'sound-sanctuary', difficulty: 'easy' },
+    { title: 'Color Calm', description: 'Color a mandala', gameType: 'color-calm', difficulty: 'easy' },
+    { title: 'Mindful Match', description: 'Learn coping skills', gameType: 'mindful-match', difficulty: 'hard' },
   ],
   'stressed/Heavy': [
-    { title: 'Breathe & Reset', description: 'Calm your mind with guided breathing', gameType: 'breathing' },
-    { title: 'Calm Taps', description: 'Tap floating bubbles to relax', gameType: 'bubbles' },
-    { title: '60-Second Breath', description: 'One minute of mindful breathing', gameType: 'breathing' },
-    { title: 'One-Thought Dump', description: 'Write down one thought and let it go', gameType: 'journal' },
+    { title: 'Breathe & Reset', description: 'Calm your mind with guided breathing', gameType: 'breathing', difficulty: 'easy' },
+    { title: 'Calm Taps', description: 'Tap floating bubbles to relax', gameType: 'bubbles', difficulty: 'medium' },
+    { title: '60-Second Breath', description: 'One minute of mindful breathing', gameType: 'breathing', difficulty: 'easy' },
+    { title: 'One-Thought Dump', description: 'Write down one thought and let it go', gameType: 'journal', difficulty: 'easy' },
+    { title: 'Breath Bubble', description: 'Follow the bubble\'s rhythm', gameType: 'breath-bubble', difficulty: 'easy' },
+    { title: 'Sound Sanctuary', description: 'Mix calming sounds', gameType: 'sound-sanctuary', difficulty: 'easy' },
+    { title: 'Color Calm', description: 'Color a mandala', gameType: 'color-calm', difficulty: 'easy' },
+    { title: 'Affirmation Stack', description: 'Build positive beliefs', gameType: 'affirmation-stack', difficulty: 'easy' },
   ],
   'sad/Low': [
-    { title: 'Gratitude Tap', description: 'Think of one good thing today', gameType: 'gratitude' },
-    { title: 'Breathe & Reset', description: 'Calm your mind with guided breathing', gameType: 'breathing' },
-    { title: 'Spin & Smile', description: 'Spin the wheel for a fun surprise', gameType: 'wheel' },
+    { title: 'Gratitude Tap', description: 'Think of one good thing today', gameType: 'gratitude', difficulty: 'easy' },
+    { title: 'Breathe & Reset', description: 'Calm your mind with guided breathing', gameType: 'breathing', difficulty: 'easy' },
+    { title: 'Spin & Smile', description: 'Spin the wheel for a fun surprise', gameType: 'wheel', difficulty: 'easy' },
+    { title: 'Gratitude Catch', description: 'Catch falling blessings', gameType: 'gratitude-catch', difficulty: 'medium' },
+    { title: 'Affirmation Stack', description: 'Build a tower of positive beliefs', gameType: 'affirmation-stack', difficulty: 'easy' },
+    { title: 'Smile Challenge', description: 'Hold a gentle smile', gameType: 'smile-challenge', difficulty: 'easy' },
+    { title: 'One-Thought Dump', description: 'Write down one thought', gameType: 'journal', difficulty: 'easy' },
   ],
   'angry/Frustrated': [
-    { title: 'Calm Taps', description: 'Tap floating bubbles to relax', gameType: 'bubbles' },
-    { title: 'Tap the Star', description: 'Tap as many stars as you can', gameType: 'stars' },
-    { title: '60-Second Breath', description: 'One minute of mindful breathing', gameType: 'breathing' },
+    { title: 'Calm Taps', description: 'Tap floating bubbles to relax', gameType: 'bubbles', difficulty: 'medium' },
+    { title: 'Tap the Star', description: 'Tap as many stars as you can', gameType: 'stars', difficulty: 'easy' },
+    { title: '60-Second Breath', description: 'One minute of mindful breathing', gameType: 'breathing', difficulty: 'easy' },
+    { title: 'Breath Bubble', description: 'Follow the bubble\'s rhythm', gameType: 'breath-bubble', difficulty: 'easy' },
+    { title: 'Color Calm', description: 'Color a mandala', gameType: 'color-calm', difficulty: 'easy' },
+    { title: 'Sound Sanctuary', description: 'Create calming sounds', gameType: 'sound-sanctuary', difficulty: 'easy' },
   ],
   'tired/Burned Out': [
-    { title: 'Focus Sprint', description: 'Stay focused. You got this 💪', gameType: 'focus-sprint' },
-    { title: 'Distraction Block', description: 'Choose one distraction to avoid', gameType: 'focus' },
-    { title: 'Blink Break', description: 'Rest your eyes for 30 seconds', gameType: 'blink-break' },
-    { title: 'Spin & Smile', description: 'Spin the wheel for a fun surprise', gameType: 'wheel' },
-    { title: 'One-Thought Dump', description: 'Write down one thought and let it go', gameType: 'journal' },
+    { title: 'Focus Sprint', description: 'Stay focused. You got this 💪', gameType: 'focus-sprint', difficulty: 'medium' },
+    { title: 'Distraction Block', description: 'Choose one distraction to avoid', gameType: 'focus', difficulty: 'hard' },
+    { title: 'Blink Break', description: 'Rest your eyes for 30 seconds', gameType: 'blink-break', difficulty: 'easy' },
+    { title: 'Spin & Smile', description: 'Spin the wheel for a fun surprise', gameType: 'wheel', difficulty: 'easy' },
+    { title: 'One-Thought Dump', description: 'Write down one thought and let it go', gameType: 'journal', difficulty: 'easy' },
+    { title: 'Breathe & Reset', description: 'Calm your mind', gameType: 'breathing', difficulty: 'easy' },
+    { title: 'Sound Sanctuary', description: 'Restorative sounds', gameType: 'sound-sanctuary', difficulty: 'easy' },
+    { title: 'Gratitude Tap', description: 'One good thing', gameType: 'gratitude', difficulty: 'easy' },
   ],
+};
+
+// ========== SHUFFLING UTILITY FUNCTIONS ==========
+
+// Fisher-Yates shuffle algorithm for true randomness
+const shuffleArray = (array) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
+// Get random subset of challenges (different each time)
+const getRandomizedChallenges = (challenges, maxCount = 4) => {
+  if (!challenges || challenges.length === 0) return [];
+  const shuffled = shuffleArray(challenges);
+  return shuffled.slice(0, Math.min(maxCount, shuffled.length));
+};
+
+// Get challenges with difficulty variety (easy/medium/hard mix)
+const getBalancedChallenges = (challenges, maxCount = 4) => {
+  if (!challenges || challenges.length === 0) return [];
+  
+  // Group by difficulty
+  const easy = challenges.filter(c => c.difficulty === 'easy');
+  const medium = challenges.filter(c => c.difficulty === 'medium');
+  const hard = challenges.filter(c => c.difficulty === 'hard');
+  
+  const result = [];
+  
+  // Take 2 easy, 1 medium, 1 hard (if available)
+  const shuffledEasy = shuffleArray(easy);
+  const shuffledMedium = shuffleArray(medium);
+  const shuffledHard = shuffleArray(hard);
+  
+  result.push(...shuffledEasy.slice(0, 2));
+  result.push(...shuffledMedium.slice(0, 1));
+  result.push(...shuffledHard.slice(0, 1));
+  
+  // If we don't have enough, fill with whatever is available
+  if (result.length < maxCount) {
+    const remaining = challenges.filter(c => !result.includes(c));
+    const shuffledRemaining = shuffleArray(remaining);
+    result.push(...shuffledRemaining.slice(0, maxCount - result.length));
+  }
+  
+  return shuffleArray(result.slice(0, maxCount));
+};
+
+// Track shown challenges in localStorage to avoid repeats
+const getPreviouslyShownChallenges = (moodValue) => {
+  const key = `shown_challenges_${moodValue}`;
+  const stored = localStorage.getItem(key);
+  return stored ? JSON.parse(stored) : [];
+};
+
+const saveShownChallenges = (moodValue, challengeTitles) => {
+  const key = `shown_challenges_${moodValue}`;
+  const existing = getPreviouslyShownChallenges(moodValue);
+  const updated = [...existing, ...challengeTitles].slice(-20); // Keep last 20
+  localStorage.setItem(key, JSON.stringify(updated));
+};
+
+// Get challenges that haven't been shown recently
+const getUnseenChallenges = (allAvailable, moodValue, maxCount = 4) => {
+  const previouslyShown = getPreviouslyShownChallenges(moodValue);
+  const unseen = allAvailable.filter(c => !previouslyShown.includes(c.title));
+  
+  if (unseen.length >= maxCount) {
+    return getRandomizedChallenges(unseen, maxCount);
+  } else {
+    // If not enough unseen, mix unseen with some previously shown
+    const shown = allAvailable.filter(c => previouslyShown.includes(c.title));
+    const mixed = [...unseen, ...getRandomizedChallenges(shown, maxCount - unseen.length)];
+    return getRandomizedChallenges(mixed, maxCount);
+  }
 };
 
 const MoodPage = () => {
@@ -180,6 +283,7 @@ const MoodPage = () => {
   const [suggestedChallenges, setSuggestedChallenges] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [celebration, setCelebration] = useState(null);
+  const [lastMoodDate, setLastMoodDate] = useState(null);
   
   // Modal states
   const [modalState, setModalState] = useState({
@@ -211,6 +315,32 @@ const MoodPage = () => {
     { id: 'personal', label: 'Personal', icon: '💡', color: 'bg-[#E5D4B1] text-slate-800' },
   ];
 
+  // Check if mood was logged today to show different suggestions
+  useEffect(() => {
+    const checkTodayMood = async () => {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token) return;
+      
+      try {
+        const response = await axios.get("http://localhost:5000/api/mood", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (response.data && response.data.length > 0) {
+          const today = new Date().toDateString();
+          const todayMood = response.data.find(m => new Date(m.createdAt).toDateString() === today);
+          if (todayMood) {
+            setLastMoodDate(today);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking today's mood:", error);
+      }
+    };
+    
+    checkTodayMood();
+  }, []);
+
   const showModal = (type, title, message) => {
     setModalState({ isOpen: true, type, title, message });
   };
@@ -241,9 +371,7 @@ const MoodPage = () => {
     );
   };
 
-  // Map mood to category for fetching challenges
   const getCategoryFromMood = (moodValue) => {
-    // All moods go to Mood Boost category for relevant challenges
     return 'Mood Boost';
   };
 
@@ -274,18 +402,19 @@ const MoodPage = () => {
         return;
       }
 
+      const backendMoodValue = selectedMoodData.backendValue;
+
       // 1. Save mood to database
       await axios.post(
         "http://localhost:5000/api/mood",
-        { mood: selectedMoodData.backendValue, note: note || "" },
+        { mood: backendMoodValue, note: note || "" },
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );
 
-      // 2. Fetch challenges based on mood
-      const backendMoodValue = selectedMoodData.backendValue;
+      // 2. Fetch and RANDOMIZE challenges based on mood
+      let availableChallenges = [];
       
       try {
-        // Try to get challenges by category first
         const category = getCategoryFromMood(backendMoodValue);
         const challengesResponse = await axios.get(
           `http://localhost:5000/api/challenges/category/${encodeURIComponent(category)}`,
@@ -299,39 +428,64 @@ const MoodPage = () => {
           );
           
           if (moodMatchedChallenges.length > 0) {
-            setSuggestedChallenges(moodMatchedChallenges);
-            setSuggestions(moodMatchedChallenges.map(c => c.title));
+            availableChallenges = moodMatchedChallenges;
           } else {
-            // Show all challenges from that category if no exact mood match
-            setSuggestedChallenges(challengesResponse.data);
-            setSuggestions(challengesResponse.data.map(c => c.title));
+            availableChallenges = challengesResponse.data;
           }
         } else {
           // Fallback to static challenges
           const staticChallenges = allChallenges['Mood Boost'] || [];
-          const moodMatchedStatic = staticChallenges.filter(
+          availableChallenges = staticChallenges.filter(
             challenge => challenge.moodTag && challenge.moodTag.includes(backendMoodValue)
           );
-          
-          if (moodMatchedStatic.length > 0) {
-            setSuggestedChallenges(moodMatchedStatic);
-            setSuggestions(moodMatchedStatic.map(c => c.title));
-          } else {
-            // Use mood-specific fallback suggestions
-            const fallback = moodFallbackSuggestions[backendMoodValue] || moodFallbackSuggestions['calm/Okay'];
-            setSuggestedChallenges(fallback);
-            setSuggestions(fallback.map(c => c.title));
-          }
         }
       } catch (challengeError) {
         console.error("Error fetching challenges:", challengeError);
         // Use mood-specific fallback suggestions
         const fallback = moodFallbackSuggestions[backendMoodValue] || moodFallbackSuggestions['calm/Okay'];
-        setSuggestedChallenges(fallback);
-        setSuggestions(fallback.map(c => c.title));
+        availableChallenges = fallback;
       }
 
+      // ========== SMART RANDOMIZATION LOGIC ==========
+      
+      // If no challenges found, use fallback
+      if (!availableChallenges || availableChallenges.length === 0) {
+        const fallback = moodFallbackSuggestions[backendMoodValue] || moodFallbackSuggestions['calm/Okay'];
+        availableChallenges = fallback;
+      }
+      
+      // Check if user already logged mood today - if yes, show different challenges
+      const today = new Date().toDateString();
+      const isSameDayMood = lastMoodDate === today;
+      
+      let randomizedChallenges;
+      
+      if (isSameDayMood) {
+        // User already logged mood today - show completely different challenges
+        // First try to get unseen challenges
+        randomizedChallenges = getUnseenChallenges(availableChallenges, backendMoodValue, 4);
+        
+        // Add a special message for repeat mood
+        showToast("✨ Here are some new challenges for you today!", 'success');
+      } else {
+        // First time logging mood today - show balanced variety
+        randomizedChallenges = getBalancedChallenges(availableChallenges, 4);
+      }
+      
+      // Ensure we have exactly 4 challenges (or less if not enough available)
+      const finalChallenges = randomizedChallenges.slice(0, 4);
+      
+      // Save shown challenges to localStorage to avoid repeats in future
+      const shownTitles = finalChallenges.map(c => c.title);
+      saveShownChallenges(backendMoodValue, shownTitles);
+      
+      setSuggestedChallenges(finalChallenges);
+      setSuggestions(finalChallenges.map(c => c.title));
       setShowSuggestions(true);
+      
+      // Update last mood date
+      setLastMoodDate(today);
+      
       showModal('success', 'Mood Saved! ✨', 'Your mood has been recorded. Check out your personalized challenges below.');
 
     } catch (error) {
@@ -353,17 +507,14 @@ const MoodPage = () => {
         return;
       }
 
-      // Find the challenge from suggestedChallenges
       const challengeObj = suggestedChallenges.find(c => c.title === challengeTitle);
       
       if (!challengeObj || !challengeObj._id) {
-        console.error("Challenge ID not found:", challengeTitle);
         setCompleted(prev => [...prev, challengeTitle]);
         setCelebration({ title: challengeTitle });
         return;
       }
 
-      // Post to completed challenges endpoint
       await axios.post(
         "http://localhost:5000/api/completed-challenges",
         { challengeId: challengeObj._id },
@@ -382,7 +533,6 @@ const MoodPage = () => {
     }
   };
 
-  // Updated handlePlayChallenge with proper game type mapping
   const handlePlayChallenge = (challengeTitle) => {
     const challengeObj = suggestedChallenges.find(c => c.title === challengeTitle);
     
@@ -392,7 +542,6 @@ const MoodPage = () => {
       return;
     }
 
-    // Map gameType to routes
     const gameRoutes = {
       'breathing': '/games/breathe',
       'gratitude': '/games/gratitude-tap',
@@ -408,7 +557,13 @@ const MoodPage = () => {
       'wheel': '/games/spin-wheel',
       'timer': '/games/timer',
       'blink-break': '/games/blink-break',
-      'journal': '/games/one-thought'
+      'journal': '/games/one-thought',
+      'breath-bubble': '/games/breath-bubble',
+      'gratitude-catch': '/games/gratitude-catch',
+      'mindful-match': '/games/mindful-match',
+      'affirmation-stack': '/games/affirmation-stack',
+      'color-calm': '/games/color-calm',
+      'sound-sanctuary': '/games/sound-sanctuary',
     };
 
     const route = gameRoutes[challengeObj.gameType] || '/games/timer';
@@ -552,7 +707,7 @@ const MoodPage = () => {
 
           {/* Suggestions Section */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="mt-16 bg-white p-10 rounded-3xl shadow-xl max-w-4xl mx-auto">
+            <div id="suggestions-section" className="mt-16 bg-white p-10 rounded-3xl shadow-xl max-w-4xl mx-auto">
               <div className="flex justify-between items-center mb-8">
                 <div>
                   <h2 className="text-3xl font-serif text-slate-800 mb-2">
@@ -561,6 +716,11 @@ const MoodPage = () => {
                   <p className="text-slate-500">
                     Based on your {selectedMoodData?.label} mood
                   </p>
+                  {lastMoodDate === new Date().toDateString() && (
+                    <p className="text-xs text-indigo-500 mt-1">
+                      ✨ Fresh challenges for today!
+                    </p>
+                  )}
                 </div>
                 <button 
                   onClick={() => navigate('/challenges')}
@@ -584,9 +744,13 @@ const MoodPage = () => {
                     >
                       <div className="flex justify-between items-start mb-3">
                         <h3 className="font-bold text-lg">{item}</h3>
-                        {challengeObj?.moodTag && Array.isArray(challengeObj.moodTag) && (
-                          <span className="text-xs bg-slate-200 px-2 py-1 rounded-full">
-                            {challengeObj.moodTag[0]}
+                        {challengeObj?.difficulty && (
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            challengeObj.difficulty === 'easy' ? 'bg-green-100 text-green-700' :
+                            challengeObj.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-red-100 text-red-700'
+                          }`}>
+                            {challengeObj.difficulty}
                           </span>
                         )}
                       </div>

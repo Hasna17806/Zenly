@@ -1,6 +1,7 @@
 import Psychiatrist from "../models/Psychiatrist.js";
 import Appointment from "../models/Appointment.js";
 import Notification from "../models/Notification.js";
+import Availability from "../models/Availability.js"; // ⭐ ADD THIS IMPORT
 
 const cleanDoctorName = (name = "") => name.replace(/^Dr\.?\s*/i, "").trim();
 
@@ -8,17 +9,17 @@ const cleanDoctorName = (name = "") => name.replace(/^Dr\.?\s*/i, "").trim();
 
 export const bookAppointment = async (req, res) => {
   try {
-    const { psychiatristId } = req.body;
+    const { psychiatristId, preferredDate, preferredTime } = req.body;
 
     const existing = await Appointment.findOne({
       userId: req.user._id,
       psychiatristId,
-      status: "Pending"
+      status: { $in: ["Pending", "Accepted"] }
     });
 
     if (existing) {
       return res.status(400).json({
-        message: "You already have a pending request with this psychiatrist"
+        message: "You already have an active appointment with this psychiatrist"
       });
     }
 
@@ -30,11 +31,11 @@ export const bookAppointment = async (req, res) => {
       });
     }
 
-    const doctorName = cleanDoctorName(psychiatrist.name);
-
     const appointment = new Appointment({
       userId: req.user._id,
-      psychiatristId
+      psychiatristId,
+      date: preferredDate || null,
+      time: preferredTime || null
     });
 
     await appointment.save();
@@ -73,6 +74,7 @@ export const getPsychiatristAppointments = async (req, res) => {
 export const acceptAppointment = async (req, res) => {
   try {
     const { date, time } = req.body;
+    const appointmentId = req.params.id;
 
     if (!date || !time) {
       return res.status(400).json({
@@ -80,7 +82,7 @@ export const acceptAppointment = async (req, res) => {
       });
     }
 
-    const appointment = await Appointment.findById(req.params.id);
+    const appointment = await Appointment.findById(appointmentId);
 
     if (!appointment) {
       return res.status(404).json({
@@ -110,6 +112,37 @@ export const acceptAppointment = async (req, res) => {
       });
     }
 
+    // ⭐⭐⭐ BOOK THE SLOT IN AVAILABILITY ⭐⭐⭐
+    try {
+      const availability = await Availability.findOne({
+        psychiatristId: appointment.psychiatristId,
+        date: date
+      });
+
+      if (availability) {
+        const slot = availability.slots.find(s => s.time === time);
+        if (slot) {
+          if (slot.isBooked) {
+            return res.status(400).json({
+              message: "This time slot is already booked by another patient"
+            });
+          }
+          slot.isBooked = true;
+          slot.bookedBy = appointment.userId;
+          slot.appointmentId = appointmentId;
+          await availability.save();
+          console.log(`✅ Slot ${time} on ${date} booked for appointment ${appointmentId}`);
+        } else {
+          console.log(`⚠️ Slot ${time} not found in availability for ${date}`);
+        }
+      } else {
+        console.log(`⚠️ No availability found for date ${date}`);
+      }
+    } catch (slotError) {
+      console.error("Error booking slot:", slotError);
+      // Don't block appointment acceptance if slot booking fails
+    }
+
     const doctorName = cleanDoctorName(psychiatrist.name);
 
     appointment.date = date;
@@ -118,7 +151,7 @@ export const acceptAppointment = async (req, res) => {
 
     await appointment.save();
 
-    // ✅ KEEP - Notification for accepted appointment
+    // Notification for accepted appointment
     await Notification.create({
       userId: appointment.userId,
       title: "Appointment Accepted",
@@ -171,13 +204,35 @@ export const rejectAppointment = async (req, res) => {
       });
     }
 
+    // ⭐ RELEASE THE SLOT IF IT WAS BOOKED ⭐
+    if (appointment.date && appointment.time) {
+      try {
+        const availability = await Availability.findOne({
+          psychiatristId: appointment.psychiatristId,
+          date: appointment.date
+        });
+        
+        if (availability) {
+          const slot = availability.slots.find(s => s.time === appointment.time);
+          if (slot && slot.isBooked && slot.appointmentId?.toString() === appointment._id.toString()) {
+            slot.isBooked = false;
+            slot.bookedBy = null;
+            slot.appointmentId = null;
+            await availability.save();
+            console.log(`✅ Slot ${appointment.time} on ${appointment.date} released`);
+          }
+        }
+      } catch (slotError) {
+        console.error("Error releasing slot:", slotError);
+      }
+    }
+
     const doctorName = cleanDoctorName(psychiatrist.name);
 
     appointment.status = "Rejected";
-
     await appointment.save();
 
-    // ✅ KEEP - Notification for rejected appointment
+    // Notification for rejected appointment
     await Notification.create({
       userId: appointment.userId,
       title: "Appointment Rejected",
@@ -254,10 +309,33 @@ export const cancelAppointment = async (req, res) => {
     const psychiatrist = await Psychiatrist.findById(appointment.psychiatristId);
     const doctorName = psychiatrist ? cleanDoctorName(psychiatrist.name) : "your psychiatrist";
 
+    // ⭐ RELEASE THE SLOT IF IT WAS BOOKED ⭐
+    if (appointment.date && appointment.time) {
+      try {
+        const availability = await Availability.findOne({
+          psychiatristId: appointment.psychiatristId,
+          date: appointment.date
+        });
+        
+        if (availability) {
+          const slot = availability.slots.find(s => s.time === appointment.time);
+          if (slot && slot.isBooked && slot.appointmentId?.toString() === appointment._id.toString()) {
+            slot.isBooked = false;
+            slot.bookedBy = null;
+            slot.appointmentId = null;
+            await availability.save();
+            console.log(`✅ Slot ${appointment.time} on ${appointment.date} released on cancellation`);
+          }
+        }
+      } catch (slotError) {
+        console.error("Error releasing slot on cancel:", slotError);
+      }
+    }
+
     appointment.status = "Cancelled";
     await appointment.save();
 
-    // ✅ KEEP - Notification for cancelled appointment
+    // Notification for cancelled appointment
     await Notification.create({
       userId: req.user._id,
       title: "Appointment Cancelled",

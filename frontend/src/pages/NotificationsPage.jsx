@@ -330,6 +330,40 @@ const css = `
     font-weight: 400;
   }
 
+  /* Read indicator button */
+  .np-read-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .np-read-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #3b82f6;
+  }
+
+  .np-read-btn.done {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #16a34a;
+    cursor: default;
+  }
+
+  .np-read-btn.done:hover {
+    background: #f0fdf4;
+    color: #16a34a;
+  }
+
   .np-empty {
     text-align: center;
     padding: 100px 20px;
@@ -367,8 +401,17 @@ const css = `
 `;
 
 // ── NotifCard ─────────────────────────────────────────────────────────────────
-const NotifCard = ({ item, delay = 0 }) => {
+const NotifCard = ({ item, delay = 0, onMarkAsRead }) => {
   const v = getVariant(item.title);
+  const [isMarking, setIsMarking] = useState(false);
+
+  const handleMarkAsRead = async () => {
+    if (item.isRead) return;
+    setIsMarking(true);
+    await onMarkAsRead(item._id);
+    setIsMarking(false);
+  };
+
   return (
     <div
       className={`np-card ${item.isRead ? "read" : "unread"}`}
@@ -393,6 +436,34 @@ const NotifCard = ({ item, delay = 0 }) => {
           {formatDate(item.createdAt)}
         </div>
       </div>
+      {!item.isRead && (
+        <button 
+          className="np-read-btn" 
+          onClick={handleMarkAsRead}
+          disabled={isMarking}
+        >
+          {isMarking ? (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
+                <path d="M12 2a10 10 0 1 1 0 20" stroke="currentColor" strokeWidth="2" fill="none"/>
+              </svg>
+              Marking...
+            </>
+          ) : (
+            <>
+              <CheckCircleIcon size={14} />
+              Mark as read
+            </>
+          )}
+        </button>
+      )}
+      {item.isRead && (
+        <button className="np-read-btn done" disabled>
+          <CheckCircleIcon size={14} />
+          Read
+        </button>
+      )}
     </div>
   );
 };
@@ -400,6 +471,7 @@ const NotifCard = ({ item, delay = 0 }) => {
 // ── Page ──────────────────────────────────────────────────────────────────────
 const NotificationsPage = () => {
   const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(false);
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
   const fetchNotifications = async () => {
@@ -414,15 +486,32 @@ const NotificationsPage = () => {
   };
 
   const markAllAsRead = async () => {
+    if (loading) return;
+    setLoading(true);
     try {
       await axios.put(
         "http://localhost:5000/api/notifications/read-all",
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchNotifications();
+      await fetchNotifications();
     } catch (err) {
       console.error("Error marking as read:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const markSingleAsRead = async (id) => {
+    try {
+      await axios.put(
+        `http://localhost:5000/api/notifications/read/${id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      await fetchNotifications();
+    } catch (err) {
+      console.error("Error marking notification as read:", err);
     }
   };
 
@@ -459,10 +548,22 @@ const NotificationsPage = () => {
               <button
                 className={`np-btn ${allRead ? "np-btn-done" : "np-btn-active"}`}
                 onClick={!allRead ? markAllAsRead : undefined}
-                disabled={allRead}
+                disabled={allRead || loading}
               >
-                <CheckAllIcon />
-                {allRead ? "All caught up" : "Mark all read"}
+                {loading ? (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
+                      <path d="M12 2a10 10 0 1 1 0 20" stroke="currentColor" strokeWidth="2" fill="none"/>
+                    </svg>
+                    Marking...
+                  </>
+                ) : (
+                  <>
+                    <CheckAllIcon />
+                    {allRead ? "All caught up" : "Mark all read"}
+                  </>
+                )}
               </button>
             )}
           </div>
@@ -476,7 +577,12 @@ const NotificationsPage = () => {
                   <>
                     <div className="np-section-label">New</div>
                     {notifications.filter(n => !n.isRead).map((item, i) => (
-                      <NotifCard key={item._id} item={item} delay={i * 0.05} />
+                      <NotifCard 
+                        key={item._id} 
+                        item={item} 
+                        delay={i * 0.05} 
+                        onMarkAsRead={markSingleAsRead}
+                      />
                     ))}
                   </>
                 )}
@@ -486,7 +592,12 @@ const NotificationsPage = () => {
                       Earlier
                     </div>
                     {notifications.filter(n => n.isRead).map((item, i) => (
-                      <NotifCard key={item._id} item={item} delay={i * 0.04} />
+                      <NotifCard 
+                        key={item._id} 
+                        item={item} 
+                        delay={i * 0.04} 
+                        onMarkAsRead={markSingleAsRead}
+                      />
                     ))}
                   </>
                 )}

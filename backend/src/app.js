@@ -14,9 +14,13 @@ import uploadRoutes from './routes/uploadRoutes.js';
 import completedChallengeRoutes from "./routes/completedChallengeRoutes.js";
 import adminRoutes from "./admin/adminRoutes.js";
 import appointmentRoutes from "./routes/appointmentRoutes.js";
+import availabilityRoutes from "./routes/availabilityRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import savedPsychiatristsRoutes from "./routes/savedPsychiatristsRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,8 +47,11 @@ app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/completed-challenges", completedChallengeRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use("/api/availability", availabilityRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/my-psychiatrists", savedPsychiatristsRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/payments", paymentRoutes);
 
 export default app;

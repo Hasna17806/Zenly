@@ -15,9 +15,12 @@ import UserAppointments from './pages/UserAppointments';
 import SessionChat from './pages/SessionChat';
 import NotificationsPage from './pages/NotificationsPage';
 import ProgressPage from './pages/ProgressPage';
+import PsychiatristReviews from './pages/PsychiatristReviews';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentCancel from './pages/PaymentCancel';
 import "./utils/axiosConfig";
 
-// Import all 15 game components
+// Import all existing game components
 import BreathingGame from './pages/games/BreathingGame';
 import GratitudeTapGame from './pages/games/GratitudeTapGame';
 import SmileChallengeGame from './pages/games/SmileChallengeGame';
@@ -35,6 +38,14 @@ import BlinkBreakGame from './pages/games/BlinkBreakGame';
 import OneThoughtGame from './pages/games/OneThoughtGame';
 import TimerGame from './pages/games/TimerGame';
 
+// Import NEW Mood Boost games (6 new games)
+import BreathBubbleGame from "./pages/games/BreathBubbleGame";
+import GratitudeCatchGame from "./pages/games/GratitudeCatchGame";
+import MindfulMatchGame from "./pages/games/MindfulMatchGame";
+import AffirmationStackGame from "./pages/games/AffirmationStackGame";
+import ColorCalmGame from "./pages/games/ColorCalmGame";
+import SoundSanctuaryGame from "./pages/games/SoundSanctuaryGame";
+
 // Admin
 import AdminLayout from './layout/AdminLayout';
 import AdminLogin from './adminPages/AdminLogin';
@@ -44,8 +55,10 @@ import AdminPsychiatrists from './adminPages/AdminPsychiatrists';
 import AdminSettings from './adminPages/AdminSettings';
 import AdminChallenges from './adminPages/AdminChallenges';
 import ProtectedAdminRoute from './components/ProtectedAdminRoute';
+import AdminReviews from './adminPages/AdminReviews';
+import AdminPayments from './adminPages/AdminPayments';
 
-//Psychiatrist
+// Psychiatrist
 import PsychiatristLogin from './pages/psychiatristLogin';
 import PsychiatristDashboard from './pages/PsychiatristDashboard';
 import PsychiatristAppointments from './pages/PsychiatristAppointments';
@@ -54,6 +67,10 @@ import PsychiatristSession from './pages/PsychiatristSession';
 import ProtectedPsychiatristRoute from './components/ProtectedPsychiatristRoute';
 import MyPsychiatrists from './pages/MyPsychiatrists';
 import PsychiatristChatPage from './pages/PsychiatristChatPage';
+import PsychiatristAvailability from './pages/PsychiatristAvailability';
+import PatientProgress from './components/PatientProgress';
+import PsychiatristPatients from './pages/PsychiatristPatients';
+import PsychiatristEarnings from './pages/PsychiatristEarnings';
 
 function App() {
   return (
@@ -81,8 +98,11 @@ function App() {
         <Route path="/my-psychiatrists" element={<ProtectedRoute><MyPsychiatrists /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
         <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
+        <Route path="/psychiatrist-reviews/:psychiatristId" element={<ProtectedRoute><PsychiatristReviews /></ProtectedRoute>} />
+        <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+        <Route path="/payment-cancel" element={<ProtectedRoute><PaymentCancel /></ProtectedRoute>} />
 
-        {/* Games */}
+        {/* Existing Games */}
         <Route path="/games/breathe" element={<ProtectedRoute><BreathingGame /></ProtectedRoute>} />
         <Route path="/games/gratitude-tap" element={<ProtectedRoute><GratitudeTapGame /></ProtectedRoute>} />
         <Route path="/games/smile-challenge" element={<ProtectedRoute><SmileChallengeGame /></ProtectedRoute>} />
@@ -100,6 +120,14 @@ function App() {
         <Route path="/games/one-thought" element={<ProtectedRoute><OneThoughtGame /></ProtectedRoute>} />
         <Route path="/games/timer" element={<ProtectedRoute><TimerGame /></ProtectedRoute>} />
 
+        {/* NEW Mood Boost Games (6 games) */}
+        <Route path="/games/breath-bubble" element={<ProtectedRoute><BreathBubbleGame /></ProtectedRoute>} />
+        <Route path="/games/gratitude-catch" element={<ProtectedRoute><GratitudeCatchGame /></ProtectedRoute>} />
+        <Route path="/games/mindful-match" element={<ProtectedRoute><MindfulMatchGame /></ProtectedRoute>} />
+        <Route path="/games/affirmation-stack" element={<ProtectedRoute><AffirmationStackGame /></ProtectedRoute>} />
+        <Route path="/games/color-calm" element={<ProtectedRoute><ColorCalmGame /></ProtectedRoute>} />
+        <Route path="/games/sound-sanctuary" element={<ProtectedRoute><SoundSanctuaryGame /></ProtectedRoute>} />
+
         {/* ================= ADMIN SECTION ================= */}
         <Route path="/admin/login" element={<AdminLogin />} />
         
@@ -116,6 +144,8 @@ function App() {
           <Route path="psychiatrists" element={<AdminPsychiatrists />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="challenges" element={<AdminChallenges />} />
+          <Route path="reviews" element={<AdminReviews />} />
+          <Route path="payments" element={<AdminPayments />} />
         </Route>
 
         {/* ================= PSYCHIATRIST SECTION ================= */}
@@ -157,6 +187,38 @@ function App() {
           element={
             <ProtectedPsychiatristRoute>
               <PsychiatristSession />
+            </ProtectedPsychiatristRoute>
+          } 
+        />
+        <Route 
+          path="/psychiatrist/availability" 
+          element={
+            <ProtectedPsychiatristRoute>
+              <PsychiatristAvailability />
+            </ProtectedPsychiatristRoute>
+          } 
+        />
+        <Route 
+          path="/psychiatrist/patients" 
+          element={
+            <ProtectedPsychiatristRoute>
+              <PsychiatristPatients />
+            </ProtectedPsychiatristRoute>
+          } 
+        />
+        <Route 
+          path="/psychiatrist/patient-progress/:patientId" 
+          element={
+            <ProtectedPsychiatristRoute>
+              <PatientProgress />
+            </ProtectedPsychiatristRoute>
+          } 
+        />
+        <Route 
+          path="/psychiatrist/earnings" 
+          element={
+            <ProtectedPsychiatristRoute>
+              <PsychiatristEarnings />
             </ProtectedPsychiatristRoute>
           } 
         />

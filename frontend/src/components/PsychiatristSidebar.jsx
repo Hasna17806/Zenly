@@ -29,6 +29,30 @@ const PsychiatristSidebar = () => {
       ),
     },
     {
+      to: "/psychiatrist/availability",
+      label: "Availability",
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+          <circle cx="12" cy="15" r="1.5" />
+          <circle cx="16" cy="15" r="1.5" />
+          <circle cx="8" cy="15" r="1.5" />
+        </svg>
+      ),
+    },
+    {
+      to: "/psychiatrist/patients",
+      label: "My Patients",
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      ),
+    },
+    {
       to: "/psychiatrist/chats",
       label: "Messages",
       icon: (
@@ -49,6 +73,16 @@ const PsychiatristSidebar = () => {
         </svg>
       ),
     },
+    {
+    to: "/psychiatrist/earnings",
+    label: "Earnings",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    ),
+  },
   ];
 
   return (
