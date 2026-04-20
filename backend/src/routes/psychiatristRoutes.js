@@ -15,21 +15,16 @@ import { protectPsychiatrist } from "../middleware/psychiatristAuth.js";
 
 const router = express.Router();
 
-// TEST ROUTE
+// Existing routes
 router.get("/test", (req, res) => {
   res.json({ message: "Psychiatrist route working ✅" });
 });
 
-// LOGIN ROUTE
 router.post("/login", loginPsychiatrist);
-
-// PROFILE ROUTE
 router.get("/profile", protectPsychiatrist, getPsychiatristProfile);
-
-// ALL PSYCHIATRISTS
 router.get("/all", getAllPsychiatrists);
 
-// PATIENT MANAGEMENT ROUTES
+// patient management routes
 router.get("/patients", protectPsychiatrist, getPsychiatristPatients);
 router.get("/patient/:patientId", protectPsychiatrist, getPatientDetails);
 router.get("/patient/:patientId/appointments", protectPsychiatrist, getPatientAppointments);
