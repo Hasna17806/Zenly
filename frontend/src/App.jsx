@@ -20,7 +20,7 @@ import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentCancel from './pages/PaymentCancel';
 import "./utils/axiosConfig";
 
-// Import all existing game components
+// game components
 import BreathingGame from './pages/games/BreathingGame';
 import GratitudeTapGame from './pages/games/GratitudeTapGame';
 import SmileChallengeGame from './pages/games/SmileChallengeGame';
@@ -37,14 +37,20 @@ import SixtySecondBreathGame from './pages/games/SixtySecondBreathGame';
 import BlinkBreakGame from './pages/games/BlinkBreakGame';
 import OneThoughtGame from './pages/games/OneThoughtGame';
 import TimerGame from './pages/games/TimerGame';
-
-// Import NEW Mood Boost games (6 new games)
 import BreathBubbleGame from "./pages/games/BreathBubbleGame";
 import GratitudeCatchGame from "./pages/games/GratitudeCatchGame";
 import MindfulMatchGame from "./pages/games/MindfulMatchGame";
 import AffirmationStackGame from "./pages/games/AffirmationStackGame";
 import ColorCalmGame from "./pages/games/ColorCalmGame";
 import SoundSanctuaryGame from "./pages/games/SoundSanctuaryGame";
+import RecallRushGame from './pages/games/RecallRushGame';
+import OneShotMathGame from './pages/games/OneShotMathGame';
+import FlashMemoryGame from './pages/games/FlashMemoryGame';
+import CatchTheMoodGame from './pages/games/CatchTheMoodGame';
+import MemeReactionGame from './pages/games/MemeReactionGame';
+import SpeedSortGame from './pages/games/SpeedSortGame';
+import TapRushGame from './pages/games/TapRushGame';
+
 
 // Admin
 import AdminLayout from './layout/AdminLayout';
@@ -102,7 +108,7 @@ function App() {
         <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
         <Route path="/payment-cancel" element={<ProtectedRoute><PaymentCancel /></ProtectedRoute>} />
 
-        {/* Existing Games */}
+        {/* Games */}
         <Route path="/games/breathe" element={<ProtectedRoute><BreathingGame /></ProtectedRoute>} />
         <Route path="/games/gratitude-tap" element={<ProtectedRoute><GratitudeTapGame /></ProtectedRoute>} />
         <Route path="/games/smile-challenge" element={<ProtectedRoute><SmileChallengeGame /></ProtectedRoute>} />
@@ -119,14 +125,20 @@ function App() {
         <Route path="/games/blink-break" element={<ProtectedRoute><BlinkBreakGame /></ProtectedRoute>} />
         <Route path="/games/one-thought" element={<ProtectedRoute><OneThoughtGame /></ProtectedRoute>} />
         <Route path="/games/timer" element={<ProtectedRoute><TimerGame /></ProtectedRoute>} />
-
-        {/* NEW Mood Boost Games (6 games) */}
         <Route path="/games/breath-bubble" element={<ProtectedRoute><BreathBubbleGame /></ProtectedRoute>} />
         <Route path="/games/gratitude-catch" element={<ProtectedRoute><GratitudeCatchGame /></ProtectedRoute>} />
         <Route path="/games/mindful-match" element={<ProtectedRoute><MindfulMatchGame /></ProtectedRoute>} />
         <Route path="/games/affirmation-stack" element={<ProtectedRoute><AffirmationStackGame /></ProtectedRoute>} />
         <Route path="/games/color-calm" element={<ProtectedRoute><ColorCalmGame /></ProtectedRoute>} />
         <Route path="/games/sound-sanctuary" element={<ProtectedRoute><SoundSanctuaryGame /></ProtectedRoute>} />
+        <Route path="/games/brain-sprint" element={<ProtectedRoute><OneShotMathGame /></ProtectedRoute>} />
+        <Route path="/games/word-builder" element={<ProtectedRoute><SpeedSortGame /></ProtectedRoute>} />
+        <Route path="/games/meme-reaction" element={<ProtectedRoute><MemeReactionGame /></ProtectedRoute>} />
+        <Route path="/games/weird-quiz" element={<ProtectedRoute><RecallRushGame /></ProtectedRoute>} />
+        <Route path="/games/tap-burst" element={<ProtectedRoute><TapRushGame /></ProtectedRoute>} />
+        <Route path="/games/color-rush" element={<ProtectedRoute><ColorCalmGame /></ProtectedRoute>} />
+        <Route path="/games/mini-memory" element={<ProtectedRoute><FlashMemoryGame /></ProtectedRoute>} />
+        <Route path="/games/catch-the-mood" element={<ProtectedRoute><CatchTheMoodGame/></ProtectedRoute>} />
 
         {/* ================= ADMIN SECTION ================= */}
         <Route path="/admin/login" element={<AdminLogin />} />

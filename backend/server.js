@@ -1,4 +1,3 @@
-
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -14,12 +13,20 @@ connectDB();
 
 const server = http.createServer(app);
 
+// Update Socket.IO configuration for production
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "https://zenly-frontend.onrender.com",
+      /\.onrender\.com$/
+    ],
     methods: ["GET", "POST"],
-    credentials: true
-  }
+    credentials: true,
+    transports: ['websocket', 'polling']
+  },
+  allowEIO3: true
 });
 
 // Store active rooms and users

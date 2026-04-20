@@ -9,6 +9,7 @@ const PsychiatristAvailability = () => {
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [toast, setToast] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, id: null, date: null });
   
   const token = localStorage.getItem("psychiatristToken");
 
@@ -68,20 +69,27 @@ const PsychiatristAvailability = () => {
     }
   };
 
-  const handleDeleteAvailability = async (id) => {
-    if (!confirm("Are you sure you want to remove this availability?")) return;
-    
+  const handleDeleteAvailability = async () => {
     try {
       await axios.delete(
-        `http://localhost:5000/api/availability/${id}`,
+        `http://localhost:5000/api/availability/${deleteConfirm.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       showToast("Availability removed successfully!");
       fetchAvailabilities();
+      setDeleteConfirm({ isOpen: false, id: null, date: null });
     } catch (error) {
       console.error("Error deleting availability:", error);
       showToast("Failed to remove availability", "error");
     }
+  };
+
+  const openDeleteConfirm = (id, date) => {
+    setDeleteConfirm({ isOpen: true, id, date });
+  };
+
+  const closeDeleteConfirm = () => {
+    setDeleteConfirm({ isOpen: false, id: null, date: null });
   };
 
   const toggleSlot = (slot) => {
@@ -95,6 +103,16 @@ const PsychiatristAvailability = () => {
   const getMinDate = () => {
     const today = new Date();
     return today.toISOString().split('T')[0];
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", { 
+      weekday: "long", 
+      month: "short", 
+      day: "numeric", 
+      year: "numeric" 
+    });
   };
 
   return (
@@ -113,6 +131,37 @@ const PsychiatristAvailability = () => {
             Add Availability
           </button>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirm.isOpen && (
+          <div className="modal-overlay" onClick={closeDeleteConfirm}>
+            <div className="delete-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="delete-modal-header">
+                <div className="delete-modal-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h3 className="delete-modal-title">Remove Availability</h3>
+              </div>
+              <div className="delete-modal-body">
+                <p className="delete-modal-message">
+                  Are you sure you want to remove availability for <strong>{formatDate(deleteConfirm.date)}</strong>?
+                </p>
+                <div className="delete-modal-warning">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>This action cannot be undone. All booked slots will be cancelled.</span>
+                </div>
+              </div>
+              <div className="delete-modal-footer">
+                <button className="delete-cancel-btn" onClick={closeDeleteConfirm}>Cancel</button>
+                <button className="delete-confirm-btn" onClick={handleDeleteAvailability}>Yes, Remove</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Add Availability Form Modal */}
         {showAddForm && (
@@ -186,26 +235,25 @@ const PsychiatristAvailability = () => {
                   </div>
                   <button
                     className="delete-btn"
-                    onClick={() => handleDeleteAvailability(item._id)}
+                    onClick={() => openDeleteConfirm(item._id, item.date)}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M18 6L6 18M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
-                {/* //Update the slot display to show booked status */}
-            <div className="card-slots">
-              {item.slots.map((slot, idx) => (
-                <span key={idx} className={`slot-tag ${slot.isBooked ? "booked" : "available"}`}>
-                  {slot.time}
-                  {slot.isBooked && " (Booked)"}
-                </span>
-              ))}
-            </div>
-            <div className="card-stats">
-              <span>Available: {item.slots.filter(s => !s.isBooked).length}</span>
-              <span>Booked: {item.slots.filter(s => s.isBooked).length}</span>
-            </div>
+                <div className="card-slots">
+                  {item.slots.map((slot, idx) => (
+                    <span key={idx} className={`slot-tag ${slot.isBooked ? "booked" : "available"}`}>
+                      {slot.time}
+                      {slot.isBooked && " (Booked)"}
+                    </span>
+                  ))}
+                </div>
+                <div className="card-stats">
+                  <span>Available: {item.slots.filter(s => !s.isBooked).length}</span>
+                  <span>Booked: {item.slots.filter(s => s.isBooked).length}</span>
+                </div>
               </div>
             ))}
           </div>
@@ -274,13 +322,19 @@ const PsychiatristAvailability = () => {
         .modal-overlay {
           position: fixed;
           inset: 0;
-          background: rgba(0,0,0,0.5);
-          backdrop-filter: blur(4px);
+          background: rgba(0,0,0,0.7);
+          backdrop-filter: blur(8px);
           display: flex;
           align-items: center;
           justify-content: center;
           z-index: 10000;
           padding: 20px;
+          animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
 
         .modal-content {
@@ -293,6 +347,120 @@ const PsychiatristAvailability = () => {
           flex-direction: column;
           overflow: hidden;
           border: 1px solid rgba(255,255,255,0.1);
+          animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .delete-modal {
+          background: #111d2b;
+          border-radius: 24px;
+          width: 420px;
+          max-width: 100%;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,0.1);
+          animation: slideUp 0.3s ease;
+        }
+
+        .delete-modal-header {
+          padding: 24px;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .delete-modal-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          background: rgba(239,68,68,0.15);
+          color: #f87171;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .delete-modal-title {
+          font-size: 18px;
+          font-weight: 600;
+          color: #eef2f5;
+          margin: 0;
+        }
+
+        .delete-modal-body {
+          padding: 24px;
+        }
+
+        .delete-modal-message {
+          font-size: 15px;
+          color: rgba(255,255,255,0.7);
+          margin-bottom: 16px;
+          line-height: 1.5;
+        }
+
+        .delete-modal-message strong {
+          color: #64b4c8;
+        }
+
+        .delete-modal-warning {
+          background: rgba(239,68,68,0.1);
+          border: 1px solid rgba(239,68,68,0.2);
+          border-radius: 12px;
+          padding: 12px 16px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-size: 13px;
+          color: #f87171;
+        }
+
+        .delete-modal-footer {
+          padding: 20px 24px;
+          border-top: 1px solid rgba(255,255,255,0.1);
+          display: flex;
+          justify-content: flex-end;
+          gap: 12px;
+        }
+
+        .delete-cancel-btn {
+          padding: 10px 20px;
+          background: transparent;
+          border: 1px solid rgba(255,255,255,0.2);
+          border-radius: 10px;
+          color: rgba(255,255,255,0.6);
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .delete-cancel-btn:hover {
+          background: rgba(255,255,255,0.05);
+          color: #fff;
+        }
+
+        .delete-confirm-btn {
+          padding: 10px 24px;
+          background: #ef4444;
+          border: none;
+          border-radius: 10px;
+          color: white;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .delete-confirm-btn:hover {
+          background: #dc2626;
+          transform: translateY(-1px);
         }
 
         .modal-header {

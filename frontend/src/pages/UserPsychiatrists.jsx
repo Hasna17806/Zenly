@@ -3,6 +3,7 @@ import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import ReviewModal from "../components/ReviewModal";
+import Footer from "../components/Footer";
 
 const UserPsychiatrists = () => {
   const [psychiatrists, setPsychiatrists] = useState([]);
@@ -44,7 +45,6 @@ const UserPsychiatrists = () => {
 
       setAdded(addedMap);
       
-      // Fetch reviews for each psychiatrist
       await fetchAllReviews(psyRes.data);
     } catch (error) {
       console.error("Error fetching psychiatrists:", error);
@@ -55,25 +55,21 @@ const UserPsychiatrists = () => {
   };
 
   const fetchAllReviews = async (psychiatristsList) => {
-    const reviewsData = {};
     const ratingsData = {};
     
     for (const doc of psychiatristsList) {
       try {
         const res = await API.get(`/reviews/psychiatrist/${doc._id}`);
-        reviewsData[doc._id] = res.data.reviews || [];
         ratingsData[doc._id] = {
           average: res.data.averageRating || 0,
           total: res.data.totalReviews || 0
         };
       } catch (error) {
         console.error(`Error fetching reviews for ${doc._id}:`, error);
-        reviewsData[doc._id] = [];
         ratingsData[doc._id] = { average: 0, total: 0 };
       }
     }
     
-    setReviews(reviewsData);
     setRatings(ratingsData);
   };
 
@@ -119,18 +115,10 @@ const UserPsychiatrists = () => {
   };
 
   const renderStars = (rating) => {
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-    
     return (
       <div className="stars-display">
-        {[...Array(fullStars)].map((_, i) => (
-          <span key={`full-${i}`} className="star full">★</span>
-        ))}
-        {hasHalfStar && <span className="star half">½</span>}
-        {[...Array(emptyStars)].map((_, i) => (
-          <span key={`empty-${i}`} className="star empty">☆</span>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <span key={star} className={`star ${Math.round(rating) >= star ? "filled" : "empty"}`}>★</span>
         ))}
       </div>
     );
@@ -166,9 +154,190 @@ const UserPsychiatrists = () => {
   };
 
   return (
-    <>
+    <div className="up-page">
+      <Navbar />
+
+      {/* Toast */}
+      <div className="toast-container">
+        {toast && (
+          <div className={`toast toast-${toast.type}`}>
+            <div className="toast-icon">
+              {toast.type === "success" ? "✓" : "!"}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div className="toast-title">{toast.title}</div>
+              <div className="toast-message">{toast.message}</div>
+            </div>
+            <button className="toast-close" onClick={() => setToast(null)}>✕</button>
+          </div>
+        )}
+      </div>
+
+      {/* Add Modal */}
+      {modal.isOpen && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-icon-wrap">+</div>
+              <span className="modal-title">Add Psychiatrist</span>
+            </div>
+            <div className="modal-body">
+              <p className="modal-msg">
+                Are you sure you want to add{" "}
+                <strong>Dr. {cleanName(modal.psychiatristName)}</strong> to your list?
+              </p>
+              <div className="modal-actions">
+                <button className="modal-btn modal-btn-cancel" onClick={closeModal}>
+                  Cancel
+                </button>
+                <button className="modal-btn modal-btn-confirm" onClick={confirmAddPsychiatrist}>
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={reviewModal.isOpen}
+        onClose={closeReviewModal}
+        psychiatristId={reviewModal.psychiatristId}
+        psychiatristName={reviewModal.psychiatristName}
+        onSuccess={handleReviewSuccess}
+      />
+
+      <main className="up-main">
+        <div className="up-inner">
+          <div className="up-hero">
+            <h1 className="up-title">Find a <em>Psychiatrist</em></h1>
+            <p className="up-subtitle">Browse and connect with trusted mental health professionals.</p>
+          </div>
+
+          <div className="up-orn">
+            <span className="up-orn-line" />
+            <span className="up-orn-dot" />
+            <span className="up-orn-line" />
+          </div>
+
+          {!loading && (
+            <div className="up-toolbar">
+              <button className="up-my-btn" onClick={() => navigate("/my-psychiatrists")}>
+                My Psychiatrists
+              </button>
+
+              <div className="up-search-wrap">
+                <svg className="up-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                    d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
+                </svg>
+                <input
+                  className="up-search"
+                  placeholder="Search by name or specialization…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+
+              <div className="up-count">
+                <strong>{filtered.length}</strong> doctors available
+              </div>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="up-loader">
+              <div className="up-loader-spin" />
+              <span>Finding professionals…</span>
+            </div>
+          ) : (
+            <div className="up-grid">
+              {filtered.length > 0 ? (
+                filtered.map((doc) => {
+                  const name = cleanName(doc.name);
+                  const pal = palette(doc.name);
+                  const inits = initials(doc.name);
+                  const sc = specColor(doc.specialization || "");
+                  const isAdded = added[doc._id];
+                  const docRatings = ratings[doc._id] || { average: 0, total: 0 };
+
+                  return (
+                    <div className="up-card" key={doc._id}>
+                      <div className="up-band">
+                        <div className="up-av" style={{ background: pal.bg, color: pal.color }}>
+                          {inits}
+                        </div>
+                      </div>
+
+                      <div className="up-body">
+                        <div className="up-doc-name">Dr. {name}</div>
+
+                        <div
+                          className="up-spec-tag"
+                          style={{ background: sc.bg, color: sc.color, borderColor: sc.border }}
+                        >
+                          <span className="up-spec-dot" style={{ background: sc.color }} />
+                          {doc.specialization || "General Psychiatry"}
+                        </div>
+
+                        <div className="rating-container">
+                          <div className="stars-display">
+                            {renderStars(docRatings.average)}
+                          </div>
+                          <div>
+                            <span className="rating-text">{docRatings.average.toFixed(1)}</span>
+                            <button 
+                              className="write-review-btn"
+                              onClick={() => openReviewModal(doc._id, doc.name)}
+                            >
+                              Write a review
+                            </button>
+                          </div>
+                        </div>
+                        <div 
+                          className="review-count" 
+                          onClick={() => navigate(`/psychiatrist-reviews/${doc._id}`)}
+                        >
+                          {docRatings.total} {docRatings.total === 1 ? "review" : "reviews"}
+                        </div>
+
+                        <div className="up-fee-box">
+                          <span className="up-fee-label">Consultation Fee</span>
+                          <span className="up-fee-amount">₹{doc.consultationFee}</span>
+                        </div>
+
+                        <div className="up-button-row">
+                          <button
+                            className={`up-add-btn ${isAdded ? "added" : ""}`}
+                            onClick={() => !isAdded && openAddModal(doc._id, doc.name)}
+                            disabled={isAdded}
+                          >
+                            {isAdded ? "✓ Added to My List" : "+ Add to My Psychiatrists"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="up-empty">
+                  <div className="up-empty-icon">🔍</div>
+                  <div>No results found for "{search}"</div>
+                  <p style={{ fontSize: "12px", marginTop: "8px", color: "#bbb" }}>
+                    Try searching with a different name or specialization
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+      
+      <Footer />
+
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -249,20 +418,20 @@ const UserPsychiatrists = () => {
         /* Page */
         .up-page {
           min-height: 100vh;
-          background: #ffffff;
+          background: linear-gradient(135deg, #faf7f3 0%, #f0ede8 100%);
           font-family: 'Inter', sans-serif;
           color: #1a1a1a;
         }
 
         .up-main { padding: 52px 24px 80px; }
-        .up-inner { max-width: 1040px; margin: 0 auto; }
+        .up-inner { max-width: 1200px; margin: 0 auto; }
 
         .up-hero { text-align: center; margin-bottom: 32px; }
         .up-title {
           font-family: 'Lora', serif;
           font-size: clamp(34px, 5vw, 52px);
           font-weight: 400;
-          color: #1a1a1a;
+          color: #2C2318;
           line-height: 1.2;
         }
         .up-title em { font-style: italic; color: #A0856A; }
@@ -280,14 +449,19 @@ const UserPsychiatrists = () => {
           flex-wrap: wrap; margin-bottom: 28px;
         }
         .up-my-btn {
-          padding: 9px 20px;
-          background: #1a1a1a; color: #fff;
-          border: none; border-radius: 50px;
-          font-size: 13px; font-weight: 500; cursor: pointer;
+          padding: 10px 24px;
+          background: #2C2318;
+          color: #fff;
+          border: none;
+          border-radius: 50px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
           font-family: 'Inter', sans-serif;
           white-space: nowrap;
+          transition: all 0.2s ease;
         }
-        .up-my-btn:hover { background: #333; }
+        .up-my-btn:hover { background: #1A1510; transform: translateY(-1px); }
 
         .up-search-wrap { position: relative; flex: 1; min-width: 240px; }
         .up-search-icon {
@@ -307,71 +481,78 @@ const UserPsychiatrists = () => {
 
         .up-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 18px;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 24px;
         }
 
         .up-card {
           background: #fff;
-          border: 1px solid #eeeeee;
+          border: 1px solid #e8e0d8;
           border-radius: 20px;
           overflow: hidden;
           display: flex; flex-direction: column;
-          transition: box-shadow .2s, border-color .2s;
+          transition: all 0.3s ease;
         }
         .up-card:hover {
-          border-color: #ddd;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+          transform: translateY(-4px);
+          box-shadow: 0 12px 32px rgba(0,0,0,0.1);
+          border-color: #d4c5b0;
         }
 
         .up-band {
-          height: 76px;
-          background: #fafafa;
-          border-bottom: 1px solid #f0f0f0;
+          height: 80px;
+          background: linear-gradient(135deg, #f5f0ea 0%, #ede5dc 100%);
           position: relative;
         }
 
         .up-av {
-          position: absolute; bottom: -26px; left: 18px;
-          width: 54px; height: 54px; border-radius: 50%;
+          position: absolute; bottom: -28px; left: 20px;
+          width: 56px; height: 56px; border-radius: 50%;
           border: 3px solid #fff;
           display: flex; align-items: center; justify-content: center;
-          font-size: 16px; font-weight: 500;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          font-size: 18px; font-weight: 600;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .up-body {
-          padding: 38px 18px 18px;
+          padding: 40px 20px 20px;
           display: flex; flex-direction: column; gap: 12px; flex: 1;
         }
 
         .up-doc-name {
           font-family: 'Lora', serif;
-          font-size: 20px; font-weight: 500; color: #1a1a1a;
+          font-size: 20px;
+          font-weight: 600;
+          color: #2C2318;
+          margin-bottom: 4px;
         }
 
         .up-spec-tag {
           display: inline-flex; align-items: center; gap: 6px;
           font-size: 11px; font-weight: 500;
-          border-radius: 30px; padding: 4px 11px;
-          width: fit-content; border: 1px solid;
+          border-radius: 30px; padding: 4px 12px;
+          width: fit-content;
           font-family: 'Inter', sans-serif;
         }
-        .up-spec-dot { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; }
 
         .up-fee-box {
           display: flex; align-items: center; justify-content: space-between;
-          background: #fafafa; border: 1px solid #f0f0f0;
-          border-radius: 12px; padding: 11px 14px;
-          margin-top: auto;
+          background: #f8f6f3;
+          border-radius: 12px; padding: 12px 16px;
+          margin-top: 8px;
         }
         .up-fee-label {
-          font-size: 10px; font-weight: 500;
-          text-transform: uppercase; letter-spacing: .06em; color: #aaa;
+          font-size: 11px;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: .06em;
+          color: #A0856A;
         }
         .up-fee-amount {
           font-family: 'Lora', serif;
-          font-size: 22px; font-weight: 500; color: #A0856A;
+          font-size: 22px;
+          font-weight: 600;
+          color: #2C2318;
         }
 
         /* Rating Stars */
@@ -379,29 +560,32 @@ const UserPsychiatrists = () => {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-top: 4px;
+          margin: 8px 0 4px;
         }
         .stars-display {
           display: flex;
-          gap: 2px;
+          gap: 3px;
         }
         .star {
           font-size: 14px;
         }
-        .star.full, .star.half {
+        .star.filled {
           color: #ffc107;
         }
         .star.empty {
-          color: #ddd;
+          color: #e0e0e0;
         }
         .rating-text {
           font-size: 12px;
-          color: #666;
+          color: #A0856A;
+          font-weight: 500;
         }
         .review-count {
           font-size: 11px;
-          color: #999;
+          color: #C8A87A;
           cursor: pointer;
+          margin-top: 4px;
+          display: inline-block;
         }
         .review-count:hover {
           text-decoration: underline;
@@ -413,31 +597,36 @@ const UserPsychiatrists = () => {
           border: none;
           cursor: pointer;
           margin-left: 8px;
+          font-weight: 500;
         }
         .write-review-btn:hover {
           text-decoration: underline;
         }
 
         .up-button-row {
-          display: flex;
-          gap: 8px;
-          flex-direction: column;
+          margin-top: 8px;
         }
         .up-add-btn {
           width: 100%; padding: 12px;
           border-radius: 50px;
-          border: 1px solid #e0e0e0;
-          background: #fff; color: #1a1a1a;
-          font-size: 13px; font-weight: 500;
+          border: 1px solid #e0d8d0;
+          background: #fff;
+          color: #2C2318;
+          font-size: 13px;
+          font-weight: 600;
           font-family: 'Inter', sans-serif;
           cursor: pointer;
-          transition: background .15s, border-color .15s;
+          transition: all 0.2s ease;
         }
         .up-add-btn:hover:not(:disabled) {
-          background: #f5f5f5; border-color: #ccc;
+          background: #f5f0ea;
+          border-color: #c8b8a8;
+          transform: translateY(-1px);
         }
         .up-add-btn.added {
-          background: #EDFAF3; border-color: #A8D8BC; color: #2E7D52;
+          background: #EAF5EA;
+          border-color: #A8D8BC;
+          color: #2E7D52;
           cursor: default;
         }
 
@@ -448,8 +637,8 @@ const UserPsychiatrists = () => {
           padding: 80px 0; gap: 14px; color: #aaa; font-size: 13px;
         }
         .up-loader-spin {
-          width: 32px; height: 32px;
-          border: 2px solid #eee;
+          width: 40px; height: 40px;
+          border: 3px solid #f0f0f0;
           border-top-color: #A0856A;
           border-radius: 50%;
           animation: spin .8s linear infinite;
@@ -462,190 +651,19 @@ const UserPsychiatrists = () => {
           color: #aaa; font-size: 14px;
         }
         .up-empty-icon {
-          width: 40px; height: 40px; border-radius: 50%;
-          background: #f5f5f5;
+          width: 60px; height: 60px; border-radius: 50%;
+          background: #f5f0ea;
           display: flex; align-items: center; justify-content: center;
-          margin: 0 auto 12px; font-size: 18px;
+          margin: 0 auto 16px;
+          font-size: 24px;
+        }
+
+        @media (max-width: 768px) {
+          .up-main { padding: 32px 16px 60px; }
+          .up-grid { gap: 16px; }
         }
       `}</style>
-
-      <div className="up-page">
-        <Navbar />
-
-        {/* Toast */}
-        <div className="toast-container">
-          {toast && (
-            <div className={`toast toast-${toast.type}`}>
-              <div className="toast-icon">
-                {toast.type === "success" ? "✓" : "!"}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div className="toast-title">{toast.title}</div>
-                <div className="toast-message">{toast.message}</div>
-              </div>
-              <button className="toast-close" onClick={() => setToast(null)}>✕</button>
-            </div>
-          )}
-        </div>
-
-        {/* Add Modal */}
-        {modal.isOpen && (
-          <div className="modal-overlay" onClick={closeModal}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <div className="modal-icon-wrap">+</div>
-                <span className="modal-title">Add psychiatrist</span>
-              </div>
-              <div className="modal-body">
-                <p className="modal-msg">
-                  Are you sure you want to add{" "}
-                  <strong>Dr. {cleanName(modal.psychiatristName)}</strong> to your list?
-                </p>
-                <div className="modal-actions">
-                  <button className="modal-btn modal-btn-cancel" onClick={closeModal}>
-                    Cancel
-                  </button>
-                  <button className="modal-btn modal-btn-confirm" onClick={confirmAddPsychiatrist}>
-                    Confirm
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Review Modal */}
-        <ReviewModal
-          isOpen={reviewModal.isOpen}
-          onClose={closeReviewModal}
-          psychiatristId={reviewModal.psychiatristId}
-          psychiatristName={reviewModal.psychiatristName}
-          onSuccess={handleReviewSuccess}
-        />
-
-        <main className="up-main">
-          <div className="up-inner">
-
-            <div className="up-hero">
-              <h1 className="up-title">Find a <em>Psychiatrist</em></h1>
-              <p className="up-subtitle">Browse and save mental health professionals to your list.</p>
-            </div>
-
-            <div className="up-orn">
-              <span className="up-orn-line" />
-              <span className="up-orn-dot" />
-              <span className="up-orn-line" />
-            </div>
-
-            {!loading && (
-              <div className="up-toolbar">
-                <button className="up-my-btn" onClick={() => navigate("/my-psychiatrists")}>
-                  My Psychiatrists
-                </button>
-
-                <div className="up-search-wrap">
-                  <svg className="up-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                      d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
-                  </svg>
-                  <input
-                    className="up-search"
-                    placeholder="Search by name or specialization…"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                </div>
-
-                <div className="up-count">
-                  <strong>{filtered.length}</strong> doctors available
-                </div>
-              </div>
-            )}
-
-            {loading ? (
-              <div className="up-loader">
-                <div className="up-loader-spin" />
-                <span>Finding professionals…</span>
-              </div>
-            ) : (
-              <div className="up-grid">
-                {filtered.length > 0 ? (
-                  filtered.map((doc) => {
-                    const name = cleanName(doc.name);
-                    const pal = palette(doc.name);
-                    const inits = initials(doc.name);
-                    const sc = specColor(doc.specialization || "");
-                    const isAdded = added[doc._id];
-                    const docRatings = ratings[doc._id] || { average: 0, total: 0 };
-
-                    return (
-                      <div className="up-card" key={doc._id}>
-                        <div className="up-band">
-                          <div className="up-av" style={{ background: pal.bg, color: pal.color }}>
-                            {inits}
-                          </div>
-                        </div>
-
-                        <div className="up-body">
-                          <div className="up-doc-name">Dr. {name}</div>
-
-                          <div
-                            className="up-spec-tag"
-                            style={{ background: sc.bg, color: sc.color, borderColor: sc.border }}
-                          >
-                            <span className="up-spec-dot" style={{ background: sc.color }} />
-                            {doc.specialization || "General Psychiatry"}
-                          </div>
-
-                          <div className="rating-container">
-                            <div className="stars-display">
-                              {renderStars(docRatings.average)}
-                            </div>
-                            <div>
-                              <span className="rating-text">{docRatings.average.toFixed(1)}</span>
-                              <button 
-                                className="write-review-btn"
-                                onClick={() => openReviewModal(doc._id, doc.name)}
-                              >
-                                Write a review
-                              </button>
-                            </div>
-                          </div>
-                          <div className="review-count" onClick={() => navigate(`/psychiatrist-reviews/${doc._id}`)}>
-                            {docRatings.total} {docRatings.total === 1 ? "review" : "reviews"}
-                          </div>
-
-                          <div className="up-fee-box">
-                            <span className="up-fee-label">Consultation fee</span>
-                            <span className="up-fee-amount">₹{doc.consultationFee}</span>
-                          </div>
-
-                          <div className="up-button-row">
-                            <button
-                              className={`up-add-btn ${isAdded ? "added" : ""}`}
-                              onClick={() => !isAdded && openAddModal(doc._id, doc.name)}
-                              disabled={isAdded}
-                            >
-                              {isAdded ? "Added to my list" : "Add to my psychiatrists"}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="up-empty">
-                    <div className="up-empty-icon">⌕</div>
-                    <div>No results for "{search}"</div>
-                  </div>
-                )}
-              </div>
-            )}
-
-          </div>
-        </main>
-      </div>
-    </>
+    </div>
   );
 };
 

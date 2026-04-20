@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, User, LogOut, Settings, Bell } from 'lucide-react';
+import { Menu, X, User, LogOut, Settings, Bell, Heart } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
@@ -23,8 +23,6 @@ const Navbar = () => {
     fetchNotifications();
 
     window.addEventListener('storage', checkLoginStatus);
-    
-    // Listen for custom userUpdated event
     window.addEventListener('userUpdated', handleUserUpdate);
 
     return () => {
@@ -33,7 +31,6 @@ const Navbar = () => {
     };
   }, []);
 
-  // Handle user update from profile page
   const handleUserUpdate = () => {
     checkLoginStatus();
   };
@@ -105,7 +102,7 @@ const Navbar = () => {
       icon: '👋',
       style: {
         borderRadius: '10px',
-        background: '#333',
+        background: '#2C2318',
         color: '#fff',
       },
     });
@@ -127,7 +124,7 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
+    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
       <div className="w-full px-6 lg:px-12">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
@@ -135,7 +132,7 @@ const Navbar = () => {
             <img
               src="https://res.cloudinary.com/dkqjn6dqw/image/upload/v1771944890/s__1_-removebg-preview_b54v9c.png"
               alt="zenly logo"
-              className="w-50 h-auto"
+              className="w-40 h-auto"
             />
           </Link>
 
@@ -146,7 +143,7 @@ const Navbar = () => {
                 <Link
                   key={item.name}
                   to={item.path}
-                  className="text-sm font-semibold text-gray-600 hover:text-blue-600 tracking-wider transition-colors"
+                  className="text-sm font-semibold text-gray-600 hover:text-teal-600 tracking-wider transition-colors duration-200"
                 >
                   {item.name}
                 </Link>
@@ -159,13 +156,13 @@ const Navbar = () => {
             {isLoggedIn ? (
               <>
                 {/* Notification Bell */}
-                <Link to="/notifications" className="relative">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 hover:bg-blue-50 flex items-center justify-center transition-colors">
-                    <Bell className="w-5 h-5 text-gray-700" />
+                <Link to="/notifications" className="relative group">
+                  <div className="w-10 h-10 rounded-full bg-gray-50 group-hover:bg-gradient-to-r group-hover:from-teal-50 group-hover:to-purple-50 flex items-center justify-center transition-all duration-200">
+                    <Bell className="w-5 h-5 text-gray-600 group-hover:text-teal-600" />
                   </div>
 
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-gradient-to-r from-teal-500 to-purple-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center shadow-md">
                       {unreadCount}
                     </span>
                   )}
@@ -173,8 +170,8 @@ const Navbar = () => {
 
                 {/* Greeting */}
                 {user && (
-                  <span className="hidden md:block text-sm text-gray-600">
-                    Hi, <span className="font-semibold text-blue-600">{user.name}</span>
+                  <span className="hidden md:block text-sm text-gray-500">
+                    Hi, <span className="font-semibold bg-gradient-to-r from-teal-600 to-purple-600 bg-clip-text text-transparent">{user.name}</span>
                   </span>
                 )}
 
@@ -182,7 +179,7 @@ const Navbar = () => {
                 <div className="relative">
                   <button
                     onClick={handleProfileClick}
-                    className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-lg hover:bg-blue-700 transition-colors focus:outline-none overflow-hidden"
+                    className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-teal-600 to-purple-600 text-white font-bold text-lg hover:shadow-lg transition-all duration-200 focus:outline-none overflow-hidden"
                   >
                     {user?.profilePicture && user.profilePicture !== "" && !avatarError ? (
                       <img
@@ -200,45 +197,56 @@ const Navbar = () => {
 
                   {/* Profile Dropdown Menu */}
                   {isProfileMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
-                      {/* User Info */}
-                      <div className="px-4 py-3 border-b border-gray-100">
-                        <p className="font-semibold text-gray-800">{user?.name}</p>
-                        <p className="text-sm text-gray-500">{user?.email}</p>
-                      </div>
+                    <>
+                      <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-fadeIn">
+                        {/* User Info */}
+                        <div className="px-4 py-3 border-b border-gray-100">
+                          <p className="font-semibold text-gray-800">{user?.name}</p>
+                          <p className="text-sm text-gray-500">{user?.email}</p>
+                        </div>
 
-                      {/* Menu Items */}
-                      <div className="py-2">
-                        <Link
-                          to="/profile"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                        >
-                          <User className="w-4 h-4" />
-                          <span className="text-sm">My Profile</span>
-                        </Link>
+                        {/* Menu Items */}
+                        <div className="py-2">
+                          <Link
+                            to="/profile"
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gradient-to-r hover:from-teal-50 hover:to-purple-50 hover:text-teal-600 transition-all duration-200"
+                          >
+                            <User className="w-4 h-4" />
+                            <span className="text-sm">My Profile</span>
+                          </Link>
 
-                        <Link
-                          to="/settings"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                        >
-                          <Settings className="w-4 h-4" />
-                          <span className="text-sm">Settings</span>
-                        </Link>
-                      </div>
+                          <Link
+                            to="/settings"
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gradient-to-r hover:from-teal-50 hover:to-purple-50 hover:text-teal-600 transition-all duration-200"
+                          >
+                            <Settings className="w-4 h-4" />
+                            <span className="text-sm">Settings</span>
+                          </Link>
+                        </div>
 
-                      {/* Logout */}
-                      <div className="border-t border-gray-100 pt-2">
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors w-full text-left"
-                        >
-                          <LogOut className="w-4 h-4" />
-                          <span className="text-sm">Logout</span>
-                        </button>
+                        {/* Logout */}
+                        <div className="border-t border-gray-100 pt-2">
+                          <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors w-full text-left"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            <span className="text-sm">Logout</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                      <style>{`
+                        @keyframes fadeIn {
+                          from { opacity: 0; transform: translateY(-10px); }
+                          to { opacity: 1; transform: translateY(0); }
+                        }
+                        .animate-fadeIn {
+                          animation: fadeIn 0.2s ease-out;
+                        }
+                      `}</style>
+                    </>
                   )}
                 </div>
               </>
@@ -246,7 +254,7 @@ const Navbar = () => {
               <div className="flex items-center gap-3">
                 <Link
                   to="/login"
-                  className="px-6 py-2.5 bg-blue-600 text-white rounded-full font-semibold text-sm hover:bg-blue-700 transition-all"
+                  className="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-purple-600 text-white rounded-full font-semibold text-sm hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5"
                 >
                   Get Started
                 </Link>
@@ -265,14 +273,14 @@ const Navbar = () => {
 
         {/* Mobile Navigation Menu */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-100">
+          <div className="md:hidden py-4 border-t border-gray-100 animate-slideDown">
             {isLoggedIn ? (
               <>
                 {/* Mobile Greeting */}
                 {user && (
-                  <div className="px-4 py-3 bg-blue-50 rounded-lg mb-3">
-                    <p className="text-sm text-gray-600">Hi,</p>
-                    <p className="font-semibold text-blue-700">{user.name}</p>
+                  <div className="px-4 py-3 bg-gradient-to-r from-teal-50 to-purple-50 rounded-xl mb-3">
+                    <p className="text-sm text-gray-500">Hi,</p>
+                    <p className="font-semibold bg-gradient-to-r from-teal-600 to-purple-600 bg-clip-text text-transparent">{user.name}</p>
                   </div>
                 )}
 
@@ -282,7 +290,7 @@ const Navbar = () => {
                     <Link
                       key={item.name}
                       to={item.path}
-                      className="text-gray-600 hover:text-blue-600 px-4 py-2 font-medium"
+                      className="text-gray-600 hover:text-teal-600 hover:bg-teal-50 px-4 py-2.5 rounded-lg font-medium transition-all duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       {item.name}
@@ -291,17 +299,22 @@ const Navbar = () => {
 
                   <Link
                     to="/notifications"
-                    className="text-gray-600 hover:text-blue-600 px-4 py-2 font-medium"
+                    className="text-gray-600 hover:text-teal-600 hover:bg-teal-50 px-4 py-2.5 rounded-lg font-medium flex items-center justify-between transition-all duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Notifications {unreadCount > 0 && `(${unreadCount})`}
+                    <span>Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="bg-gradient-to-r from-teal-500 to-purple-500 text-white text-xs px-2 py-0.5 rounded-full">
+                        {unreadCount}
+                      </span>
+                    )}
                   </Link>
 
                   <hr className="my-2 border-gray-100" />
 
                   <Link
                     to="/profile"
-                    className="text-gray-600 hover:text-blue-600 px-4 py-2 font-medium"
+                    className="text-gray-600 hover:text-teal-600 hover:bg-teal-50 px-4 py-2.5 rounded-lg font-medium transition-all duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     My Profile
@@ -309,7 +322,7 @@ const Navbar = () => {
 
                   <Link
                     to="/settings"
-                    className="text-gray-600 hover:text-blue-600 px-4 py-2 font-medium"
+                    className="text-gray-600 hover:text-teal-600 hover:bg-teal-50 px-4 py-2.5 rounded-lg font-medium transition-all duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Settings
@@ -320,7 +333,7 @@ const Navbar = () => {
                       handleLogout();
                       setIsMenuOpen(false);
                     }}
-                    className="text-left text-red-600 hover:bg-red-50 px-4 py-2 font-medium"
+                    className="text-left text-red-600 hover:bg-red-50 px-4 py-2.5 rounded-lg font-medium transition-all duration-200"
                   >
                     Logout
                   </button>
@@ -330,7 +343,7 @@ const Navbar = () => {
               <div className="flex flex-col space-y-3">
                 <Link
                   to="/login"
-                  className="bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold text-center hover:bg-blue-700 transition-colors"
+                  className="bg-gradient-to-r from-teal-600 to-purple-600 text-white px-4 py-3 rounded-xl font-semibold text-center hover:shadow-lg transition-all duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Get Started
@@ -340,6 +353,22 @@ const Navbar = () => {
           </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-slideDown {
+          animation: slideDown 0.3s ease-out;
+        }
+      `}</style>
     </nav>
   );
 };
