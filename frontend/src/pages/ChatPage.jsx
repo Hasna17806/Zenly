@@ -29,7 +29,7 @@ const ChatPage = () => {
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       
-      const response = await axios.get("/chatbot/history", {
+      const response = await API.get("/chatbot/history", {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -109,7 +109,7 @@ const ChatPage = () => {
     setIsTyping(true);
 
     try {
-      const response = await axios.post(
+      const response = await API.post(
         "/chatbot/send", 
         { message: inputMessage },
         {

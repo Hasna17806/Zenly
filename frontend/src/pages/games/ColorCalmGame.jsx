@@ -174,7 +174,7 @@ const ColorCalmGame = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.post(
+      await API.post(
         "/completed-challenges",
         { completed: true },
         { headers: { Authorization: `Bearer ${token}` } }

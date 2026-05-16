@@ -180,7 +180,7 @@ const StudyLockInGame = () => {
     setSaving(true);
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.post("/completed-challenges",
+      await API.post("/completed-challenges",
         { challengeId: challenge?._id, disciplineScore, distractions, tasksCompleted },
         { headers: { Authorization: `Bearer ${token}` } }
       );

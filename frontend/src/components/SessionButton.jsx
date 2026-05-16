@@ -11,7 +11,7 @@ const SessionButton = ({ appointmentId, psychiatristName }) => {
   useEffect(() => {
     const fetchAppointment = async () => {
       try {
-        const res = await axios.get(`/appointments/${appointmentId}`, {
+        const res = await API.get(`/appointments/${appointmentId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setAppointment(res.data);

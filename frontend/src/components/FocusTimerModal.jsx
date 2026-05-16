@@ -63,7 +63,7 @@ const FocusTimerModal = ({ isOpen, onClose }) => {
         return;
       }
 
-      await axios.post(
+      await API.post(
         "/focus",
         { duration: time },
         { headers: { Authorization: `Bearer ${token}` } }

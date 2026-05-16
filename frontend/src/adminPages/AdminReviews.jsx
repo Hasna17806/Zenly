@@ -10,7 +10,7 @@ const AdminReviews = () => {
 
   const fetchReviews = async () => {
     try {
-      const res = await axios.get(
+      const res = await API.get(
         "/reviews/admin/all",
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -26,7 +26,7 @@ const AdminReviews = () => {
 
   const toggleVisibility = async (id, currentStatus) => {
     try {
-      await axios.put(
+      await API.put(
         `/reviews/admin/${id}/toggle`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }

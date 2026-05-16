@@ -315,7 +315,7 @@ const AdminUsers = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("/admin/users",
+      const res = await API.get("/admin/users",
         { headers: { Authorization: `Bearer ${token}` } });
       setUsers(res.data);
     } catch (e) { console.error(e); }
@@ -324,7 +324,7 @@ const AdminUsers = () => {
 
   const handleToggleActive = async (id) => {
     try {
-      await axios.put(`/admin/users/${id}/block`, {},
+      await API.put(`/admin/users/${id}/block`, {},
         { headers: { Authorization: `Bearer ${token}` } });
       fetchUsers();
     } catch (e) { console.error(e); }
@@ -332,7 +332,7 @@ const AdminUsers = () => {
 
   const viewUser = async (id) => {
     try {
-      const res = await axios.get(`/admin/users/${id}/activity`,
+      const res = await API.get(`/admin/users/${id}/activity`,
         { headers: { Authorization: `Bearer ${token}` } });
       setSelectedUser(res.data);
     } catch (e) { console.error(e); }

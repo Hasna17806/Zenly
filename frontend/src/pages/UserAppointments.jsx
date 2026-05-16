@@ -341,7 +341,7 @@ const UserAppointments = () => {
     }
 
     try {
-      await axios.delete(
+      await API.delete(
         `/appointments/cancel/${id}`,
         {
           headers: {
@@ -375,7 +375,7 @@ const UserAppointments = () => {
       return;
     }
 
-    const res = await axios.get("/appointments/user", {
+    const res = await API.get("/appointments/user", {
       headers: {
         Authorization: `Bearer ${token}`,
       },

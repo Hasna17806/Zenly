@@ -17,7 +17,7 @@ export default function PsychiatristLogin() {
       localStorage.removeItem("token");
       sessionStorage.removeItem("token");
 
-      const res = await axios.post(
+      const res = await API.post(
         "/psychiatrist/login",
         { email, password }
       );

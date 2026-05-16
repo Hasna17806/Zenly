@@ -81,7 +81,7 @@ const BreathBubbleGame = () => {
       setLoading(true);
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       
-      await axios.post(
+      await API.post(
         "/completed-challenges",
         { cyclesCompleted, duration: cyclesCompleted * 16 },
         { headers: { Authorization: `Bearer ${token}` } }

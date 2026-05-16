@@ -18,7 +18,7 @@ const AdminLogin = () => {
     setLoading(true);
     
     try {
-      const { data } = await axios.post("https://zenly.onrender.com/api/admin/login", { 
+      const { data } = await API.post("https://zenly.onrender.com/api/admin/login", { 
         email, 
         password 
       });

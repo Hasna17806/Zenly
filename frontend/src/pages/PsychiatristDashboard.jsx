@@ -14,7 +14,7 @@ const PsychiatristDashboard = () => {
 
   const fetchAppointments = async () => {
     try {
-      const res = await axios.get(
+      const res = await API.get(
         "/appointments/psychiatrist",
         { headers: { Authorization: `Bearer ${token}` } }
       );

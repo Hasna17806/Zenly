@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
+import API from "../api/axios";
 import axios from "axios";
-import API from "../api/axios";  
 import AdminSidebar from "../components/Sidebar";
 
 // Custom Delete Confirmation Modal Component
@@ -201,7 +201,7 @@ const AdminChallenges = () => {
 
   const fetchChallenges = async () => {
     try {
-      const res = await axios.get("/challenges/admin/all");
+      const res = await API.get("/challenges/admin/all");
       setChallenges(res.data);
     } catch (error) { console.error(error); }
   };
@@ -217,9 +217,9 @@ const AdminChallenges = () => {
     try {
       const payload = { title, description, category, duration, image, moodTag: moodTags };
       if (editingId) {
-        await axios.put(`/challenges/admin/update/${editingId}`, payload);
+        await API.put(`/challenges/admin/update/${editingId}`, payload);
       } else {
-        await axios.post("/challenges/admin/create", payload);
+        await API.post("/challenges/admin/create", payload);
       }
       handleCancel(); fetchChallenges();
     } catch (error) {
@@ -229,7 +229,7 @@ const AdminChallenges = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`/challenges/admin/delete/${deleteModal.id}`);
+      await API.delete(`/challenges/admin/delete/${deleteModal.id}`);
       fetchChallenges();
       setDeleteModal({ isOpen: false, id: null, title: "" });
     } catch (error) { console.error(error); }

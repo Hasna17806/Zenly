@@ -13,7 +13,7 @@ const PatientList = () => {
 
   const fetchPatients = async () => {
     try {
-      const res = await axios.get(
+      const res = await API.get(
         "/psychiatrist/patients",
         { headers: { Authorization: `Bearer ${token}` } }
       );

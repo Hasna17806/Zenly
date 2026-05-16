@@ -477,7 +477,7 @@ const NotificationsPage = () => {
 
   const fetchNotifications = async () => {
     try {
-      const { data } = await axios.get("/notifications", {
+      const { data } = await API.get("/notifications", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setNotifications(data);
@@ -490,7 +490,7 @@ const NotificationsPage = () => {
     if (loading) return;
     setLoading(true);
     try {
-      await axios.put(
+      await API.put(
         "/notifications/read-all",
         {},
         { headers: { Authorization: `Bearer ${token}` } }
@@ -505,7 +505,7 @@ const NotificationsPage = () => {
 
   const markSingleAsRead = async (id) => {
     try {
-      await axios.put(
+      await API.put(
         `/notifications/read/${id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }

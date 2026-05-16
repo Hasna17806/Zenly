@@ -5,7 +5,7 @@ import API from "../api/axios";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const API = "https://zenly.onrender.com";
+// const API = "https://zenly.onrender.com";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -50,7 +50,7 @@ const ProfilePage = () => {
 
   const fetchUserProfile = async () => {
     try {
-      const { data } = await axios.get(`${API}/api/auth/profile`, {
+      const { data } = await API.get(`/auth/profile`, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       setUser(data);
@@ -66,9 +66,9 @@ const ProfilePage = () => {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [moodsRes, challengesRes, chatRes] = await Promise.all([
-        axios.get(`${API}/api/mood`, { headers }).catch(() => ({ data: [] })),
-        axios.get(`${API}/api/completed-challenges`, { headers }).catch(() => ({ data: [] })),
-        axios.get(`${API}/api/chatbot/history`, { headers }).catch(() => ({ data: [] })),
+        API.get(`/mood`, { headers }).catch(() => ({ data: [] })),
+        API.get(`/completed-challenges`, { headers }).catch(() => ({ data: [] })),
+        API.get(`/chatbot/history`, { headers }).catch(() => ({ data: [] })),
       ]);
 
       setStats({
@@ -91,7 +91,7 @@ const ProfilePage = () => {
   const handleSaveProfile = async () => {
     setSaveLoading(true);
     try {
-      const { data } = await axios.put(`${API}/api/auth/profile`, formData, {
+      const { data } = await API.put(`$/auth/profile`, formData, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       setUser(data.user || data);
@@ -123,7 +123,7 @@ const ProfilePage = () => {
       const fd = new FormData();
       fd.append("profilePic", file);
 
-      const { data } = await axios.post(`${API}/api/auth/profile-pic`, fd, {
+      const { data } = await API.post(`/auth/profile-pic`, fd, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,

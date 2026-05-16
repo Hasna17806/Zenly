@@ -221,7 +221,7 @@ const QuickQuizGame = () => {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.post("/completed-challenges", { challengeId: challenge._id }, { headers: { Authorization: `Bearer ${token}` } });
+      await API.post("/completed-challenges", { challengeId: challenge._id }, { headers: { Authorization: `Bearer ${token}` } });
     } catch {}
     navigate("/challenges");
     setIsSubmitting(false);

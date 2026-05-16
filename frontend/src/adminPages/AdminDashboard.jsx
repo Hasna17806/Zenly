@@ -3,7 +3,6 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area
 } from "recharts";
-import API from '../api/axios';
 import axios from 'axios';
 import API from '../api/axios';
 import { useNavigate } from 'react-router-dom';

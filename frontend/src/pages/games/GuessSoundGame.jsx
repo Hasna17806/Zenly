@@ -105,7 +105,7 @@ const GuessSoundGame = () => {
       const token =
         localStorage.getItem("token") || sessionStorage.getItem("token");
 
-      await axios.post(
+      await API.post(
         "/completed-challenges",
         {
           challengeId: challenge?._id || challenge?.id,

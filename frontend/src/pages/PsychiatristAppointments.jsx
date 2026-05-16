@@ -26,7 +26,7 @@ const PsychiatristAppointments = () => {
 
   const fetchAppointments = async () => {
     try {
-      const res = await axios.get(
+      const res = await API.get(
         "/appointments/psychiatrist",
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -41,7 +41,7 @@ const PsychiatristAppointments = () => {
   const acceptAppointment = async (id, preferredDate, preferredTime) => {
     setActionLoading(prev => ({ ...prev, [id]: "accept" }));
     try {
-      await axios.put(
+      await API.put(
         `/appointments/accept/${id}`,
         { date: preferredDate, time: preferredTime },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -59,7 +59,7 @@ const PsychiatristAppointments = () => {
   const rejectAppointment = async (id) => {
     setActionLoading(prev => ({ ...prev, [id]: "reject" }));
     try {
-      await axios.put(
+      await API.put(
         `/appointments/reject/${id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }

@@ -11,7 +11,7 @@ const PsychiatristEarnings = () => {
 
   const fetchEarnings = async () => {
     try {
-      const res = await axios.get(
+      const res = await API.get(
         "/payments/psychiatrist/earnings",
         { headers: { Authorization: `Bearer ${token}` } }
       );

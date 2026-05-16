@@ -22,8 +22,8 @@ const BookingModal = ({ isOpen, onClose, psychiatrist, onSuccess }) => {
 
   const fetchAvailableDates = async () => {
     try {
-      const res = await axios.get(
-        `http://localhost:5000/api/availability/dates/${psychiatrist._id}`,
+      const res = await API.get(
+        `/availability/dates/${psychiatrist._id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setAvailableDates(res.data);
@@ -35,8 +35,8 @@ const BookingModal = ({ isOpen, onClose, psychiatrist, onSuccess }) => {
   const fetchAvailableSlots = async (date) => {
       setLoading(true);
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/availability/slots/${psychiatrist._id}/${date}`,
+        const res = await API.get(
+          `/availability/slots/${psychiatrist._id}/${date}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setAvailableSlots(res.data); // This now only returns non-booked slots

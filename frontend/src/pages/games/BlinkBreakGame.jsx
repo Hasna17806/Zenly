@@ -87,7 +87,7 @@ const BlinkBreakGame = () => {
       return;
     }
 
-    const response = await axios.post(
+    const response = await API.post(
       "/completed-challenges",
       { challengeId },
       { headers: { Authorization: `Bearer ${token}` } }

@@ -1,4 +1,5 @@
 import axios from "axios";
+import API from "../api/axios";
 
 export const completeChallenge = async ({
   challenge,
@@ -35,7 +36,7 @@ export const completeChallenge = async ({
       return false;
     }
 
-    const response = await axios.post(
+    const response = await API.post(
       "/completed-challenges",
       { challengeId },
       {

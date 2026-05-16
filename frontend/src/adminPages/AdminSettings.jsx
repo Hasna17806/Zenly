@@ -362,7 +362,7 @@ const ProfileSection = () => {
   const save = async () => {
     try {
       const token = localStorage.getItem("adminToken");
-      await axios.put("/admin/profile",
+      await API.put("/admin/profile",
         { name, email },
         { headers: { Authorization: `Bearer ${token}` } });
       flash("Profile updated successfully!", "success");
@@ -455,7 +455,7 @@ const SecuritySection = () => {
     if (nw.length < 8)         return flash("Password must be at least 8 characters.", "error");
     try {
       const token = localStorage.getItem("adminToken");
-      await axios.put("/admin/change-password",
+      await API.put("/admin/change-password",
         { currentPassword: cur, newPassword: nw },
         { headers: { Authorization: `Bearer ${token}` } });
       setCur(""); setNw(""); setConf("");
@@ -530,7 +530,7 @@ const NotificationsSection = () => {
   const save = async () => {
     try {
       const token = localStorage.getItem("adminToken");
-      await axios.put("/admin/notifications", settings,
+      await API.put("/admin/notifications", settings,
         { headers: { Authorization: `Bearer ${token}` } });
       setToast({ msg: "Notification preferences saved!", type: "success" });
       setTimeout(() => setToast(null), 3000);
@@ -599,7 +599,7 @@ const AppearanceSection = () => {
   const save = async () => {
     try {
       const token = localStorage.getItem("adminToken");
-      await axios.put("/admin/preferences",
+      await API.put("/admin/preferences",
         { timezone, dateFormat: dateFmt, language },
         { headers: { Authorization: `Bearer ${token}` } });
       setToast({ msg: "Preferences saved!", type: "success" });

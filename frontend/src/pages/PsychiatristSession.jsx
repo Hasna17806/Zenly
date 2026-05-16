@@ -25,7 +25,7 @@ const PsychiatristSession = () => {
 
   const fetchMessages = async () => {
     try {
-      const res = await axios.get(
+      const res = await API.get(
         `/chat/messages/${appointmentId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -42,7 +42,7 @@ const PsychiatristSession = () => {
     if (!newMessage.trim()) return;
 
     try {
-      const res = await axios.post(
+      const res = await API.post(
         `/chat/send`,
         {
           appointmentId,

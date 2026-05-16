@@ -103,7 +103,7 @@ const SpeedSortGame = () => {
   const handleComplete = async () => {
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.post(
+      await API.post(
         "/completed-challenges",
         { challengeId: challenge?._id, score },
         { headers: { Authorization: `Bearer ${token}` } }

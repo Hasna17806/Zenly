@@ -10,7 +10,7 @@ const AdminPayments = () => {
 
   const fetchPayments = async () => {
     try {
-      const res = await axios.get(
+      const res = await API.get(
         "/payments/admin/all",
         { headers: { Authorization: `Bearer ${token}` } }
       );

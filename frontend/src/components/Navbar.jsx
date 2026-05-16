@@ -50,7 +50,7 @@ const Navbar = () => {
       });
 
       try {
-        const { data } = await axios.get('/auth/profile', {
+        const { data } = await API.get('/auth/profile', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser({
@@ -74,7 +74,7 @@ const Navbar = () => {
 
       if (!token) return;
 
-      const { data } = await axios.get("/notifications", {
+      const { data } = await API.get("/notifications", {
         headers: {
           Authorization: `Bearer ${token}`
         }

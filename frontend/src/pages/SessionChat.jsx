@@ -68,7 +68,7 @@ const currentUserId = useMemo(() => getCurrentUserId(), [token]);
   // ---------------- FETCH MESSAGES ----------------
   const fetchMessages = async () => {
     try {
-      const res = await axios.get(
+      const res = await API.get(
         `/chat/${appointmentId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -155,7 +155,7 @@ const currentUserId = useMemo(() => getCurrentUserId(), [token]);
     setMessages((prev) => [...prev, tempMessage]);
 
     try {
-      const response = await axios.post(
+      const response = await API.post(
         "/chat/send",
         { appointmentId, message: message.trim() },
         {

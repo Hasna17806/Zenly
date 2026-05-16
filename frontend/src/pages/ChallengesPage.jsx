@@ -324,7 +324,7 @@ const ChallengesPage = () => {
 
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 
-      const response = await axios.get(
+      const response = await API.get(
         `/challenges/category/${encodeURIComponent(categoryMap[activeCategory])}`,
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -388,7 +388,7 @@ const ChallengesPage = () => {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       if (!token) return;
 
-      const response = await axios.get('/completed-challenges', {
+      const response = await API.get('/completed-challenges', {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -413,7 +413,7 @@ const ChallengesPage = () => {
 
       const challengeId = challenge._id || challenge.id;
       
-      await axios.post(
+      await API.post(
         '/completed-challenges',
         { challengeId: challengeId },
         { headers: { Authorization: `Bearer ${token}` } }

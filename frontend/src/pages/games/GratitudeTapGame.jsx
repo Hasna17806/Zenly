@@ -120,7 +120,7 @@ const GratitudeTapGame = () => {
       const calculatedScore =
         Math.min(40, gratitude.trim().length / 5) + Math.min(30, taps * 2) + emotion * 10;
 
-      await axios.post(
+      await API.post(
         "/completed-challenges",
         { challengeId, gratitude, taps, emotion, score: Math.round(calculatedScore) },
         { headers: { Authorization: `Bearer ${token}` } }

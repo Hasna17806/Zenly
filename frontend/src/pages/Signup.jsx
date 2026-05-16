@@ -3,6 +3,8 @@ import { useNavigate, Link } from "react-router-dom";
 import API from "../api/axios";
 import Navbar from "../components/Navbar";
 import { CheckCircle, AlertCircle, X } from "lucide-react";
+import { auth, googleProvider } from "../firebase/config";
+import { SignInMethod } from "firebase/auth";
 
 // Custom Modal Component
 const CustomModal = ({ isOpen, onClose, type, title, message, onAction }) => {

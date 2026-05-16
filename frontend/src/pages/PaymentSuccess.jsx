@@ -29,7 +29,7 @@ const PaymentSuccess = () => {
     try {
       const pendingPaymentId = localStorage.getItem("pendingPaymentId");
       
-      const response = await axios.post(
+      const response = await API.post(
         "/payments/capture-order",
         { orderId, paymentId: pendingPaymentId },
         { headers: { Authorization: `Bearer ${token}` } }

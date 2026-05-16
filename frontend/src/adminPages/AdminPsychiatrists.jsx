@@ -634,7 +634,7 @@ const AdminPsychiatrists = () => {
 
   const fetchPsychiatrists = async () => {
   try {
-    const { data } = await axios.get("/psychiatrist/all", {
+    const { data } = await API.get("/psychiatrist/all", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -700,7 +700,7 @@ const AdminPsychiatrists = () => {
         formData.append("documents", file);
       });
 
-      await axios.post("/admin/psychiatrists", formData, {
+      await API.post("/admin/psychiatrists", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -742,7 +742,7 @@ const AdminPsychiatrists = () => {
       formData.append("documents", file);
     });
 
-    await axios.put(`/admin/psychiatrists/${editingId}`, formData, {
+    await API.put(`/admin/psychiatrists/${editingId}`, formData, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "multipart/form-data"
@@ -781,7 +781,7 @@ const AdminPsychiatrists = () => {
 
   const handleBlock = async (id) => {
     try {
-      const { data } = await axios.put(
+      const { data } = await API.put(
         `/admin/psychiatrists/${id}/block`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
@@ -802,7 +802,7 @@ const AdminPsychiatrists = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`/admin/psychiatrists/${deleteModal.id}`, {
+      await API.delete(`/admin/psychiatrists/${deleteModal.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

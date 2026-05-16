@@ -14,7 +14,7 @@ const PsychiatristChatList = () => {
 
   const fetchAppointments = async () => {
     try {
-      const res = await axios.get("/appointments/psychiatrist", {
+      const res = await API.get("/appointments/psychiatrist", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const accepted = res.data.filter(app => app.status === "Accepted");
@@ -32,7 +32,7 @@ const PsychiatristChatList = () => {
     const unreadMap = {};
     for (const app of appointmentsList) {
       try {
-        const res = await axios.get(`/chat/messages/${app._id}`, {
+        const res = await API.get(`/chat/messages/${app._id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const messages = res.data;

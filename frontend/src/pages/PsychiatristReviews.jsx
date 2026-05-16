@@ -17,13 +17,13 @@ const PsychiatristReviews = () => {
 
   const fetchReviews = async () => {
     try {
-      const res = await axios.get(`/reviews/psychiatrist/${psychiatristId}`);
+      const res = await API.get(`/reviews/psychiatrist/${psychiatristId}`);
       setReviews(res.data.reviews);
       setAverageRating(res.data.averageRating);
       setTotalReviews(res.data.totalReviews);
       
       // Also fetch psychiatrist details
-      const psyRes = await axios.get(`/psychiatrist/all`);
+      const psyRes = await API.get(`/psychiatrist/all`);
       const foundPsychiatrist = psyRes.data.find(p => p._id === psychiatristId);
       setPsychiatrist(foundPsychiatrist);
     } catch (error) {

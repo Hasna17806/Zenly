@@ -10,7 +10,7 @@ const PsychiatristProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      const res = await axios.get(
+      const res = await API.get(
         "/psychiatrist/profile",
         { headers: { Authorization: `Bearer ${token}` } }
       );

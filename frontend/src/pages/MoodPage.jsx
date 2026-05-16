@@ -323,7 +323,7 @@ const MoodPage = () => {
       if (!token) return;
       
       try {
-        const response = await axios.get("https://zenly.onrender.com/api/mood", {
+        const response = await API.get("https://zenly.onrender.com/api/mood", {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -406,7 +406,7 @@ const MoodPage = () => {
       const backendMoodValue = selectedMoodData.backendValue;
 
       // 1. Save mood to database
-      await axios.post(
+      await API.post(
         "https://zenly.onrender.com/api/mood",
         { mood: backendMoodValue, note: note || "" },
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
@@ -417,7 +417,7 @@ const MoodPage = () => {
       
       try {
         const category = getCategoryFromMood(backendMoodValue);
-        const challengesResponse = await axios.get(
+        const challengesResponse = await API.get(
           `https://zenly.onrender.com/api/challenges/category/${encodeURIComponent(category)}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -516,7 +516,7 @@ const MoodPage = () => {
         return;
       }
 
-      await axios.post(
+      await API.post(
         "https://zenly.onrender.com/api/completed-challenges",
         { challengeId: challengeObj._id },
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }

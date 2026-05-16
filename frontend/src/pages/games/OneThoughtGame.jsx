@@ -13,7 +13,7 @@ const OneThoughtGame = () => {
   const handleSubmit = async () => {
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.post(
+      await API.post(
         "/completed-challenges",
         { challengeId: location.state?.challenge?.id },
         { headers: { Authorization: `Bearer ${token}` } }

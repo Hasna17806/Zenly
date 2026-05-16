@@ -108,7 +108,7 @@ const FileUploader = ({ onUploadSuccess, onUploadError }) => {
       formData.append('upload_preset', signatureData.uploadPreset);
       formData.append('signature', signatureData.signature);
 
-      const response = await axios.post(
+      const response = await API.post(
         `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/auto/upload`,
         formData,
         {

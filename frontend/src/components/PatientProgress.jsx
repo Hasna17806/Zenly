@@ -19,10 +19,10 @@ const PatientProgress = () => {
   const fetchPatientData = async () => {
     try {
       const [patientRes, appointmentsRes, moodRes, challengesRes] = await Promise.all([
-        axios.get(`/psychiatrist/patient/${patientId}`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`/psychiatrist/patient/${patientId}/appointments`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`/psychiatrist/patient/${patientId}/mood-history`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`/psychiatrist/patient/${patientId}/challenges`, { headers: { Authorization: `Bearer ${token}` } })
+        API.get(`/psychiatrist/patient/${patientId}`, { headers: { Authorization: `Bearer ${token}` } }),
+        API.get(`/psychiatrist/patient/${patientId}/appointments`, { headers: { Authorization: `Bearer ${token}` } }),
+        API.get(`/psychiatrist/patient/${patientId}/mood-history`, { headers: { Authorization: `Bearer ${token}` } }),
+        API.get(`/psychiatrist/patient/${patientId}/challenges`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
       setPatient(patientRes.data);
       setAppointments(appointmentsRes.data);
@@ -495,7 +495,7 @@ const PatientProgress = () => {
         {/* Hero card */}
         <div className="pp-hero">
           <div className="pp-avatar" style={{ background: `linear-gradient(135deg, ${moodColor}, ${moodColor}dd)` }}>
-            {patient.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+            {patient?.name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "PT"}
           </div>
           <div className="pp-hero-info">
             <div className="pp-hero-name">{patient.name}</div>

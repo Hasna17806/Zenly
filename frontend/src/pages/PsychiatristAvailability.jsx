@@ -27,7 +27,7 @@ const PsychiatristAvailability = () => {
 
   const fetchAvailabilities = async () => {
     try {
-      const res = await axios.get(
+      const res = await API.get(
         "/availability/psychiatrist",
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -54,7 +54,7 @@ const PsychiatristAvailability = () => {
     }
 
     try {
-      await axios.post(
+      await API.post(
         "/availability/add",
         { date: selectedDate, slots: selectedSlots },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -72,7 +72,7 @@ const PsychiatristAvailability = () => {
 
   const handleDeleteAvailability = async () => {
     try {
-      await axios.delete(
+      await API.delete(
         `/availability/${deleteConfirm.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );

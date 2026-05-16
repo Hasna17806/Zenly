@@ -201,7 +201,7 @@ const SoundSanctuaryGame = () => {
   const completeSession = async () => {
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.post("/completed-challenges",
+      await API.post("/completed-challenges",
         { minutesListened: minutesListened + 1 },
         { headers: { Authorization: `Bearer ${token}` } }
       );
