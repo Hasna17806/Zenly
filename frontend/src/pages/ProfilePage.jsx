@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import API from "../api/axios";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const API = "http://localhost:5000";
+const API = "https://zenly.onrender.com";
 
 const ProfilePage = () => {
   const navigate = useNavigate();

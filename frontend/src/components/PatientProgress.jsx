@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import API from "../api/axios";
 import axios from "axios";
 import PsychiatristSidebar from "../components/PsychiatristSidebar";
 import PsychiatristLayout from "../components/PsychiatristLayout";
@@ -18,10 +19,10 @@ const PatientProgress = () => {
   const fetchPatientData = async () => {
     try {
       const [patientRes, appointmentsRes, moodRes, challengesRes] = await Promise.all([
-        axios.get(`http://localhost:5000/api/psychiatrist/patient/${patientId}`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`http://localhost:5000/api/psychiatrist/patient/${patientId}/appointments`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`http://localhost:5000/api/psychiatrist/patient/${patientId}/mood-history`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`http://localhost:5000/api/psychiatrist/patient/${patientId}/challenges`, { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(`/psychiatrist/patient/${patientId}`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`/psychiatrist/patient/${patientId}/appointments`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`/psychiatrist/patient/${patientId}/mood-history`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`/psychiatrist/patient/${patientId}/challenges`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
       setPatient(patientRes.data);
       setAppointments(appointmentsRes.data);

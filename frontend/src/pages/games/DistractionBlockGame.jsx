@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import API from "../../api/axios";
 import axios from "axios";
 
 const SESSION_SECONDS = 300;
@@ -172,7 +173,7 @@ const DistractionBlockGame = () => {
         localStorage.getItem("token") || sessionStorage.getItem("token");
 
       await axios.post(
-        "http://localhost:5000/api/completed-challenges",
+        "/completed-challenges",
         {
           challengeId: challenge?._id,
           distraction: selectedDistraction?.name,

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import API from "../api/axios";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 
@@ -476,7 +477,7 @@ const NotificationsPage = () => {
 
   const fetchNotifications = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/notifications", {
+      const { data } = await axios.get("/notifications", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setNotifications(data);
@@ -490,7 +491,7 @@ const NotificationsPage = () => {
     setLoading(true);
     try {
       await axios.put(
-        "http://localhost:5000/api/notifications/read-all",
+        "/notifications/read-all",
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -505,7 +506,7 @@ const NotificationsPage = () => {
   const markSingleAsRead = async (id) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/notifications/read/${id}`,
+        `/notifications/read/${id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

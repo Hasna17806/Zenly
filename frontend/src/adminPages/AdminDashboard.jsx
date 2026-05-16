@@ -3,7 +3,9 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area
 } from "recharts";
+import API from '../api/axios';
 import axios from 'axios';
+import API from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 
 // ─── Inject Google Fonts + Global Styles ────────────────────────────────────
@@ -302,11 +304,11 @@ const AdminDashboard = () => {
     
     // ADD: Fetch recent challenges separately
     const [statsRes, focusRes, moodRes, activityRes, challengesRes] = await Promise.all([
-      axios.get('http://localhost:5000/api/admin/stats', { headers }).catch(() => ({ data: null })),
-      axios.get('http://localhost:5000/api/admin/focus-weekly', { headers }).catch(() => ({ data: null })),
-      axios.get('http://localhost:5000/api/admin/mood-distribution', { headers }).catch(() => ({ data: null })),
-      axios.get('http://localhost:5000/api/admin/recent-activity', { headers }).catch(() => ({ data: null })),
-      axios.get('http://localhost:5000/api/admin/recent-challenges', { headers }).catch(() => ({ data: null })), // NEW
+      axios.get('/admin/stats', { headers }).catch(() => ({ data: null })),
+      axios.get('/admin/focus-weekly', { headers }).catch(() => ({ data: null })),
+      axios.get('/admin/mood-distribution', { headers }).catch(() => ({ data: null })),
+      axios.get('/api/admin/recent-activity', { headers }).catch(() => ({ data: null })),
+      axios.get('/api/admin/recent-challenges', { headers }).catch(() => ({ data: null })), // NEW
     ]);
 
     // Convert hours to minutes

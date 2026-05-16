@@ -1,4 +1,5 @@
 import { useState } from "react";
+import API from "../api/axios";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -17,7 +18,7 @@ export default function PsychiatristLogin() {
       sessionStorage.removeItem("token");
 
       const res = await axios.post(
-        "http://localhost:5000/api/psychiatrist/login",
+        "/psychiatrist/login",
         { email, password }
       );
 

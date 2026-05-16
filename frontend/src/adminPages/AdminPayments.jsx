@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import API from "../api/axios";
 import axios from "axios";
 
 const AdminPayments = () => {
@@ -10,7 +11,7 @@ const AdminPayments = () => {
   const fetchPayments = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/payments/admin/all",
+        "/payments/admin/all",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setPayments(res.data.payments);

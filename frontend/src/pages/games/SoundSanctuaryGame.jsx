@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import GameControls from "../../components/GameControls";
+import API from "../../api/axios";
 import axios from "axios";
 
 const SOUNDS = [
@@ -200,7 +201,7 @@ const SoundSanctuaryGame = () => {
   const completeSession = async () => {
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.post("http://localhost:5000/api/completed-challenges",
+      await axios.post("/completed-challenges",
         { minutesListened: minutesListened + 1 },
         { headers: { Authorization: `Bearer ${token}` } }
       );

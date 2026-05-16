@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import API from "../api/axios";
 import axios from "axios";
 
 const AdminReviews = () => {
@@ -10,7 +11,7 @@ const AdminReviews = () => {
   const fetchReviews = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/reviews/admin/all",
+        "/reviews/admin/all",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setReviews(res.data);
@@ -26,7 +27,7 @@ const AdminReviews = () => {
   const toggleVisibility = async (id, currentStatus) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/reviews/admin/${id}/toggle`,
+        `/reviews/admin/${id}/toggle`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

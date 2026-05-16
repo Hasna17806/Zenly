@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import API from "../../api/axios";
 import axios from "axios";
 
 const moodScenarios = [
@@ -120,7 +121,7 @@ const MoodDecodeGame = () => {
         localStorage.getItem("token") || sessionStorage.getItem("token");
 
       await axios.post(
-        "http://localhost:5000/api/completed-challenges",
+        "/completed-challenges",
         {
           challengeId: challenge?._id,
           score,

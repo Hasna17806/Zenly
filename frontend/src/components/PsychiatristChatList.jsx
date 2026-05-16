@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import API from "../api/axios";
 import axios from "axios";
 import Modal from "./Modal";
 import SessionChat from "../pages/SessionChat";
@@ -13,7 +14,7 @@ const PsychiatristChatList = () => {
 
   const fetchAppointments = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/appointments/psychiatrist", {
+      const res = await axios.get("/appointments/psychiatrist", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const accepted = res.data.filter(app => app.status === "Accepted");
@@ -31,7 +32,7 @@ const PsychiatristChatList = () => {
     const unreadMap = {};
     for (const app of appointmentsList) {
       try {
-        const res = await axios.get(`http://localhost:5000/api/chat/messages/${app._id}`, {
+        const res = await axios.get(`/chat/messages/${app._id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const messages = res.data;

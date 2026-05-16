@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import API from "../api/axios";
 import axios from "axios";
 import Modal from "./Modal";
 
@@ -10,7 +11,7 @@ const SessionButton = ({ appointmentId, psychiatristName }) => {
   useEffect(() => {
     const fetchAppointment = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/appointments/${appointmentId}`, {
+        const res = await axios.get(`/appointments/${appointmentId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setAppointment(res.data);

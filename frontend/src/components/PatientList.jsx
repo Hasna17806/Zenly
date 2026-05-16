@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import API from "../api/axios";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -13,7 +14,7 @@ const PatientList = () => {
   const fetchPatients = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/psychiatrist/patients",
+        "/psychiatrist/patients",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setPatients(res.data);

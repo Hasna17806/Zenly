@@ -91,7 +91,7 @@ const RecallRushGame = () => {
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       await axios.post(
-        "http://localhost:5000/api/completed-challenges",
+        "/completed-challenges",
         { challengeId: challenge?._id, score },
         { headers: { Authorization: `Bearer ${token}` } }
       );

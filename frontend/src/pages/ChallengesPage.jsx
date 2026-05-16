@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import API from '../api/axios';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -324,7 +325,7 @@ const ChallengesPage = () => {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 
       const response = await axios.get(
-        `http://localhost:5000/api/challenges/category/${encodeURIComponent(categoryMap[activeCategory])}`,
+        `/challenges/category/${encodeURIComponent(categoryMap[activeCategory])}`,
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         }
@@ -387,7 +388,7 @@ const ChallengesPage = () => {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       if (!token) return;
 
-      const response = await axios.get('http://localhost:5000/api/completed-challenges', {
+      const response = await axios.get('/completed-challenges', {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -413,7 +414,7 @@ const ChallengesPage = () => {
       const challengeId = challenge._id || challenge.id;
       
       await axios.post(
-        'http://localhost:5000/api/completed-challenges',
+        '/completed-challenges',
         { challengeId: challengeId },
         { headers: { Authorization: `Bearer ${token}` } }
       );

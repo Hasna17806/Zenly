@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import API from "../../api/axios";
 import axios from "axios";
 
 const BlinkBreakGame = () => {
@@ -87,7 +88,7 @@ const BlinkBreakGame = () => {
     }
 
     const response = await axios.post(
-      "http://localhost:5000/api/completed-challenges",
+      "/completed-challenges",
       { challengeId },
       { headers: { Authorization: `Bearer ${token}` } }
     );

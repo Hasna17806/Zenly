@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import API from "../api/axios";
 import axios from "axios";
 
 const PaymentSuccess = () => {
@@ -29,7 +30,7 @@ const PaymentSuccess = () => {
       const pendingPaymentId = localStorage.getItem("pendingPaymentId");
       
       const response = await axios.post(
-        "http://localhost:5000/api/payments/capture-order",
+        "/payments/capture-order",
         { orderId, paymentId: pendingPaymentId },
         { headers: { Authorization: `Bearer ${token}` } }
       );

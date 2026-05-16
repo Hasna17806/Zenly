@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import API from "../api/axios";
 import axios from "axios";
 import PsychiatristLayout from "../components/PsychiatristLayout";
 
@@ -11,7 +12,7 @@ const PsychiatristEarnings = () => {
   const fetchEarnings = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/payments/psychiatrist/earnings",
+        "/payments/psychiatrist/earnings",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setPayments(res.data.payments);

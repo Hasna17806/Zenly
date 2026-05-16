@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import API from "../api/axios";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
@@ -341,7 +342,7 @@ const UserAppointments = () => {
 
     try {
       await axios.delete(
-        `http://localhost:5000/api/appointments/cancel/${id}`,
+        `/appointments/cancel/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -374,7 +375,7 @@ const UserAppointments = () => {
       return;
     }
 
-    const res = await axios.get("http://localhost:5000/api/appointments/user", {
+    const res = await axios.get("/appointments/user", {
       headers: {
         Authorization: `Bearer ${token}`,
       },

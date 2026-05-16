@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import API from "../../api/axios";
 import axios from "axios";
 
 const prompts = [
@@ -120,7 +121,7 @@ const GratitudeTapGame = () => {
         Math.min(40, gratitude.trim().length / 5) + Math.min(30, taps * 2) + emotion * 10;
 
       await axios.post(
-        "http://localhost:5000/api/completed-challenges",
+        "/completed-challenges",
         { challengeId, gratitude, taps, emotion, score: Math.round(calculatedScore) },
         { headers: { Authorization: `Bearer ${token}` } }
       );

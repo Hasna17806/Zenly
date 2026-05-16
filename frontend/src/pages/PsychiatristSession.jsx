@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+import API from "../api/axios";
 import axios from "axios";
 import PsychiatristLayout from "../components/PsychiatristLayout";
 
@@ -25,7 +26,7 @@ const PsychiatristSession = () => {
   const fetchMessages = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/chat/messages/${appointmentId}`,
+        `/chat/messages/${appointmentId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessages(res.data.messages);
@@ -42,7 +43,7 @@ const PsychiatristSession = () => {
 
     try {
       const res = await axios.post(
-        `http://localhost:5000/api/chat/send`,
+        `/chat/send`,
         {
           appointmentId,
           message: newMessage,

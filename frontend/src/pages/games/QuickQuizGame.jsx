@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import API from "../../api/axios";
 import axios from "axios";
 
 /* ─────────────────────────── Data ─────────────────────────── */
@@ -220,7 +221,7 @@ const QuickQuizGame = () => {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.post("http://localhost:5000/api/completed-challenges", { challengeId: challenge._id }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.post("/completed-challenges", { challengeId: challenge._id }, { headers: { Authorization: `Bearer ${token}` } });
     } catch {}
     navigate("/challenges");
     setIsSubmitting(false);

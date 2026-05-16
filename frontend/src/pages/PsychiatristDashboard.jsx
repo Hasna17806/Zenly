@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import API from "../api/axios";
 import axios from "axios";
 import PsychiatristLayout from "../components/PsychiatristLayout";
 import {
@@ -14,7 +15,7 @@ const PsychiatristDashboard = () => {
   const fetchAppointments = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/appointments/psychiatrist",
+        "/appointments/psychiatrist",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setAppointments(res.data);

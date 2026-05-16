@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import API from "../api/axios";
 import axios from "axios";
 import PsychiatristLayout from "../components/PsychiatristLayout";
 
@@ -27,7 +28,7 @@ const PsychiatristAvailability = () => {
   const fetchAvailabilities = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/availability/psychiatrist",
+        "/availability/psychiatrist",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setAvailabilities(res.data);
@@ -54,7 +55,7 @@ const PsychiatristAvailability = () => {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/availability/add",
+        "/availability/add",
         { date: selectedDate, slots: selectedSlots },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -72,7 +73,7 @@ const PsychiatristAvailability = () => {
   const handleDeleteAvailability = async () => {
     try {
       await axios.delete(
-        `http://localhost:5000/api/availability/${deleteConfirm.id}`,
+        `/availability/${deleteConfirm.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       showToast("Availability removed successfully!");

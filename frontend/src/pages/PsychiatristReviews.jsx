@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import API from "../api/axios";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -16,13 +17,13 @@ const PsychiatristReviews = () => {
 
   const fetchReviews = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/reviews/psychiatrist/${psychiatristId}`);
+      const res = await axios.get(`/reviews/psychiatrist/${psychiatristId}`);
       setReviews(res.data.reviews);
       setAverageRating(res.data.averageRating);
       setTotalReviews(res.data.totalReviews);
       
       // Also fetch psychiatrist details
-      const psyRes = await axios.get(`http://localhost:5000/api/psychiatrist/all`);
+      const psyRes = await axios.get(`/psychiatrist/all`);
       const foundPsychiatrist = psyRes.data.find(p => p._id === psychiatristId);
       setPsychiatrist(foundPsychiatrist);
     } catch (error) {

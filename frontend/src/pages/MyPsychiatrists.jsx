@@ -5,7 +5,7 @@ import Navbar from "../components/Navbar";
 import Modal from "../components/Modal";
 import SessionChat from "./SessionChat";
 import BookingModal from "../components/BookingModal";
-import PaymentButton from "../components/PaymentButton"; // Add this import
+import PaymentButton from "../components/PaymentButton"; 
 
 const MyPsychiatrists = () => {
   const [list, setList] = useState([]);

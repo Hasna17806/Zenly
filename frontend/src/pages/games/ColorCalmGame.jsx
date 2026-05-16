@@ -1,9 +1,10 @@
-// ColorCalmGame.jsx
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import GameControls from "../../components/GameControls";
+import API from "../../api/axios";
 import axios from "axios";
 
 const COLOR_PALETTE = [
@@ -174,7 +175,7 @@ const ColorCalmGame = () => {
       setLoading(true);
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       await axios.post(
-        "http://localhost:5000/api/completed-challenges",
+        "/completed-challenges",
         { completed: true },
         { headers: { Authorization: `Bearer ${token}` } }
       );

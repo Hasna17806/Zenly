@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import API from '../api/axios';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -28,7 +29,7 @@ const ChatPage = () => {
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       
-      const response = await axios.get("http://localhost:5000/api/chatbot/history", {
+      const response = await axios.get("/chatbot/history", {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -109,7 +110,7 @@ const ChatPage = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/chatbot/send", 
+        "/chatbot/send", 
         { message: inputMessage },
         {
           headers: {

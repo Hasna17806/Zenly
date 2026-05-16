@@ -1,4 +1,5 @@
 import { useState } from "react";
+import API from "../api/axios";
 import axios from "axios";
 
 /* ─────────────────────────────────────────────
@@ -361,7 +362,7 @@ const ProfileSection = () => {
   const save = async () => {
     try {
       const token = localStorage.getItem("adminToken");
-      await axios.put("http://localhost:5000/api/admin/profile",
+      await axios.put("/admin/profile",
         { name, email },
         { headers: { Authorization: `Bearer ${token}` } });
       flash("Profile updated successfully!", "success");
@@ -454,7 +455,7 @@ const SecuritySection = () => {
     if (nw.length < 8)         return flash("Password must be at least 8 characters.", "error");
     try {
       const token = localStorage.getItem("adminToken");
-      await axios.put("http://localhost:5000/api/admin/change-password",
+      await axios.put("/admin/change-password",
         { currentPassword: cur, newPassword: nw },
         { headers: { Authorization: `Bearer ${token}` } });
       setCur(""); setNw(""); setConf("");
@@ -529,7 +530,7 @@ const NotificationsSection = () => {
   const save = async () => {
     try {
       const token = localStorage.getItem("adminToken");
-      await axios.put("http://localhost:5000/api/admin/notifications", settings,
+      await axios.put("/admin/notifications", settings,
         { headers: { Authorization: `Bearer ${token}` } });
       setToast({ msg: "Notification preferences saved!", type: "success" });
       setTimeout(() => setToast(null), 3000);
@@ -598,7 +599,7 @@ const AppearanceSection = () => {
   const save = async () => {
     try {
       const token = localStorage.getItem("adminToken");
-      await axios.put("http://localhost:5000/api/admin/preferences",
+      await axios.put("/admin/preferences",
         { timezone, dateFormat: dateFmt, language },
         { headers: { Authorization: `Bearer ${token}` } });
       setToast({ msg: "Preferences saved!", type: "success" });

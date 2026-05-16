@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import API from "../api/axios";
 import axios from "axios";
 
 const GlobalStyles = () => (
@@ -633,7 +634,7 @@ const AdminPsychiatrists = () => {
 
   const fetchPsychiatrists = async () => {
   try {
-    const { data } = await axios.get("http://localhost:5000/api/psychiatrist/all", {
+    const { data } = await axios.get("/psychiatrist/all", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -699,7 +700,7 @@ const AdminPsychiatrists = () => {
         formData.append("documents", file);
       });
 
-      await axios.post("http://localhost:5000/api/admin/psychiatrists", formData, {
+      await axios.post("/admin/psychiatrists", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -741,7 +742,7 @@ const AdminPsychiatrists = () => {
       formData.append("documents", file);
     });
 
-    await axios.put(`http://localhost:5000/api/admin/psychiatrists/${editingId}`, formData, {
+    await axios.put(`/admin/psychiatrists/${editingId}`, formData, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "multipart/form-data"
@@ -781,7 +782,7 @@ const AdminPsychiatrists = () => {
   const handleBlock = async (id) => {
     try {
       const { data } = await axios.put(
-        `http://localhost:5000/api/admin/psychiatrists/${id}/block`,
+        `/admin/psychiatrists/${id}/block`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -801,7 +802,7 @@ const AdminPsychiatrists = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/admin/psychiatrists/${deleteModal.id}`, {
+      await axios.delete(`/admin/psychiatrists/${deleteModal.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -1063,7 +1064,7 @@ const AdminPsychiatrists = () => {
                               <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                                 {typeof file === "string" && (
                                   <a
-                                    href={`http://localhost:5000/${file}`}
+                                    href={`https://zenly.onrender.com/${file}`}
                                     target="_blank"
                                     rel="noreferrer"
                                     style={{

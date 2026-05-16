@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import io from "socket.io-client";
+import API from "../api/axios";
 import axios from "axios";
 
-const socket = io("http://localhost:5000");
+const socket = io("https://zenly.onrender.com");
 
 const SessionChat = ({ appointmentId, onClose }) => {
   const [message, setMessage] = useState("");
@@ -68,7 +69,7 @@ const currentUserId = useMemo(() => getCurrentUserId(), [token]);
   const fetchMessages = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/chat/${appointmentId}`,
+        `/chat/${appointmentId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -155,7 +156,7 @@ const currentUserId = useMemo(() => getCurrentUserId(), [token]);
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/chat/send",
+        "/chat/send",
         { appointmentId, message: message.trim() },
         {
           headers: {

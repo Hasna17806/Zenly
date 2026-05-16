@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, User, LogOut, Settings, Bell, Heart } from 'lucide-react';
 import toast from 'react-hot-toast';
+import API from '../api/axios';
 import axios from 'axios';
 
 const Navbar = () => {
@@ -49,7 +50,7 @@ const Navbar = () => {
       });
 
       try {
-        const { data } = await axios.get('http://localhost:5000/api/auth/profile', {
+        const { data } = await axios.get('/auth/profile', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser({
@@ -73,7 +74,7 @@ const Navbar = () => {
 
       if (!token) return;
 
-      const { data } = await axios.get("http://localhost:5000/api/notifications", {
+      const { data } = await axios.get("/notifications", {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -185,7 +186,7 @@ const Navbar = () => {
                       <img
                         src={user.profilePicture.startsWith("http")
                           ? user.profilePicture
-                          : `http://localhost:5000/${user.profilePicture}`}
+                          : `https://zenly.onrender.com/${user.profilePicture}`}
                         alt="Profile"
                         className="w-full h-full object-cover rounded-full"
                         onError={() => setAvatarError(true)}

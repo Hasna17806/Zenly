@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import API from "../../api/axios";
 import axios from "axios";
 
 const ITEMS = [
@@ -103,7 +104,7 @@ const SpeedSortGame = () => {
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       await axios.post(
-        "http://localhost:5000/api/completed-challenges",
+        "/completed-challenges",
         { challengeId: challenge?._id, score },
         { headers: { Authorization: `Bearer ${token}` } }
       );

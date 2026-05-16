@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import API from "../../api/axios";
 import axios from "axios";
 
 const REFOCUS_TIPS = [
@@ -179,7 +180,7 @@ const StudyLockInGame = () => {
     setSaving(true);
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.post("http://localhost:5000/api/completed-challenges",
+      await axios.post("/completed-challenges",
         { challengeId: challenge?._id, disciplineScore, distractions, tasksCompleted },
         { headers: { Authorization: `Bearer ${token}` } }
       );

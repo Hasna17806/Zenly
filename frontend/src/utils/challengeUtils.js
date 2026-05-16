@@ -20,7 +20,7 @@ export const completeChallenge = async (challenge, token) => {
     }
 
     const response = await axios.post(
-      "http://localhost:5000/api/completed-challenges",
+      "/completed-challenges",
       { 
         challengeId: challengeId,
         challengeTitle: challenge.title 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import API from "../api/axios";
 import axios from "axios";
 import PsychiatristLayout from "../components/PsychiatristLayout";
 import { useNavigate } from "react-router-dom";
@@ -26,7 +27,7 @@ const PsychiatristAppointments = () => {
   const fetchAppointments = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/appointments/psychiatrist",
+        "/appointments/psychiatrist",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setAppointments(res.data);
@@ -41,7 +42,7 @@ const PsychiatristAppointments = () => {
     setActionLoading(prev => ({ ...prev, [id]: "accept" }));
     try {
       await axios.put(
-        `http://localhost:5000/api/appointments/accept/${id}`,
+        `/appointments/accept/${id}`,
         { date: preferredDate, time: preferredTime },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -59,7 +60,7 @@ const PsychiatristAppointments = () => {
     setActionLoading(prev => ({ ...prev, [id]: "reject" }));
     try {
       await axios.put(
-        `http://localhost:5000/api/appointments/reject/${id}`,
+        `/appointments/reject/${id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

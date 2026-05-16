@@ -1,4 +1,5 @@
 import { useState } from "react";
+import API from "../api/axios";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, LogIn, Shield, Key } from "lucide-react";
@@ -17,7 +18,7 @@ const AdminLogin = () => {
     setLoading(true);
     
     try {
-      const { data } = await axios.post("http://localhost:5000/api/admin/login", { 
+      const { data } = await axios.post("https://zenly.onrender.com/api/admin/login", { 
         email, 
         password 
       });

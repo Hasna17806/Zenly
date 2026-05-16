@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import API from '../api/axios';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, AlertCircle, X, Sparkles } from 'lucide-react';
@@ -322,7 +323,7 @@ const MoodPage = () => {
       if (!token) return;
       
       try {
-        const response = await axios.get("http://localhost:5000/api/mood", {
+        const response = await axios.get("https://zenly.onrender.com/api/mood", {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -406,7 +407,7 @@ const MoodPage = () => {
 
       // 1. Save mood to database
       await axios.post(
-        "http://localhost:5000/api/mood",
+        "https://zenly.onrender.com/api/mood",
         { mood: backendMoodValue, note: note || "" },
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );
@@ -417,7 +418,7 @@ const MoodPage = () => {
       try {
         const category = getCategoryFromMood(backendMoodValue);
         const challengesResponse = await axios.get(
-          `http://localhost:5000/api/challenges/category/${encodeURIComponent(category)}`,
+          `https://zenly.onrender.com/api/challenges/category/${encodeURIComponent(category)}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         
@@ -516,7 +517,7 @@ const MoodPage = () => {
       }
 
       await axios.post(
-        "http://localhost:5000/api/completed-challenges",
+        "https://zenly.onrender.com/api/completed-challenges",
         { challengeId: challengeObj._id },
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );

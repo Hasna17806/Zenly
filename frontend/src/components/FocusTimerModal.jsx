@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import API from "../api/axios";
 import axios from "axios";
 import { Timer, X, CheckCircle, Play, Pause, RotateCcw, Save } from "lucide-react";
 
@@ -63,7 +64,7 @@ const FocusTimerModal = ({ isOpen, onClose }) => {
       }
 
       await axios.post(
-        "http://localhost:5000/api/focus",
+        "/focus",
         { duration: time },
         { headers: { Authorization: `Bearer ${token}` } }
       );

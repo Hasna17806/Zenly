@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import GameControls from "../../components/GameControls";
+import API from "../../api/axios";
 import axios from "axios";
 
 const moods = [
@@ -188,7 +189,7 @@ const CalmTapsGame = () => {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
       await axios.post(
-        "http://localhost:5000/api/completed-challenges",
+        "/completed-challenges",
         {
           challengeId: challenge._id,
           mood: selectedMood,
