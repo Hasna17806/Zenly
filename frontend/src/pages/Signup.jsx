@@ -3,8 +3,9 @@ import { useNavigate, Link } from "react-router-dom";
 import API from "../api/axios";
 import Navbar from "../components/Navbar";
 import { CheckCircle, AlertCircle, X } from "lucide-react";
+// Google imports
 import { auth, googleProvider } from "../firebase/config";
-import { SignInMethod } from "firebase/auth";
+import { signInWithPopup } from "firebase/auth";
 
 // Custom Modal Component
 const CustomModal = ({ isOpen, onClose, type, title, message, onAction }) => {
@@ -101,6 +102,7 @@ function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [errors, setErrors] = useState({});
   
   // Modal states
@@ -215,71 +217,151 @@ function Signup() {
   };
 
   const submitHandler = async (e) => {
-  e.preventDefault();
-  
-  const newErrors = validateForm();
-  if (Object.keys(newErrors).length > 0) {
-    setErrors(newErrors);
-    showModal(
-      'error',
-      'Validation Error',
-      'Please check all fields and try again.'
-    );
-    return;
-  }
-
-  setErrors({});
-  setIsLoading(true);
-
-  try {
-    const { data } = await API.post("/auth/register", {
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-    });
-
-    console.log("SIGNUP SUCCESS:", data);
-    console.log("FULL SIGNUP RESPONSE:", JSON.stringify(data, null, 2));
-
-    // Store token
-    localStorage.setItem("token", data.token);
+    e.preventDefault();
     
-    // Store user email
-    localStorage.setItem("userEmail", formData.email);
-    
-    
-    if (data.name) {
-      localStorage.setItem("userName", data.name);
-    } else if (data.user?.name) {
-      localStorage.setItem("userName", data.user.name);
-    } else {
-      
-      localStorage.setItem("userName", formData.name);
+    const newErrors = validateForm();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      showModal(
+        'error',
+        'Validation Error',
+        'Please check all fields and try again.'
+      );
+      return;
     }
-    
-    showModal(
-      'success',
-      'Welcome to Zenly! 🎉',
-      `Your account has been created successfully, ${formData.name}!`
-    );
 
- 
-    setTimeout(() => {
-      closeModal();
-      navigate("/");
-    }, 2000);
+    setErrors({});
+    setIsLoading(true);
 
-  } catch (error) {
-    console.error("Signup error:", error);
-    showModal(
-      'error',
-      'Signup Failed',
-      error.response?.data?.message || "Unable to create account. Please try again."
-    );
-  } finally {
-    setIsLoading(false);
-  }
-};
+    try {
+      const { data } = await API.post("/auth/register", {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
+
+      console.log("SIGNUP SUCCESS:", data);
+      console.log("FULL SIGNUP RESPONSE:", JSON.stringify(data, null, 2));
+
+      // Store token
+      localStorage.setItem("token", data.token);
+      
+      // Store user email
+      localStorage.setItem("userEmail", formData.email);
+      
+      if (data.name) {
+        localStorage.setItem("userName", data.name);
+      } else if (data.user?.name) {
+        localStorage.setItem("userName", data.user.name);
+      } else {
+        localStorage.setItem("userName", formData.name);
+      }
+      
+      showModal(
+        'success',
+        'Welcome to Zenly! 🎉',
+        `Your account has been created successfully, ${formData.name}!`
+      );
+
+      setTimeout(() => {
+        closeModal();
+        navigate("/");
+      }, 2000);
+
+    } catch (error) {
+      console.error("Signup error:", error);
+      showModal(
+        'error',
+        'Signup Failed',
+        error.response?.data?.message || "Unable to create account. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Google Sign-Up Handler
+  const handleGoogleSignUp = async () => {
+    console.log("Google Sign-Up button clicked");
+    setGoogleLoading(true);
+
+    try {
+      if (!auth || !googleProvider) {
+        console.error("Firebase auth or provider not initialized");
+        showModal('error', 'Configuration Error', 'Firebase not properly configured. Please contact support.');
+        setGoogleLoading(false);
+        return;
+      }
+
+      console.log("Attempting to sign in with popup...");
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log("Sign-in successful!", result);
+      
+      const user = result.user;
+      console.log("User data:", {
+        email: user.email,
+        name: user.displayName,
+        uid: user.uid,
+        photoURL: user.photoURL
+      });
+
+      // Send to backend for signup/login
+      const { data } = await API.post("/auth/google-login", {
+        email: user.email,
+        name: user.displayName,
+        googleId: user.uid,
+        photoURL: user.photoURL
+      });
+
+      console.log("Backend response:", data);
+      
+      // Store token and user data
+      const token = data.token || data.user?.token;
+      if (token) {
+        localStorage.setItem("token", token);
+      }
+      localStorage.setItem("userEmail", user.email);
+      localStorage.setItem("userName", user.displayName);
+      
+      showModal(
+        'success',
+        'Welcome to Zenly! 🎉',
+        `Your account has been created successfully, ${user.displayName}!`
+      );
+
+      setTimeout(() => {
+        closeModal();
+        navigate("/");
+      }, 2000);
+
+    } catch (error) {
+      console.error("Detailed Google Sign-In error:", error);
+      
+      let errorMessage = "Failed to sign up with Google. Please try again.";
+      
+      if (error.code === 'auth/popup-closed-by-user') {
+        errorMessage = "Sign-in popup was closed. Please try again.";
+      } else if (error.code === 'auth/popup-blocked') {
+        errorMessage = "Pop-up was blocked by your browser. Please allow pop-ups and try again.";
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        errorMessage = "Another popup is already open. Please close it and try again.";
+      } else if (error.code === 'auth/unauthorized-domain') {
+        errorMessage = "This domain is not authorized for Firebase. Please check Firebase console settings.";
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = "Network error. Please check your internet connection.";
+      } else if (error.code === 'auth/operation-not-allowed') {
+        errorMessage = "Google Sign-In is not enabled. Please contact support.";
+      } else if (error.response) {
+        errorMessage = error.response.data?.message || "Server error. Please try again.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      showModal('error', 'Google Sign-Up Failed', errorMessage);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const getPasswordStrength = () => {
     const password = formData.password;
@@ -622,32 +704,33 @@ function Signup() {
                   </div>
                 </div>
 
-               {/* Google Sign Up */}
-                  <button
-                    type="button"
-                    className="w-full bg-white border border-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 transition-all duration-200 flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    {/* Real Google Icon with colors */}
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                      <path 
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" 
-                        fill="#4285F4"
-                      />
-                      <path 
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" 
-                        fill="#34A853"
-                      />
-                      <path 
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" 
-                        fill="#FBBC05"
-                      />
-                      <path 
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" 
-                        fill="#EA4335"
-                      />
-                    </svg>
-                    Continue with Google
-                  </button>
+                {/* Google Sign Up Button - UPDATED WITH FUNCTIONALITY */}
+                <button
+                  type="button"
+                  onClick={handleGoogleSignUp}
+                  disabled={googleLoading}
+                  className="w-full bg-white border border-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 transition-all duration-200 flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {googleLoading ? (
+                    <div className="flex items-center justify-center">
+                      <svg className="animate-spin h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span className="ml-2">Connecting...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                      </svg>
+                      Continue with Google
+                    </>
+                  )}
+                </button>
 
                 {/* Login Link */}
                 <p className="mt-6 text-center text-gray-600">
