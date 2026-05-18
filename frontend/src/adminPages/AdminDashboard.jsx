@@ -303,11 +303,11 @@ const AdminDashboard = () => {
     
     // ADD: Fetch recent challenges separately
     const [statsRes, focusRes, moodRes, activityRes, challengesRes] = await Promise.all([
-      axios.get('/admin/stats', { headers }).catch(() => ({ data: null })),
-      axios.get('/admin/focus-weekly', { headers }).catch(() => ({ data: null })),
-      axios.get('/admin/mood-distribution', { headers }).catch(() => ({ data: null })),
-      axios.get('/api/admin/recent-activity', { headers }).catch(() => ({ data: null })),
-      axios.get('/api/admin/recent-challenges', { headers }).catch(() => ({ data: null })), // NEW
+      API.get('/admin/stats', { headers }).catch(() => ({ data: null })),
+      API.get('/admin/focus-weekly', { headers }).catch(() => ({ data: null })),
+      API.get('/admin/mood-distribution', { headers }).catch(() => ({ data: null })),
+      API.get('/api/admin/recent-activity', { headers }).catch(() => ({ data: null })),
+      API.get('/api/admin/recent-challenges', { headers }).catch(() => ({ data: null })), // NEW
     ]);
 
     // Convert hours to minutes

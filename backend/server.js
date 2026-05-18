@@ -19,7 +19,7 @@ const io = new Server(server, {
     origin: [
       "http://localhost:5173",
       "http://localhost:3000",
-      "https://zenly-frontend.onrender.com",
+      "https://zenly-1-frontend.onrender.com/",
       /\.onrender\.com$/
     ],
     methods: ["GET", "POST"],

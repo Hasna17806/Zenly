@@ -32,7 +32,7 @@ const corsOptions = {
     'http://localhost:5173',
     'http://localhost:3000',
     'http://localhost:5000',
-    'https://zenly-frontend.onrender.com',
+    'https://zenly-1-frontend.onrender.com/',
     /\.onrender\.com$/,
     /\.vercel\.app$/,
     /\.netlify\.app$/
