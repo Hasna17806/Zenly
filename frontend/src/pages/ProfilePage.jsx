@@ -91,7 +91,7 @@ const ProfilePage = () => {
   const handleSaveProfile = async () => {
     setSaveLoading(true);
     try {
-      const { data } = await API.put(`$/auth/profile`, formData, {
+      const { data } = await API.put(`/auth/profile`, formData, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       setUser(data.user || data);
