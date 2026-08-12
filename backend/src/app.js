@@ -26,7 +26,6 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Simple CORS configuration (works without errors)
 const corsOptions = {
   origin: [
     'http://localhost:5173',
